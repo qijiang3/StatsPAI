@@ -124,6 +124,29 @@ StatsPAI's focus is **causal inference** — and on this axis we aim to be the m
 
 ---
 
+**📦 v1.14.0 (2026-05-04) — External-validity dossier + cold-start surgery**
+
+v1.14 ships a 36-module R parity harness (`tests/r_parity/`), a 21-module
+Stata parity harness (`tests/stata_parity/`), 4 canonical-dataset
+original-paper replays (Card 1995, Callaway–Sant'Anna `mpdta`, Abadie
+Basque, LaLonde NSW + PSID-1 — all bit-equal to the published headline
+numbers), a Track-C performance harness (HDFE / CS-DiD / SCM / DML
+log-log scaling), a B=1000 Monte-Carlo coverage run on
+`tests/coverage_monte_carlo/` (OLS 0.952 / 2×2 DiD 0.955 / strong-Z IV
+0.962, all inside the 99% Wilson band [0.935, 0.967]), and a 900-trial
+CausalAgentBench prompt suite (mock mode shipped, `--api` one switch
+away). Three new top-level meta-APIs — `sp.validation_report()`,
+`sp.coverage_matrix()`, `sp.reproduce_jss_tables()` — let referees
+verify StatsPAI's external-validity claims without leaving Python. Cold
+start: `statspai.forest` is lazy-loaded (Step 1B), 18 estimator files
+import sklearn lazily (Step 1C), and HAL TMLE drops sklearn class
+inheritance (Step 1D); `import statspai` now pulls **0** sklearn
+submodules (down from 245). **⚠️ Correctness fix** —
+`sp.callaway_santanna(method='reg')` had a latent influence-function
+scaling bug; `'ipw'` and `'dr'` are unchanged but **re-run any
+v1.10–v1.13 CS-DiD analyses that used `method='reg'`**. Full notes in
+[`CHANGELOG.md`](CHANGELOG.md) under `[1.14.0]`.
+
 **📦 v1.12.2 (2026-05-01) — ML routing for `sp.causal_question` + shared robustness battery + weighted PLIV/IIVM**
 
 Patch release on top of v1.12.0's DML hardening: `sp.causal_question`
@@ -1227,7 +1250,7 @@ resolves to the latest version):
   author       = {Wang, Biaoyue},
   title        = {StatsPAI: The Agent-Native Causal Inference \& Econometrics Toolkit for Python},
   year         = {2026},
-  version      = {1.12.2},
+  version      = {1.14.0},
   doi          = {10.5281/zenodo.19933900},
   url          = {https://doi.org/10.5281/zenodo.19933900},
   license      = {MIT},
