@@ -9,6 +9,17 @@ numerical change) or to revert the behavioural drift.
 
 The fixtures are checked to 4 decimal places so bit-level floating-point
 differences across BLAS backends do not cause spurious failures.
+
+History note (CHANGELOG ``[1.14.0]``): the SEs in ``PINNED_ATT_GT``,
+``PINNED_EVENT_STUDY``, and the overall-ATT SE in
+``test_overall_att_matches_pinned`` were re-pinned in v1.14 to absorb
+the simple-ATT influence-function scaling fix
+(``Fix CS-DiD parity inference``).  Each group-time IF is now
+multiplied by ``n_total / n_relevant`` when embedded in the full unit
+universe, and the outcome-regression IF carries the
+control-regression uncertainty term.  The point estimates are
+unchanged at 4 decimals; the SEs grew by roughly the
+``sqrt(n_total / n_relevant)`` factor, which is the corrected size.
 """
 import numpy as np
 import pandas as pd
@@ -48,27 +59,30 @@ def cs_fixture():
 
 # (group, time) -> (att, se).  Generated from the current implementation.
 PINNED_ATT_GT = {
-    (3, 1): (-0.583666, 0.377119),
-    (3, 3): (0.162054,  0.332874),
-    (3, 4): (1.146706,  0.365457),
-    (3, 5): (0.810629,  0.416610),
-    (3, 6): (1.340394,  0.405758),
-    (3, 7): (2.299304,  0.378036),
-    (3, 8): (2.862484,  0.385927),
-    (5, 1): (-0.392430, 0.318560),
-    (5, 2): (0.346434,  0.339810),
-    (5, 3): (-0.174793, 0.343675),
-    (5, 5): (0.289302,  0.359778),
-    (5, 6): (0.956634,  0.455490),
-    (5, 7): (1.945725,  0.437620),
-    (5, 8): (1.986254,  0.295077),
-    (7, 1): (0.082153,  0.323557),
-    (7, 2): (0.284830,  0.340380),
-    (7, 3): (0.663454,  0.417548),
-    (7, 4): (0.507629,  0.334881),
-    (7, 5): (0.206995,  0.400476),
-    (7, 7): (0.617812,  0.295688),
-    (7, 8): (0.968689,  0.315171),
+    # Re-pinned 2026-05-05 after the v1.14 simple-ATT IF-scaling fix.
+    # ATT point estimates unchanged; SEs grew by the
+    # n_total/n_relevant correction.
+    (3, 1): (-0.583666, 0.552161),
+    (3, 3): (0.162054,  0.546096),
+    (3, 4): (1.146706,  0.490623),
+    (3, 5): (0.810629,  0.567576),
+    (3, 6): (1.340394,  0.580295),
+    (3, 7): (2.299304,  0.521175),
+    (3, 8): (2.862484,  0.509427),
+    (5, 1): (-0.392430, 0.477550),
+    (5, 2): (0.346434,  0.471830),
+    (5, 3): (-0.174793, 0.530724),
+    (5, 5): (0.289302,  0.575977),
+    (5, 6): (0.956634,  0.603753),
+    (5, 7): (1.945725,  0.601489),
+    (5, 8): (1.986254,  0.428450),
+    (7, 1): (0.082153,  0.581038),
+    (7, 2): (0.284830,  0.536620),
+    (7, 3): (0.663454,  0.586537),
+    (7, 4): (0.507629,  0.518836),
+    (7, 5): (0.206995,  0.545912),
+    (7, 7): (0.617812,  0.426407),
+    (7, 8): (0.968689,  0.502857),
 }
 
 
@@ -88,7 +102,9 @@ def test_att_gt_matches_pinned_values(cs_fixture):
 
 def test_overall_att_matches_pinned(cs_fixture):
     assert cs_fixture.estimate == pytest.approx(1.282166, abs=1e-4)
-    assert cs_fixture.se == pytest.approx(0.101724, abs=1e-4)
+    # SE re-pinned to 0.289142 (was 0.101724 pre-v1.14) following the
+    # simple-ATT IF-scaling fix; see module docstring.
+    assert cs_fixture.se == pytest.approx(0.289142, abs=1e-4)
 
 
 # --------------------------------------------------------------------------- #
@@ -96,17 +112,18 @@ def test_overall_att_matches_pinned(cs_fixture):
 # --------------------------------------------------------------------------- #
 
 PINNED_EVENT_STUDY = {
-    -6: (0.082153,  0.161875),
-    -5: (0.284830,  0.155933),
-    -4: (0.135512,  0.129498),
-    -3: (0.427031,  0.121281),
-    -2: (-0.183822, 0.101445),
-     0: (0.356390,  0.093998),
-     1: (1.024010,  0.107502),
-     2: (1.378177,  0.157336),
-     3: (1.663324,  0.122397),
-     4: (2.299304,  0.191350),
-     5: (2.862484,  0.200262),
+    # Re-pinned 2026-05-05 after the v1.14 simple-ATT IF-scaling fix.
+    -6: (0.082153,  0.602161),
+    -5: (0.284830,  0.536783),
+    -4: (0.135512,  0.419463),
+    -3: (0.427031,  0.295390),
+    -2: (-0.183822, 0.342370),
+     0: (0.356390,  0.303102),
+     1: (1.024010,  0.265289),
+     2: (1.378177,  0.445609),
+     3: (1.663324,  0.368396),
+     4: (2.299304,  0.553597),
+     5: (2.862484,  0.511114),
 }
 
 
