@@ -1,0 +1,71 @@
+%% =====================================================================
+%% Archive of JSS-manuscript passages mentioning CausalAgentBench / Track D
+%% Original location: Paper-JSS/manuscript/sections/{01,07,09}-*.tex
+%% Captured before P0-3 (CausalAgentBench split) trimmed the JSS draft.
+%%
+%% Purpose: preserve hard-won wording so the companion benchmark paper
+%% can recover any phrasing it needs without going through git history.
+%%
+%% This file is NOT compiled. It is a reference archive only.
+%% =====================================================================
+
+
+%% ---------------------------------------------------------------------
+%% From sections/01-introduction.tex -- §1.3 "Contribution and roadmap"
+%% Item 4 of the four-fold contributions list. Track D production RCT
+%% language in particular belongs to the companion paper.
+%% ---------------------------------------------------------------------
+
+\item We propose and partially implement the \emph{Causal Inference
+Decathlon} benchmark
+(Section~\ref{sec:parity}), a representative-not-exhaustive panel of
+twelve estimators evaluated on four tracks: Track~A combines
+analytical recovery, numerical parity against canonical
+\proglang{R} references, and selected \proglang{Stata} bridge checks
+for migration-critical commands; Track~B measures Monte Carlo
+coverage against known data-generating processes; Track~C measures
+computational performance; and Track~D measures behavioural
+performance of LLM agents using the platform versus alternative tool
+stacks. We report results from the
+package's existing reference-parity, \proglang{R}-parity,
+selected \proglang{Stata}-bridge, external-parity, and Monte Carlo
+coverage suites; we also report measured Track~C performance results
+and a mock-LLM dry run of the Track~D harness while leaving the
+production agent RCT for pre-registration.
+
+
+%% ---------------------------------------------------------------------
+%% From sections/09-discussion.tex -- "What StatsPAI is and is not"
+%% paragraph. The CausalAgentBench falsifiability framing belongs to
+%% the companion paper.
+%% ---------------------------------------------------------------------
+
+% Original sentence (ending of paragraph):
+% "...Nor do we claim that the agent-native API replaces the human
+%  researcher; we claim only that it lowers the cost of obtaining a
+%  correct first-pass empirical analysis from an LLM agent, which is
+%  the falsifiable hypothesis \textsc{CausalAgentBench} is designed
+%  to test."
+
+
+%% ---------------------------------------------------------------------
+%% From sections/09-discussion.tex -- "Roadmap (1.14--1.20)" T2 theme.
+%% ---------------------------------------------------------------------
+
+% Original phrasing (within T2):
+% "...extending Tracks A and B to all twelve estimators at $B = 1{,}000$
+%  in CI, and running \textsc{CausalAgentBench} once the OSF
+%  pre-registration is deposited and API budget is approved."
+
+
+%% ---------------------------------------------------------------------
+%% From sections/09-discussion.tex -- concluding remarks paragraph.
+%% ---------------------------------------------------------------------
+
+% Original sentence:
+% "Whether the platform actually delivers in agent-mediated empirical
+%  work is the empirical question \textsc{CausalAgentBench} will
+%  answer in a forthcoming companion benchmark paper
+%  (Section~\ref{sec:agentbench-behavioural}); the Bayesian and
+%  causal-discovery companion papers will close the corresponding
+%  evaluation gaps for those sub-packages."
