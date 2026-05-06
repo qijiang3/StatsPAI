@@ -60,6 +60,12 @@ from .distribution_valued import rd_distribution, DistRDResult
 from .bayes_hte import rd_bayes_hte, BayesRDHTEResult
 from .distributional_design import rd_distributional_design, DDDResult
 
+# v1.15 RDD polish — recent literature
+from .rd_flex import rd_flex
+from .bias_aware import rd_bias_aware_fuzzy
+from .rd_discrete import rd_discrete
+from .dashboard import rd_dashboard, rd_compare, rd_robustness_table
+
 # User-friendly aliases
 from ._aliases import (
     multi_cutoff_rd, geographic_rd, boundary_rd, multi_score_rd,
@@ -142,6 +148,19 @@ _RD_METHOD_ALIASES: _Dict[str, str] = {
     # External validity
     "external_validity": "external_validity",
     "rd_external_validity": "external_validity",
+
+    # v1.15: Flexible covariate adjustment (Noack-Olma-Rothe 2025)
+    "flex": "flex", "rd_flex": "flex",
+    "flexible": "flex", "ml_adjust": "flex",
+
+    # v1.15: Bias-aware fuzzy CI (Noack-Rothe 2024 ECTA)
+    "bias_aware": "bias_aware_fuzzy",
+    "bias_aware_fuzzy": "bias_aware_fuzzy",
+    "noack_rothe": "bias_aware_fuzzy",
+
+    # v1.15: Discrete running variable (Kolesár-Rothe 2018 AER)
+    "discrete": "discrete", "rd_discrete": "discrete",
+    "kolesar_rothe": "discrete", "discrete_rv": "discrete",
 }
 
 
@@ -218,9 +237,23 @@ def _rd_dispatch(
         "rkd": rkd,
         "extrapolate": rd_extrapolate,
         "external_validity": rd_external_validity,
+        # v1.15 additions
+        "flex": rd_flex,
+        "discrete": rd_discrete,
     }
     if canon in _passthrough_xc:
         return _passthrough_xc[canon](data=data, y=y, x=x, c=c, **kwargs)
+
+    # ── Bias-aware fuzzy: requires ``fuzzy=`` ─────────────────────────
+    if canon == "bias_aware_fuzzy":
+        fuzzy = kwargs.pop("fuzzy", None)
+        if fuzzy is None:
+            raise ValueError(
+                "method='bias_aware_fuzzy' requires fuzzy=<treatment column>."
+            )
+        return rd_bias_aware_fuzzy(
+            data=data, y=y, x=x, c=c, fuzzy=fuzzy, **kwargs,
+        )
 
     # ── Methods that use ``running``/``cutoff`` instead of ``x``/``c``
     if canon == "bayes_hte":
@@ -310,6 +343,13 @@ _sys.modules[__name__].__class__ = _CallableRDModule
 __all__ = [
     # callable + alias
     'fit',
+    # v1.15 polish
+    'rd_flex',
+    'rd_bias_aware_fuzzy',
+    'rd_discrete',
+    'rd_dashboard',
+    'rd_compare',
+    'rd_robustness_table',
     # core estimators
     'rdrobust',
     'rdplot',

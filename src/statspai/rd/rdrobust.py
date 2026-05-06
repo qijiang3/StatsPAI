@@ -18,6 +18,7 @@ Imbens, G. and Kalyanaraman, K. (2012).
 
 from typing import Optional, List, Tuple, Dict, Any
 from math import factorial
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -43,6 +44,7 @@ def rdrobust(
     bwselect: str = 'mserd',
     h: Optional[float] = None,
     b: Optional[float] = None,
+    rho: Optional[float] = None,
     covs: Optional[List[str]] = None,
     cluster: Optional[str] = None,
     donut: float = 0,
@@ -51,6 +53,8 @@ def rdrobust(
     bootstrap: Optional[str] = None,
     n_boot: int = 999,
     random_state: Optional[int] = None,
+    warn_mass_points: bool = True,
+    warn_weak_first_stage: bool = True,
 ) -> CausalResult:
     """
     Local polynomial RD estimation with robust bias-corrected inference.
@@ -93,7 +97,16 @@ def rdrobust(
     h : float, optional
         Manual bandwidth for estimation (overrides bwselect).
     b : float, optional
-        Manual bandwidth for bias correction (default = h).
+        Manual bandwidth for bias correction (default = ``h``, i.e.
+        ``rho = 1``).  When supplied alongside ``rho``, raises an
+        error.
+    rho : float, optional
+        Ratio ``h/b`` for the bias-correction bandwidth, following
+        Calonico, Cattaneo & Farrell (2018, *Journal of the American
+        Statistical Association* 113(522), 767-779).  When supplied,
+        ``b = h / rho``.  Common choices: ``rho=1`` (default, no
+        oversmoothing), ``rho=0.5–1`` (mild oversmoothing reduces CI
+        length).  Mutually exclusive with explicit ``b``.
     covs : list of str, optional
         Covariate names for covariate-adjusted RD estimation.
         Covariates are included in the local polynomial regression
@@ -118,6 +131,15 @@ def rdrobust(
         Number of bootstrap replicates when ``bootstrap='rbc'``.
     random_state : int, optional
         Seed for the rbc bootstrap.
+    warn_mass_points : bool, default True
+        If ``True``, emit a ``UserWarning`` when the running variable
+        has fewer than 30 distinct values, recommending
+        :func:`rd_discrete` (Kolesár & Rothe 2018) for honest inference.
+    warn_weak_first_stage : bool, default True
+        If ``True`` and ``fuzzy`` is set, emit a ``UserWarning`` when
+        the first-stage discontinuity F-statistic is below 10,
+        recommending the bias-aware fuzzy CI of Noack & Rothe (2024)
+        and the ITT report of Kaliski-Keane-Neal (2025).
 
     Returns
     -------
@@ -173,8 +195,25 @@ def rdrobust(
     if q is None:
         q = p + 1
 
+    if rho is not None and b is not None:
+        raise ValueError("Pass at most one of `b` or `rho` — they are mutually exclusive.")
+    if rho is not None and rho <= 0:
+        raise ValueError(f"rho must be strictly positive (got {rho}).")
+
     # --- Parse and prepare data ---
     Y, X_c, D, Z = _parse_data(data, y, x, c, fuzzy, covs)
+
+    # --- Mass-points diagnostic (Kolesár-Rothe 2018) -----------------
+    n_unique = int(np.unique(X_c).size)
+    if warn_mass_points and n_unique < 30 and len(X_c) >= 100:
+        warnings.warn(
+            f"rdrobust: running variable has only {n_unique} distinct values. "
+            "Local-polynomial inference can have poor coverage when the "
+            "running variable is discrete; consider sp.rd.rd_discrete "
+            "(Kolesár & Rothe 2018, AER) for honest CIs in this regime.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     # --- Observation-level weights ---
     if weights is not None:
@@ -214,7 +253,14 @@ def rdrobust(
     if h is None:
         h = _select_bandwidth(Y, X_c, left, right, p, kernel, bwselect, n)
     if b is None:
-        b = h  # bias-correction bandwidth mirrors estimation bandwidth
+        if rho is not None:
+            # CCT 2018 JASA: b = h / rho.  rho=1 reproduces default.
+            if isinstance(h, tuple):
+                b = (float(h[0]) / float(rho), float(h[1]) / float(rho))
+            else:
+                b = float(h) / float(rho)
+        else:
+            b = h  # bias-correction bandwidth mirrors estimation bandwidth
 
     # --- Cluster values (handle donut filtering) ---
     if cluster:
@@ -238,6 +284,7 @@ def rdrobust(
     )
 
     # --- Fuzzy RD: Wald / IV at cutoff ---
+    fs_F = None
     if D is not None:
         fs_conv, fs_se, _, _ = _rd_estimate(
             D, X_c, left, right, h, p, kernel, None, None,
@@ -247,6 +294,18 @@ def rdrobust(
             D, X_c, left, right, b, q, kernel, None, None,
             deriv=deriv, covs=Z,
         )
+        # First-stage F (for weak-IV diagnostic, KKN 2025)
+        fs_F = float((fs_conv / fs_se) ** 2) if fs_se and fs_se > 0 else float('inf')
+        if warn_weak_first_stage and np.isfinite(fs_F) and fs_F < 10:
+            warnings.warn(
+                f"rdrobust (fuzzy): first-stage F = {fs_F:.2f} < 10. "
+                "Conventional fuzzy-RD t-tests have a power asymmetry "
+                "(Kaliski-Keane-Neal 2025, NBER 33972); also report the ITT "
+                "(sharp RD on the outcome) and consider sp.rd.rd_bias_aware_fuzzy "
+                "(Noack & Rothe 2024, ECTA) for bias-aware CIs.",
+                UserWarning,
+                stacklevel=2,
+            )
         if abs(fs_conv) > 1e-10:
             tau_conv /= fs_conv
             se_conv /= abs(fs_conv)
@@ -311,6 +370,9 @@ def rdrobust(
             'estimate': tau_bc, 'se': se_robust,
             'pvalue': pv_robust, 'ci': ci_robust,
         },
+        'rho': float(rho) if rho is not None else None,
+        'first_stage_F': fs_F,
+        'n_unique_running': n_unique,
     }
 
     # --- rbc bootstrap (Cattaneo-Jansson-Ma 2026) -----------------------
@@ -369,7 +431,7 @@ def rdrobust(
                 "fuzzy": fuzzy, "deriv": deriv,
                 "p": p, "q": q,
                 "kernel": kernel, "bwselect": bwselect,
-                "h": h, "b": b,
+                "h": h, "b": b, "rho": rho,
                 "covs": covs, "cluster": cluster,
                 "donut": donut, "weights": weights,
                 "alpha": alpha,
@@ -574,6 +636,68 @@ def rdplot(
     return fig, ax
 
 
+def _cjm_local_poly_density(
+    x_side: np.ndarray,
+    grid: np.ndarray,
+    h: float,
+    p: int,
+    cutoff: float,
+    side: str = "left",
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Local-polynomial density via the empirical-CDF regression of
+    Cattaneo, Jansson & Ma (2020, JASA).
+
+    For each grid point g we fit a weighted local polynomial of order
+    ``p`` to ``(x_i, F_n(x_i))`` over ``|x_i - g| <= h`` and read off
+    the slope as the density estimate ``f̂(g)``.  Triangular kernel.
+
+    Variance approximated by the sandwich formula scaled by the
+    side sample size — sufficient for plotting CIs at the precision
+    needed for a manipulation test.
+    """
+    n_side = len(x_side)
+    if n_side < max(p + 2, 5):
+        return (np.full_like(grid, np.nan, dtype=float),
+                np.full_like(grid, np.nan, dtype=float))
+
+    # Empirical CDF on the side
+    order = np.argsort(x_side)
+    x_sorted = x_side[order]
+    F = (np.arange(1, n_side + 1) - 0.5) / n_side  # midpoint rule
+
+    densities = np.full_like(grid, np.nan, dtype=float)
+    ses = np.full_like(grid, np.nan, dtype=float)
+    for i, g in enumerate(grid):
+        u = (x_sorted - g) / h
+        in_bw = np.abs(u) <= 1
+        n_bw = int(in_bw.sum())
+        if n_bw < p + 2:
+            continue
+        xb = x_sorted[in_bw] - g
+        Fb = F[in_bw]
+        wb = np.maximum(1 - np.abs(u[in_bw]), 0.0)
+        # Design [1, x, x^2, ..., x^p]
+        Xd = np.column_stack([xb ** j for j in range(p + 1)])
+        sqw = np.sqrt(wb)
+        Xw = Xd * sqw[:, None]
+        yw = Fb * sqw
+        try:
+            XtX_inv = np.linalg.inv(Xw.T @ Xw)
+        except np.linalg.LinAlgError:
+            continue
+        beta = XtX_inv @ Xw.T @ yw
+        # f̂(g) = β1 (slope of F at g)
+        densities[i] = float(max(beta[1], 0.0))
+        # Sandwich variance for slope estimator
+        resid = Fb - Xd @ beta
+        meat = Xw.T @ np.diag((resid ** 2) * wb) @ Xw
+        v = XtX_inv @ meat @ XtX_inv
+        # Heuristic finite-sample inflation: divide by n_side to obtain
+        # density-scale variance
+        ses[i] = float(np.sqrt(max(v[1, 1] / max(n_side, 1), 0.0)))
+    return densities, ses
+
+
 def _imse_optimal_bins(x: np.ndarray, y: np.ndarray,
                        binselect: str) -> int:
     """IMSE-optimal number of bins for RD plots (CCT 2015).
@@ -717,11 +841,16 @@ def rdplotdensity(
     title: Optional[str] = None,
 ):
     """
-    Density discontinuity plot at the RD cutoff.
+    Boundary-adaptive density discontinuity plot at the RD cutoff.
 
-    Visualizes whether the running variable density is continuous at the
-    cutoff. Combines a histogram with local polynomial density estimates
-    and confidence intervals on each side.
+    Implements the local-polynomial density estimator of Cattaneo,
+    Jansson & Ma (2020, *Journal of the American Statistical
+    Association* 115(531), 1449-1455): for each side of the cutoff
+    the empirical CDF F̂ is constructed and a local polynomial of
+    order ``p`` is fit to F̂.  The slope at the cutoff equals the
+    density f̂(c±), and the asymptotic variance comes from the same
+    local-polynomial sandwich.  Boundary-adaptive — does not require
+    a separate boundary kernel.
 
     Parameters
     ----------
@@ -731,11 +860,12 @@ def rdplotdensity(
     c : float, default 0
         Cutoff.
     p : int, default 2
-        Polynomial order for density estimation.
+        Polynomial order for the CDF regression (p=2 recommended;
+        p=1 is faster but with worse boundary behavior).
     n_grid : int, default 50
         Grid points per side for the density curve.
     h : float, optional
-        Bandwidth. If None, auto-selects.
+        Bandwidth. If None, side-specific Silverman pilot.
     ci_level : float, default 0.95
         Confidence level for CI bands.
     hist : bool, default True
@@ -749,6 +879,12 @@ def rdplotdensity(
     Returns
     -------
     (fig, ax)
+
+    References
+    ----------
+    Cattaneo, M.D., Jansson, M. and Ma, X. (2020). "Simple Local
+    Polynomial Density Estimators." *JASA* 115(531), 1449-1455.
+    [@cattaneo2020simple]
     """
     try:
         import matplotlib.pyplot as plt
@@ -762,40 +898,19 @@ def rdplotdensity(
     x_left = X[X < c]
     x_right = X[X >= c]
 
-    # Auto bandwidth
-    sd = np.std(X)
+    # Auto bandwidth (Silverman, side-specific)
     if h is None:
         h_l = 1.06 * np.std(x_left) * len(x_left) ** (-1 / (2 * p + 3))
         h_r = 1.06 * np.std(x_right) * len(x_right) ** (-1 / (2 * p + 3))
     else:
         h_l = h_r = h
 
-    # Grid points
     grid_l = np.linspace(max(c - 3 * h_l, x_left.min()), c, n_grid)
     grid_r = np.linspace(c, min(c + 3 * h_r, x_right.max()), n_grid)
 
-    # Density estimation via KDE-like local polynomial
-    def _density_at_grid(x_data, grid_pts, bw):
-        densities = []
-        ses = []
-        for g in grid_pts:
-            u = (x_data - g) / bw
-            in_bw = np.abs(u) <= 1
-            n_bw = in_bw.sum()
-            if n_bw < 5:
-                densities.append(np.nan)
-                ses.append(np.nan)
-                continue
-            # Kernel density (triangular kernel)
-            w = np.maximum(1 - np.abs(u[in_bw]), 0)
-            f_hat = w.sum() / (bw * len(x_data))
-            se_hat = np.sqrt(f_hat / (bw * len(x_data))) if f_hat > 0 else 0
-            densities.append(f_hat)
-            ses.append(se_hat)
-        return np.array(densities), np.array(ses)
-
-    f_l, se_l = _density_at_grid(x_left, grid_l, h_l)
-    f_r, se_r = _density_at_grid(x_right, grid_r, h_r)
+    # CJM-2020 boundary-adaptive local polynomial density
+    f_l, se_l = _cjm_local_poly_density(x_left, grid_l, h_l, p, c, side="left")
+    f_r, se_r = _cjm_local_poly_density(x_right, grid_r, h_r, p, c, side="right")
 
     z = stats.norm.ppf(1 - (1 - ci_level) / 2)
 
