@@ -97,6 +97,91 @@ class Collection:
                 for it in self.items]
         return pd.DataFrame(rows, columns=["name", "kind", "title"])
 
+    def to_frame(self, *, include_text: bool = False) -> pd.DataFrame:
+        """Return a semantic long-format view of the collection.
+
+        This is the programmatic counterpart to Stata's ``collect layout``
+        and R's ``modelsummary``/``gt`` data pipeline: every rendered cell
+        is represented as one row with stable dimensions
+        ``item`` / ``kind`` / ``term`` / ``statistic`` / ``model`` and both
+        a raw numeric ``value`` (when parseable) and the display
+        ``formatted`` string.
+
+        Parameters
+        ----------
+        include_text : bool, default False
+            Include free-form text and headings as rows. Table workflows
+            usually leave this off; document-audit workflows may want it.
+
+        Returns
+        -------
+        pandas.DataFrame
+            Long-format cell table with provenance-friendly dimensions.
+        """
+        rows: List[Dict[str, Any]] = []
+        for item_index, it in enumerate(self.items):
+            if it.kind in {"text", "heading"}:
+                if include_text:
+                    rows.append({
+                        "collection": self.title or "",
+                        "item": it.name,
+                        "item_index": item_index,
+                        "kind": it.kind,
+                        "title": it.title or "",
+                        "panel": it.options.get("panel", ""),
+                        "model": "",
+                        "term": "",
+                        "statistic": "text",
+                        "column": "",
+                        "value": pd.NA,
+                        "formatted": str(it.payload),
+                        "source": type(it.payload).__name__,
+                    })
+                continue
+
+            df = self._item_to_dataframe(it)
+            if df is None or df.empty:
+                continue
+            for row_pos, (term, row) in enumerate(df.iterrows()):
+                for col, cell in row.items():
+                    statistic = str(col)
+                    model = ""
+                    if it.kind == "regtable":
+                        model = str(col)
+                        statistic = self._infer_regtable_statistic(str(term), str(cell))
+                    rows.append({
+                        "collection": self.title or "",
+                        "item": it.name,
+                        "item_index": item_index,
+                        "kind": it.kind,
+                        "title": it.title or "",
+                        "panel": it.options.get("panel", ""),
+                        "model": model,
+                        "term": str(term),
+                        "term_index": row_pos,
+                        "statistic": statistic,
+                        "column": str(col),
+                        "value": self._coerce_numeric(cell),
+                        "formatted": "" if pd.isna(cell) else str(cell),
+                        "source": type(it.payload).__name__,
+                    })
+        columns = [
+            "collection", "item", "item_index", "kind", "title", "panel",
+            "model", "term", "term_index", "statistic", "column",
+            "value", "formatted", "source",
+        ]
+        return pd.DataFrame(rows, columns=columns)
+
+    # Alias mirroring tidyverse / broom vocabulary.
+    to_long = to_frame
+
+    def to_csv(self, path: Optional[str] = None, **kwargs) -> str:
+        """Render :meth:`to_frame` to CSV; optionally write to ``path``."""
+        content = self.to_frame().to_csv(index=False, **kwargs)
+        if path is not None:
+            Path(path).write_text(content, encoding="utf-8")
+        return content
+
     def get(self, name: str) -> CollectionItem:
         for it in self.items:
             if it.name == name:
@@ -113,6 +198,48 @@ class Collection:
     def clear(self) -> "Collection":
         self.items.clear()
         return self
+
+    @staticmethod
+    def _coerce_numeric(value: Any) -> Any:
+        if pd.isna(value):
+            return pd.NA
+        if isinstance(value, (int, float)):
+            return float(value)
+        s = str(value).strip()
+        # Keep stars, parentheses, and thousands separators from blocking
+        # numeric access to the underlying table cell.
+        s = (
+            s.replace(",", "")
+            .replace("*", "")
+            .replace("(", "")
+            .replace(")", "")
+        )
+        try:
+            return float(s)
+        except ValueError:
+            return pd.NA
+
+    @staticmethod
+    def _infer_regtable_statistic(term: str, formatted: str) -> str:
+        t = term.lower()
+        if t in {"n", "observations", "r-squared", "r2", "adj. r-squared"}:
+            return t.replace(" ", "_").replace(".", "")
+        if formatted.strip().startswith("(") and formatted.strip().endswith(")"):
+            return "std_error"
+        return "estimate"
+
+    @staticmethod
+    def _item_to_dataframe(it: CollectionItem) -> Optional[pd.DataFrame]:
+        if it.kind == "summary":
+            return it.payload.copy()
+        payload = it.payload
+        if hasattr(payload, "to_dataframe"):
+            df = payload.to_dataframe()
+            if isinstance(df, pd.DataFrame):
+                return df.copy()
+        if isinstance(payload, pd.DataFrame):
+            return payload.copy()
+        return None
 
     # ------------------------------------------------------------------
     # Adders

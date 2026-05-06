@@ -89,6 +89,42 @@ def test_collection_get_lookup(models_and_df):
         c.get("nope")
 
 
+def test_collection_to_frame_exposes_semantic_cells(models_and_df):
+    df, m1, m2, _ = models_and_df
+    c = (
+        sp.collect("Doc")
+        .add_regression(m1, m2, name="main", title="Main")
+        .add_summary(df, vars=["x1"], name="desc")
+        .add_text("Audit note", name="note")
+    )
+    long = c.to_frame()
+    assert {
+        "item", "kind", "model", "term", "statistic", "value", "formatted",
+    } <= set(long.columns)
+    assert {"main", "desc"} <= set(long["item"])
+    assert "note" not in set(long["item"])
+    assert long.query("item == 'main'")["model"].astype(str).str.len().gt(0).any()
+    assert pd.to_numeric(long["value"], errors="coerce").notna().any()
+
+
+def test_collection_to_frame_can_include_text(models_and_df):
+    _, m1, _, _ = models_and_df
+    c = sp.collect().add_heading("Appendix").add_regression(m1, name="main")
+    long = c.to_frame(include_text=True)
+    assert "heading" in set(long["kind"])
+    assert "Appendix" in set(long["formatted"])
+
+
+def test_collection_to_csv_writes_long_table(tmp_path, models_and_df):
+    _, m1, _, _ = models_and_df
+    c = sp.collect().add_regression(m1, name="main")
+    out = tmp_path / "collect.csv"
+    csv_text = c.to_csv(str(out))
+    assert out.exists()
+    assert "item, item_index" not in csv_text  # no accidental spaces in header
+    assert "formatted" in csv_text
+
+
 # ---------------------------------------------------------------------------
 # Adders
 # ---------------------------------------------------------------------------
