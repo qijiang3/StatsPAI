@@ -234,17 +234,41 @@ interface: `.summary()`, `.plot()`, `.to_latex()`, `.to_docx()`, and
   [@abadie2021synthetic; @abadiecattaneo2021introduction], with
   staggered-adoption diagnostics aligned to Liu--Wang--Xu's
   practical guide [@liu2024practical] and Stata `sdid` [@clarke2024synthetic].
-- **Decomposition analysis (18 methods, v0.9.2):** Blinder--Oaxaca with
-  five reference-coefficient conventions (Neumark 1988, Cotton 1988,
-  Reimers 1983), Gelbach (2016) sequential OVB, Fairlie (1999/2005)
-  nonlinear, Bauer--Sinning (2008), Firpo--Fortin--Lemieux (2009, 2018)
-  RIF and two-step, DiNardo--Fortin--Lemieux (1996) reweighting,
-  Machado--Mata (2005), Melly (2005), Chernozhukov--Fernández-Val--Melly
-  (2013), Theil/Atkinson/Dagum--Gini decompositions with closed-form
-  influence functions, Shorrocks--Shapley allocation,
-  Lerman--Yitzhaki source decomposition, Kitagawa (1955) and Das Gupta
-  (1993) demographic standardisation, Lundberg (2021) gap-closing, and
-  VanderWeele mediation/disparity decomposition.
+- **Decomposition analysis (19 methods, v0.9.2 / refreshed v1.15):**
+  Blinder--Oaxaca [@blinder1973wage; @oaxaca1973male] with five
+  reference-coefficient conventions [@neumark1988employers;
+  @cotton1988estimation; @reimers1983labor; @jann2008blinder],
+  Gelbach (2016) sequential OVB [@gelbach2016covariates],
+  Fairlie (1999/2005) nonlinear [@fairlie2005extension],
+  Bauer--Sinning (2008) [@bauer2008extension],
+  Firpo--Fortin--Lemieux (2009, 2018) RIF and two-step
+  [@firpo2009unconditional; @firpo2018decomposing],
+  DiNardo--Fortin--Lemieux (1996) reweighting [@dinardo1996labor],
+  Machado--Mata (2005) [@machado2005counterfactual],
+  Melly (2005) [@melly2005decomposition],
+  Chernozhukov--Fernández-Val--Melly (2013) distribution regression
+  [@chernozhukov2013inference], Theil/Atkinson/Dagum--Gini
+  decompositions with closed-form influence functions
+  [@cowell2007income; @shorrocks1980class],
+  Shorrocks--Shapley allocation [@shorrocks2013decomposition],
+  Lerman--Yitzhaki source decomposition [@lerman1985income],
+  Kitagawa (1955) and Das Gupta (1993) demographic standardisation
+  [@kitagawa1955components; @dasgupta1993standardization;
+  @kroger2021kitagawa; @oaxaca2025meets], Lundberg (2021)
+  gap-closing [@lundberg2021gap], VanderWeele
+  mediation/disparity decomposition [@vanderweele2014unification;
+  @jackson2018decomposition], and Yu--Elwert (2025) nonparametric
+  causal decomposition of group disparities into baseline,
+  prevalence, average-effect, and selection mechanisms with efficient
+  influence functions [@yu2025nonparametric] — implemented as both
+  a plug-in and a doubly-robust (cross-fit) estimator. v1.15 added a
+  unified ``DecompResultMixin`` so every result class shares
+  ``.cite()``, ``.confint()``, ``.to_dict()``, ``.to_excel()``, and
+  ``.to_word()`` exporters; plots adopt a common palette and add
+  forest, mediation-forest, and Yu--Elwert mechanism charts with
+  optional 95\% CI whiskers. Reference parity is provided against
+  Stata's ``oaxaca``/``rifreg``/``ddecompose`` and R's
+  ``ddecompose``/``oaxaca``/``cdgd`` packages.
 - **Stochastic frontier analysis (v0.9.3):** cross-sectional `sp.frontier`
   with half-normal/exponential/truncated-normal, heteroskedastic
   inefficiency (Caudill--Ford--Gropper 1995) and noise (Wang 2002),
@@ -368,31 +392,21 @@ interface: `.summary()`, `.plot()`, `.to_latex()`, `.to_docx()`, and
    progress notifications, and `sp.citation()` together with a
    `paper.bib`-checked DOI verifier that refuses to emit citations
    not present in the curated bibliography.
-5. **Selective accelerator backends** for the workloads that
-   benefit from them. Neural causal estimators (TARNet, CFRNet,
-   DragonNet, CEVAE, DeepIV) route through PyTorch CUDA / MPS via
-   the `STATSPAI_TORCH_DEVICE` environment variable. The HDFE
-   residualiser exposes `backend="jax"` and `sp.fast.feols_jax`
-   runs the full WLS solve on JAX / XLA. The largest GPU win in
-   v1.14 is `sp.fast.feols_jax_bootstrap`: the same JIT-compiled
-   WLS kernel is lifted to a `jax.vmap` batched primitive, giving
-   a 10--100x speedup over sequential CPU bootstrap on CUDA / TPU
-   at $B \geq 1{,}000$. Four bootstrap variants share the same
-   JAX kernel infrastructure --- pairs, cluster, wild, and wild
-   cluster [@cameron2008bootstrap] --- with the wild
-   variants using the score formulation $\hat\beta^*_b =
-   \hat\beta + (X'WX)^{-1}\, X'W\, (\eta_b \odot \hat u)$ which
-   is mathematically identical to refitting on
-   $y^* = X\hat\beta + \eta \odot \hat u$ but needs only a single
-   matrix--vector multiply per iteration. The remainder of the
-   package (DiD, RD, synthetic control, GMM) is CPU-only by
-   design: these workloads are bandwidth-bound or involve small-$K$
-   convex programs where a tuned Rust + Numba kernel matches GPU
-   performance. Cluster-robust meat matrices use a Rust + Rayon
-   kernel parallel over clusters
-   (`statspai.core._numba_kernels.cluster_meat`) introduced in
-   v1.14, and `sp.iv(absorb=...)` newly wires the Rust HDFE
-   residualiser into the 2SLS first stage.
+5. **Selective accelerator backends.** Three workloads opt into
+   accelerators without changing the public API: neural causal
+   estimators route through PyTorch CUDA / MPS via the
+   `STATSPAI_TORCH_DEVICE` environment variable;
+   `sp.fast.feols_jax` runs end-to-end OLS on JAX / XLA; and
+   `sp.fast.feols_jax_bootstrap` lifts a JIT-compiled WLS kernel to
+   a `jax.vmap` batched primitive for pairs, cluster, wild, and
+   wild-cluster bootstrap [@cameron2008bootstrap], delivering a
+   10--100x speedup over sequential CPU bootstrap on CUDA / TPU
+   at $B \geq 1{,}000$. The rest of the package is CPU-only by
+   design (DiD, RD, synth, GMM are bandwidth-bound or small-$K$
+   convex programs); a Rust + Rayon `cluster_meat` kernel and the
+   new `sp.iv(absorb=...)` HDFE-2SLS path keep the CPU side
+   competitive. The unified architecture story is documented in
+   the JSS companion paper.
 
 The package is implemented in pure Python atop NumPy, SciPy, Pandas,
 statsmodels, scikit-learn, and linearmodels, with optional PyTorch and

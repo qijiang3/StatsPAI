@@ -4,6 +4,31 @@ All notable changes to StatsPAI will be documented in this file.
 
 ## [Unreleased]
 
+### Docs — v1.14 GPU sprint follow-up
+
+- JSS manuscript (`Paper-JSS/manuscript/`, gitignored — local working
+  copy) gets a substantive expansion of §5.6 *Performance backbone*
+  documenting `sp.fast.feols_jax`, `sp.fast.feols_jax_bootstrap` (with
+  the score-formulation derivation for wild and wild-cluster variants
+  and the Cameron-Gelbach-Miller 2008 attribution added to
+  `jss-bib.bib`), the Rust `cluster_meat` kernel, and `sp.iv(absorb=...)`.
+  §6 gains an `\subsection{Accelerator benchmarks (v1.14 bootstrap)}`
+  with a 4-variant × 4-hardware-tier table (CPU sequential / CPU JAX
+  vmap / GPU T4 / GPU A100 80GB) whose cells are placeholders pending
+  a GPU benchmark run; `\usepackage{multirow}` added to `main.tex`.
+  The benchmark harness is shipped as
+  `tests/perf/05_feols_jax_bootstrap_bench.py` (n=10⁶, B=2000, 5000
+  clusters; modes `cpu_seq` / `cpu_jax` / `gpu`); a one-time GPU run
+  populates the table from the emitted JSON.
+- JOSS bullet 5 in `paper.md` simplified from a four-paragraph
+  exposition to a single tight paragraph that cross-references the
+  JSS companion paper for full architecture detail.
+- Note on version numbering: the `pyproject.toml` version moved from
+  1.14.0 (GPU sprint cut, commit `a87d788`) to 1.15.0 (RDD polish
+  cut) within a single day. Both `[1.14.0]` and `[1.15.0]` entries
+  below remain historically correct for the work each release
+  contained; no retroactive renaming is needed.
+
 ### Added — ML+causal polish
 
 A cross-cutting polish wave on the machine-learning + causal-inference
@@ -93,7 +118,7 @@ module family (DML / meta-learners / causal forests / causal discovery
 
 ### Headline
 
-Two pushes in this cycle. First, an IV-module polish to the post-2022
+Four pushes in this cycle. First, an IV-module polish to the post-2022
 reporting standard (the `sp.iv.iv_diag` bundle, see below). Second, a
 synthetic-control polish pass: every estimator the package already
 ships now has a publication-grade table-export pipeline, the trajectory
@@ -105,7 +130,159 @@ is canonicalised end-to-end so `sp.synth_report(method='sdid', ...)`
 produces a full Markdown / text / LaTeX report rather than a row of
 N/As. Seven 2022–2025 SCM citations were added to `paper.bib`,
 each verified independently via Crossref / arXiv (refs verified
-via `crossref` + `arxiv`).
+via `crossref` + `arxiv`). Third, a decomposition-module polish — see
+the dedicated section below. Fourth, a **ML+causal polish wave (v1.15)**
+covering DML / meta-learners / causal forests / causal discovery /
+policy learning / mediation — see the dedicated section below.
+
+### Added — ML+causal polish (v1.15)
+
+- **DML-OVB sensitivity analysis** (`sp.dml_sensitivity`,
+  `DMLSensitivityResult`) implementing the Chernozhukov–Cinelli–
+  Newey–Sharma–Syrgkanis (2022) "Long Story Short" framework
+  (NBER WP 30302; arXiv:2112.13398). Returns the robustness value
+  RV_q (strength of confounder needed to shrink the estimate to
+  zero), the significance-loss value RV_{q,α}, scenario bias
+  bounds for user-specified (cf_y, cf_d), benchmark-covariate
+  comparisons, and a `plot()` rendering bias contours over the
+  (cf_d, cf_y) grid à la R `sensemakr`. Refs verified via NBER + arXiv.
+- **DML diagnostics bundle** (`sp.dml_diagnostics`, `DMLDiagnostics`)
+  bundles overlap (propensity histogram for IRM; |D-residual|
+  distribution for PLR), score density (with N(0,σ̂²) overlay and
+  Q-Q plot), residual-balance check (corr(X_k, Ỹ) and corr(X_k, D̃)
+  for each covariate), and an orthogonality-score test in a single
+  2×2 publication-style panel matching DoubleML's defaults
+  (Bach–Kurz–Chernozhukov–Spindler–Klaassen 2024, *JSS* 108(3),
+  DOI 10.18637/jss.v108.i03).
+- **Backbone-agnostic CATE evaluation** (`sp.cate_eval`,
+  `CATEEvalResult`) computing Yadlowsky–Fleming–Shah–Brunskill–
+  Wager (2025) RATE / AUTOC / Qini with closed-form influence-
+  function SEs for *any* CATE array (meta-learner, BCF, conformal-
+  CATE, neural-CATE), so the metric is decoupled from the forest
+  backbone. JASA 120(549), DOI 10.1080/01621459.2024.2393466
+  (arXiv:2111.07966). Verified via Crossref + arXiv.
+- ⚠️ **Correctness fix** — `forest.CausalForest.best_linear_projection`
+  is rewritten to use the Semenova–Chernozhukov (2021) AIPW
+  pseudo-outcome Γ_i with HC1 standard errors. The previous
+  implementation regressed the plug-in CATE estimate on X with
+  naïve OLS SEs, which was anti-conservative in finite samples.
+  *Econometrics Journal* 24(2): 264–289, DOI 10.1093/ectj/utaa027.
+  Users who relied on the prior BLP SEs should re-fit and report
+  the new HC1 numbers.
+- ⚠️ **Correctness fix** — `mediation.mediate` no longer silently
+  substitutes the point estimate for failed bootstrap replicates
+  (which artificially shrunk SEs). Each failure now triggers up to
+  five retry draws; remaining failures are dropped, and a
+  `RuntimeWarning` fires if more than 10% of replicates fail. The
+  result's `model_info` exposes `n_boot_requested`,
+  `n_boot_successful`, `n_boot_failed`, and `boot_failure_rate`
+  for audit. SEs estimated under heavy bootstrap failure on prior
+  versions should be regenerated.
+- **OPE namespace deduplication** — `sp.policy_learning.OPEResult`
+  is now an alias for the canonical `sp.ope.estimators.OPEResult`,
+  so `isinstance(sp.direct_method(X, A, R, π), sp.OPEResult)` is
+  True regardless of which entry point was used. The legacy
+  `estimator` / `n_obs` attributes survive as properties on the
+  unified class.
+- **Causal-discovery graph visualization** — every result class
+  (`LiNGAMResult`, `GESResult`, `FCIResult`, `ICPResult`,
+  `PCMCIResult`, `LPCMCIResult`, `DYNOTEARSResult`) and the dict-
+  shaped returns from `sp.notears` and `sp.pc_algorithm` (now
+  promoted to a `DAGDict` thin subclass) expose a unified
+  `.to_networkx()` / `.to_dot()` / `.plot()` / `.edge_list()` API.
+  Module-level helpers `sp.causal_discovery.{to_networkx, to_dot,
+  plot_dag, edge_list, shd}` work standalone on any adjacency
+  matrix; `shd()` follows the Tsamardinos–Brown–Aliferis (2006)
+  Structural Hamming Distance convention.
+- **PolicyTreeResult promotion** — `sp.policy_tree` now returns a
+  `PolicyTreeResult` (subclass of `dict` for full back-compat) with
+  influence-function SE on the policy value and a 95% CI from the
+  AIPW scores, plus a Graphviz-style `plot_tree()`, `summary()`,
+  `to_latex()`, `to_excel()`, and `cite()` (Athey & Wager 2021,
+  *Econometrica* 89(1)).
+- **Mediation sensitivity plot upgrade** — `MediateSensitivityResult.plot()`
+  now produces a publication-style ACME(ρ) curve with coloured fill
+  for the {ACME>0} / {ACME<0} regions, annotated baseline, and
+  explicit ρ-at-zero (the robustness threshold).
+- **`CausalResult.to_word`** added alongside the existing `.to_latex`
+  / `.to_excel`. Renders a publication-style three-block Word
+  document (estimates / detail / notes) using the AER booktab styling
+  helpers in `output/_aer_style.py`. Coverage: every estimator that
+  already returns `CausalResult` (DML, TMLE, BCF, mediate,
+  conformal_cate, proximal.p2sls, matrix_completion, metalearners,
+  hal_tmle, did, rd, synth) now has uniform LaTeX / Excel / Word
+  export.
+- **DTR + QTE test coverage** — `tests/test_dtr.py` (10 new tests)
+  and `tests/test_qte.py` (7 new tests) close two zero-coverage
+  modules flagged in the v1.13 audit. Tests verify (i) Q-learning
+  exactly recovers the optimal terminal-stage rule under a linear
+  blip, (ii) A-learning's terminal contrast aligns with the truth,
+  (iii) `qte` and `qdid` recover the constant-shift / parallel-
+  trends benchmarks of Firpo (2007) and Athey–Imbens (2006)
+  respectively to within 0.30 absolute error at every quantile,
+  and (iv) `distributional_te`'s CDFs are monotone with stochastic
+  dominance in the right direction.
+- **`tests/test_ml_causal_polish.py`** (22 new tests) covers all of
+  the above end-to-end (BLP DR-score recovery, mediation bootstrap
+  diagnostics, OPE isinstance, DAG viz, `PolicyTreeResult` contract,
+  DML sensitivity / diagnostics, `cate_eval` direction, `to_word`
+  integration).
+- **Citation expansion** — 4 new bib entries added to `paper.bib`,
+  each verified independently via NBER / arXiv / journal site:
+  `chernozhukov2022long`, `semenova2021debiased`,
+  `yadlowsky2025evaluating`, `bach2024doubleml`.
+
+### Added — decomposition module polish (v1.15)
+
+- **Yu–Elwert (2025) nonparametric causal decomposition**
+  (`sp.yu_elwert_decompose`, dispatcher aliases `yu_elwert` / `cdgd`)
+  — splits an observed group disparity into baseline, prevalence,
+  effect, and selection mechanisms. Two estimators: a plug-in version
+  that returns *exactly* zero residual by algebraic identity, and a
+  doubly-robust `method="efficient"` augmented variant. Cluster-aware
+  bootstrap inference, plot helper (`yu_elwert_mechanisms_plot`), and
+  a per-component CI table. Aligned conceptually with the R `cdgd`
+  package. Reference verified via Crossref:
+  doi:10.1214/24-AOAS1990 (*Annals of Applied Statistics*, 19(1)
+  821–845).
+- **Unified `DecompResultMixin`** — every result class in
+  `sp.decomposition` (Oaxaca, Gelbach, RIF, FFL, DFL, Machado–Mata,
+  Melly, CFM, Fairlie, Bauer–Sinning, Yun, Kitagawa, Das Gupta,
+  Subgroup / Source / Shapley inequality, GapClosing, Mediation,
+  Disparity, Yu–Elwert) now exposes the same surface:
+  `confint(alpha)`, `cite()` / `cite("bibtex_keys")`, `to_dict()`,
+  `to_json()`, `to_excel(path)` (multi-sheet workbook), and
+  `to_word(path)` (python-docx report) in addition to the existing
+  `summary()` / `plot()` / `to_latex()`.
+- **Plot polish** — `sp.decomposition.plots` now ships a unified
+  Material-style palette (`DECOMP_PALETTE`) and a despined minimal
+  grid via `apply_decomp_style`. New helpers: `forest_plot` (with
+  significance shading), `mediation_forest`, and
+  `yu_elwert_mechanisms_plot`. Existing plots (`detailed_waterfall`,
+  `quantile_process_plot`, `dfl_plot`, `ffl_waterfall`,
+  `gap_closing_plot`, `inequality_subgroup_plot`,
+  `counterfactual_cdf_plot`, `rif_heatmap`) gain optional
+  95% CI whiskers / ribbons whenever the result carries SEs.
+- **Wild bootstrap** in `decomposition._common.wild_bootstrap_stat`
+  with Rademacher and Mammen multipliers and cluster-aware multiplier
+  sharing (Cameron–Gelbach–Miller 2008 style). `analytical_ci(point,
+  se, alpha)` helper for two-sided normal intervals.
+- **Citation expansion** — 15 new bib entries added to `paper.bib`,
+  each verified via Crossref: `blinder1973wage`, `oaxaca1973male`,
+  `neumark1988employers`, `cotton1988estimation`, `reimers1983labor`,
+  `jann2008blinder`, `gelbach2016covariates`, `kline2011oaxaca`,
+  `shorrocks1980class`, `cowell2007income`, `riosavila2020rif`,
+  `kroger2021kitagawa`, `oaxaca2025meets`, `yu2025nonparametric`,
+  `park2024choosing` (refs verified via Crossref).
+- **Docs** — new family guide
+  `docs/guides/decomposition_family.md`, wired into MkDocs nav under
+  the v1.15 entry. Decomposition section in `paper.md` rewritten with
+  inline citation keys.
+- **Tests** — `tests/test_decomposition_polish.py` (14 new tests)
+  covering the Yu–Elwert algebraic identity, bootstrap inference,
+  dispatcher routing, plot smoke test, the unified mixin (cite /
+  to_dict / to_excel / confint), and the wild bootstrap helper
+  (Rademacher / Mammen / clustered).
 
 ### Added — synthetic control polish
 
