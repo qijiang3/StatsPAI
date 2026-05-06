@@ -42,7 +42,11 @@ except ImportError:  # pragma: no cover
 # CUDA/TPU; CPU JAX path is correctness-grade but typically slower than
 # the Rust/numpy default. Lazy-load — module import stays jax-free.
 try:
-    from .jax_feols import feols_jax  # noqa: F401
+    from .jax_feols import (  # noqa: F401
+        feols_jax,
+        feols_jax_bootstrap,
+        FeolsBootstrapResult,
+    )
     _HAS_JAX_FEOLS = True
 except ImportError:  # pragma: no cover
     _HAS_JAX_FEOLS = False
@@ -52,6 +56,14 @@ except ImportError:  # pragma: no cover
             "jax is not installed; pip install jax jaxlib to enable "
             "feols_jax. Plain sp.fast.feols runs without JAX."
         )
+
+    def feols_jax_bootstrap(*_args, **_kwargs):  # type: ignore[no-redef]
+        raise ImportError(
+            "jax is not installed; pip install jax jaxlib to enable "
+            "feols_jax_bootstrap."
+        )
+
+    FeolsBootstrapResult = None  # type: ignore[assignment]
 
 # Torch device diagnostic — mirrors jax_device_info for the optional
 # neural backends (deepiv / neural_causal / cevae). See
@@ -97,6 +109,8 @@ __all__ = [
     'jax_device_info',
     'torch_device_info',
     'feols_jax',
+    'feols_jax_bootstrap',
+    'FeolsBootstrapResult',
     'etable',
     'demean_polars',
     'fepois_polars',
