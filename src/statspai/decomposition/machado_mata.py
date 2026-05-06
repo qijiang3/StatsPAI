@@ -18,13 +18,14 @@ Albrecht, Björklund, Vroman (2003). "Is There a Glass Ceiling in Sweden?"
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple, Union
 import warnings
 
 import numpy as np
 import pandas as pd
 from scipy.optimize import linprog
 
+from ._results import DecompResultMixin
 from ._common import (
     add_constant,
     bootstrap_ci,
@@ -92,8 +93,14 @@ def _qreg_grid(
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class MachadoMataResult:
+class MachadoMataResult(DecompResultMixin):
     """Container for Machado-Mata decomposition."""
+
+    method_name: ClassVar[str] = "Machado-Mata Quantile Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "machado2005counterfactual",
+    )
+
     quantile_grid: pd.DataFrame   # τ, q_a, q_b, q_cf, gap, composition, structure
     overall: Dict[str, float]     # aggregated across grid
     reference: int

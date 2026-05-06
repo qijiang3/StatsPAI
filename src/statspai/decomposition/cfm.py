@@ -19,12 +19,13 @@ Discrete Outcomes." *JASA*, 115(529), 123-137. [@chernozhukov2020generic]
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, ClassVar, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
+from ._results import DecompResultMixin
 from ._common import (
     add_constant,
     bootstrap_ci,
@@ -118,8 +119,16 @@ def _invert_cdf(thr: np.ndarray, cdf: np.ndarray, taus: np.ndarray) -> np.ndarra
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class CFMResult:
+class CFMResult(DecompResultMixin):
     """Chernozhukov-Fernández-Val-Melly counterfactual distribution result."""
+
+    method_name: ClassVar[str] = (
+        "Chernozhukov-Fernandez-Val-Melly (2013) Decomposition"
+    )
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "chernozhukov2013inference",
+    )
+
     quantile_grid: pd.DataFrame
     cdf_grid: pd.DataFrame
     overall: Dict[str, float]

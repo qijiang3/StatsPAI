@@ -5,8 +5,8 @@ World-class decomposition toolkit covering mean, distributional,
 inequality, demographic, and causal decomposition methods under a
 unified API: ``sp.decompose(method=...)``.
 
-Methods (18 in total)
----------------------
+Methods (19 in total — Yu-Elwert added in v1.15)
+-----------------------------------------------
 
 **Mean decomposition**
 - ``oaxaca`` — Blinder-Oaxaca (Blinder 1973; Oaxaca 1973) with 5
@@ -39,15 +39,28 @@ Methods (18 in total)
 - ``das_gupta`` — Das Gupta (1993) multi-factor decomposition
 
 **Causal decomposition**
-- ``gap_closing`` — Lundberg (2021) gap-closing estimator
+- ``gap_closing`` — Lundberg (2022) gap-closing estimator
   (regression / IPW / AIPW)
 - ``mediation`` — VanderWeele (2014) natural direct/indirect effects
 - ``disparity`` / ``causal_jvw`` — Jackson-VanderWeele (2018) causal
   disparity decomposition
+- ``yu_elwert`` — Yu & Elwert (2025) nonparametric causal decomposition
+  of group disparities into baseline, prevalence, effect, and selection
+  components (efficient-influence-function-based; ML-friendly)
 
 Unified Entry
 -------------
 ``sp.decompose(method=..., **kwargs)`` dispatches to any of the above.
+
+Polish (v1.15)
+--------------
+Every result class now inherits ``DecompResultMixin``, exposing a
+common ``.confint()``, ``.cite()``, ``.to_dict()``, ``.to_json()``,
+``.to_excel()``, and ``.to_word()`` surface in addition to each
+method's bespoke ``.summary()`` / ``.plot()`` / ``.to_latex()``.
+Plots share a common palette and minimalist style via
+:mod:`statspai.decomposition.plots` (forest plots, mediation forest,
+Yu-Elwert mechanism plot, RIF heatmap, …).
 """
 # Existing (backward-compatible) imports
 from .oaxaca import oaxaca, gelbach, OaxacaResult, GelbachResult
@@ -79,6 +92,7 @@ from .causal import (
     gap_closing, mediation_decompose, disparity_decompose,
     GapClosingResult, MediationDecompResult, DisparityDecompResult,
 )
+from .yu_elwert import yu_elwert_decompose, YuElwertResult
 
 # Unified dispatcher
 from .dispatcher import decompose, available_methods
@@ -119,6 +133,7 @@ __all__ = [
     # Causal
     'gap_closing', 'mediation_decompose', 'disparity_decompose',
     'GapClosingResult', 'MediationDecompResult', 'DisparityDecompResult',
+    'yu_elwert_decompose', 'YuElwertResult',
     # Unified dispatcher
     'decompose', 'available_methods',
     # Datasets

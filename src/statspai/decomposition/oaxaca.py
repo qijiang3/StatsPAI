@@ -21,6 +21,7 @@ from scipy import stats
 from ._common import add_constant as _add_constant
 from ._common import sig_stars as _significance_stars
 from ._common import wls as _ols_wls
+from ._results import DecompResultMixin
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -42,7 +43,7 @@ def _ols(
 # OaxacaResult
 # ════════════════════════════════════════════════════════════════════════
 
-class OaxacaResult:
+class OaxacaResult(DecompResultMixin):
     """
     Result container for Oaxaca-Blinder decomposition.
 
@@ -60,6 +61,13 @@ class OaxacaResult:
     reference : str or int
         Reference weight specification used.
     """
+
+    method_name = "Oaxaca-Blinder Decomposition"
+    bib_keys = (
+        "blinder1973wage", "oaxaca1973male", "neumark1988employers",
+        "cotton1988estimation", "reimers1983labor", "jann2008blinder",
+        "oaxaca2025meets",
+    )
 
     def __init__(
         self,
@@ -165,39 +173,44 @@ class OaxacaResult:
 
     # ── Plotting ─────────────────────────────────────────────────────
 
-    def plot(self, figsize=(8, 5), color_pos="#2196F3", color_neg="#FF5722"):
-        """
-        Horizontal bar chart of variable-level explained contributions.
+    def plot(self, figsize=(8, 5), kind: str = "waterfall", **kwargs):
+        """Bar / forest chart of per-variable explained contributions.
 
-        Returns
-        -------
-        (fig, ax)
+        Parameters
+        ----------
+        kind : {"waterfall", "forest"}
+            ``"waterfall"`` (default) is a sign-coloured bar chart with
+            optional 95% CI whiskers; ``"forest"`` shows point estimates
+            with CI lines and greys out non-significant rows.
         """
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
-            raise ImportError(
-                "matplotlib is required for plotting. "
-                "Install it with: pip install matplotlib"
-            )
-
-        df = self.detailed.copy()
-        if df.empty:
+        if self.detailed.empty:
             raise ValueError(
                 "No detailed decomposition available. "
                 "Re-run oaxaca() with detail=True."
             )
-
-        df = df.sort_values("contribution")
-        colors = [color_pos if v >= 0 else color_neg for v in df["contribution"]]
-
-        fig, ax = plt.subplots(figsize=figsize)
-        ax.barh(df["variable"], df["contribution"], color=colors, edgecolor="white")
-        ax.set_xlabel("Contribution to explained gap")
-        ax.set_title("Oaxaca-Blinder: Detailed Decomposition")
-        ax.axvline(0, color="black", linewidth=0.8)
-        fig.tight_layout()
-        return fig, ax
+        # Backwards-compat: in v1.14 OaxacaResult.plot accepted color_pos
+        # / color_neg overrides. v1.15 unified the palette via
+        # ``DECOMP_PALETTE``; we accept the legacy kwargs with a
+        # DeprecationWarning rather than silently raising TypeError.
+        legacy_keys = {"color_pos", "color_neg"}
+        legacy = {k: kwargs.pop(k) for k in list(kwargs) if k in legacy_keys}
+        if legacy:
+            warnings.warn(
+                "OaxacaResult.plot() no longer accepts color_pos / "
+                "color_neg overrides — the v1.15 polish unified the "
+                "palette via statspai.decomposition.plots.DECOMP_PALETTE "
+                "(monkey-patch that mapping if you need a different "
+                "scheme). Ignoring: " + ", ".join(legacy),
+                DeprecationWarning, stacklevel=2,
+            )
+        from .plots import detailed_waterfall, forest_plot
+        plot_fn = forest_plot if kind == "forest" else detailed_waterfall
+        return plot_fn(
+            self.detailed, value_col="contribution", label_col="variable",
+            se_col="se", figsize=figsize,
+            title="Oaxaca-Blinder: Detailed Decomposition",
+            **kwargs,
+        )
 
     # ── LaTeX ────────────────────────────────────────────────────────
 
@@ -296,7 +309,7 @@ class OaxacaResult:
 # GelbachResult
 # ════════════════════════════════════════════════════════════════════════
 
-class GelbachResult:
+class GelbachResult(DecompResultMixin):
     """
     Result container for Gelbach (2016) decomposition.
 
@@ -315,6 +328,9 @@ class GelbachResult:
     base_var : str
         Name of the variable of interest.
     """
+
+    method_name = "Gelbach Sequential Decomposition"
+    bib_keys = ("gelbach2016covariates",)
 
     def __init__(
         self,

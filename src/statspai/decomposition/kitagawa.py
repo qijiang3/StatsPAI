@@ -21,10 +21,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import permutations
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
+
+from ._results import DecompResultMixin
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -32,7 +34,12 @@ import pandas as pd
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class KitagawaResult:
+class KitagawaResult(DecompResultMixin):
+    method_name: ClassVar[str] = "Kitagawa Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "kitagawa1955components", "kroger2021kitagawa", "oaxaca2025meets",
+    )
+
     rate_a: float
     rate_b: float
     gap: float
@@ -213,7 +220,10 @@ def kitagawa_decompose(
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class DasGuptaResult:
+class DasGuptaResult(DecompResultMixin):
+    method_name: ClassVar[str] = "Das Gupta Multi-Factor Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = ("dasgupta1993standardization",)
+
     rate_a: float
     rate_b: float
     gap: float

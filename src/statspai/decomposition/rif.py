@@ -21,13 +21,14 @@ Supported statistics: ``quantile(τ)``, ``variance``, ``gini``.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import ClassVar, Literal, Tuple
 
 import numpy as np
 import pandas as pd
 from scipy import stats as sp_stats
 
 from ._common import influence_function as _influence_function
+from ._results import DecompResultMixin
 
 
 StatisticKind = Literal[
@@ -80,7 +81,12 @@ def rif_values(y: np.ndarray, statistic: StatisticKind = "quantile",
 # --------------------------------------------------------------------- #
 
 @dataclass
-class RIFResult:
+class RIFResult(DecompResultMixin):
+    method_name: ClassVar[str] = "RIF Regression"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "firpo2009unconditional", "riosavila2020rif",
+    )
+
     params: pd.Series
     std_errors: pd.Series
     statistic: str
@@ -152,7 +158,13 @@ def rifreg(
 # --------------------------------------------------------------------- #
 
 @dataclass
-class RIFDecompositionResult:
+class RIFDecompositionResult(DecompResultMixin):
+    method_name: ClassVar[str] = "RIF Oaxaca-Blinder Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "firpo2009unconditional", "firpo2018decomposing",
+        "riosavila2020rif",
+    )
+
     total_diff: float
     explained: float
     unexplained: float

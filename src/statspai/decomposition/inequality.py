@@ -32,11 +32,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from itertools import combinations
 from math import factorial
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
+from ._results import DecompResultMixin
 from ._common import (
     add_constant,
     bootstrap_ci,
@@ -159,7 +160,10 @@ def inequality_index(
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class SubgroupDecompResult:
+class SubgroupDecompResult(DecompResultMixin):
+    method_name: ClassVar[str] = "Inequality Subgroup Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = ("shorrocks1980class",)
+
     index: str
     total: float
     between: float
@@ -392,7 +396,12 @@ def _gini_subgroup(
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class SourceDecompResult:
+class SourceDecompResult(DecompResultMixin):
+    method_name: ClassVar[str] = (
+        "Gini Source Decomposition (Lerman-Yitzhaki)"
+    )
+    bib_keys: ClassVar[Tuple[str, ...]] = ("lerman1985income",)
+
     total_gini: float
     sources: pd.DataFrame   # source, share, R, G, contribution
 
@@ -510,7 +519,12 @@ def source_decompose(
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class ShapleyInequalityResult:
+class ShapleyInequalityResult(DecompResultMixin):
+    method_name: ClassVar[str] = (
+        "Shapley/Shorrocks Inequality Decomposition"
+    )
+    bib_keys: ClassVar[Tuple[str, ...]] = ("shorrocks2013decomposition",)
+
     index: str
     total: float
     shapley: pd.DataFrame     # variable, contribution, pct

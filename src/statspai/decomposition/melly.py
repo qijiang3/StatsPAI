@@ -23,18 +23,23 @@ Quantile Regression." Swiss Institute for International Economics.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 
 from ._common import add_constant, prepare_frame
+from ._results import DecompResultMixin
 from .machado_mata import _qreg_grid
 
 
 @dataclass
-class MellyResult:
+class MellyResult(DecompResultMixin):
     """Container for Melly quantile decomposition."""
+
+    method_name: ClassVar[str] = "Melly (2005) Quantile Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = ("melly2005decomposition",)
+
     quantile_grid: pd.DataFrame
     overall: Dict[str, float]
     reference: int

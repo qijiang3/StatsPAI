@@ -54,6 +54,13 @@ _REGISTRY: Dict[str, tuple] = {
     "jackson_vanderweele": ("statspai.decomposition.causal",
                             "disparity_decompose"),
     "disparity": ("statspai.decomposition.causal", "disparity_decompose"),
+
+    # Yu-Elwert (2025) — nonparametric causal decomposition of group
+    # disparities into baseline / prevalence / effect / selection.
+    "yu_elwert": ("statspai.decomposition.yu_elwert", "yu_elwert_decompose"),
+    "yu_elwert_decompose": ("statspai.decomposition.yu_elwert",
+                            "yu_elwert_decompose"),
+    "cdgd": ("statspai.decomposition.yu_elwert", "yu_elwert_decompose"),
 }
 
 

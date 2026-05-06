@@ -28,12 +28,13 @@ Distributions Using Recentered Influence Function Regressions."
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
+from ._results import DecompResultMixin
 from ._common import (
     add_constant,
     bootstrap_ci,
@@ -55,8 +56,14 @@ from .rif import rif_values
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class FFLResult:
+class FFLResult(DecompResultMixin):
     """Container for Firpo-Fortin-Lemieux two-step decomposition."""
+    method_name: ClassVar[str] = "Firpo-Fortin-Lemieux Two-Step Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "firpo2018decomposing", "firpo2009unconditional",
+        "fortin2011decomposition",
+    )
+
     gap: float
     composition: float
     structure: float

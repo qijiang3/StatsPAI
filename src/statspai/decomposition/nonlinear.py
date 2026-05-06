@@ -31,11 +31,12 @@ Detailed Wage Decompositions." *Economic Inquiry*, 43(4), 766-772. [@yun2005simp
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 
+from ._results import DecompResultMixin
 from ._common import (
     add_constant,
     bootstrap_ci,
@@ -97,7 +98,12 @@ def _probit_predict(beta: np.ndarray, X: np.ndarray) -> np.ndarray:
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class NonlinearDecompResult:
+class NonlinearDecompResult(DecompResultMixin):
+    method_name: ClassVar[str] = "Nonlinear Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "fairlie2005extension", "bauer2008extension", "yun2004decomposing",
+    )
+
     method: str
     model: str
     gap: float

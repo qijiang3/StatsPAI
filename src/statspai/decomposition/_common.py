@@ -251,6 +251,90 @@ def bootstrap_stat(
     return arr
 
 
+def wild_bootstrap_stat(
+    stat_fn: Callable[[np.ndarray], Union[float, np.ndarray]],
+    resid: np.ndarray,
+    fitted: np.ndarray,
+    n_boot: int = 499,
+    rng: Optional[np.random.Generator] = None,
+    weights: str = "rademacher",
+    clusters: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """
+    Wild (multiplier) bootstrap for residual-based decomposition statistics.
+
+    Generates pseudo-outcomes ``y* = fitted + v_i * resid_i`` with i.i.d.
+    multipliers ``v_i ∈ {-1, 1}`` (Rademacher) or two-point Mammen weights,
+    keeping ``X`` fixed. ``stat_fn`` is called with the bootstrap pseudo-y;
+    it must accept a 1-d numpy array of length ``n``.
+
+    For cluster-robust wild bootstrap (Cameron-Gelbach-Miller 2008), pass a
+    ``clusters`` vector — multipliers then share within cluster.
+
+    Parameters
+    ----------
+    stat_fn : callable(y_star) -> scalar or 1-d array
+    resid : (n,) baseline residuals
+    fitted : (n,) baseline fitted values
+    n_boot : int
+    rng : np.random.Generator or None
+    weights : {"rademacher", "mammen"}
+    clusters : (n,) cluster id or None
+
+    Returns
+    -------
+    (n_boot, d) bootstrap replications.
+    """
+    if rng is None:
+        rng = np.random.default_rng(12345)
+    resid = np.asarray(resid, dtype=float)
+    fitted = np.asarray(fitted, dtype=float)
+    n = len(resid)
+    out: list[Union[float, np.ndarray]] = []
+    n_failed = 0
+
+    if clusters is not None:
+        c_arr = np.asarray(clusters)
+        c_unique, c_idx = np.unique(c_arr, return_inverse=True)
+        n_g = len(c_unique)
+    else:
+        c_idx = None
+        n_g = n
+
+    for _ in range(n_boot):
+        if weights == "rademacher":
+            v_g = rng.choice([-1.0, 1.0], size=n_g)
+        elif weights == "mammen":
+            # Mammen (1993) two-point distribution
+            phi = (1.0 + np.sqrt(5.0)) / 2.0
+            p = phi / np.sqrt(5.0)
+            v_g = np.where(
+                rng.random(n_g) < p, -(phi - 1.0), phi
+            )
+        else:
+            raise ValueError(f"unknown weights {weights!r}")
+        v = v_g if c_idx is None else v_g[c_idx]
+        y_star = fitted + v * resid
+        try:
+            out.append(stat_fn(y_star))
+        except Exception:  # noqa: BLE001
+            n_failed += 1
+            continue
+    if not out:
+        raise RuntimeError("All wild-bootstrap replications failed.")
+    if n_failed > 0.05 * n_boot:
+        warnings.warn(
+            f"{n_failed}/{n_boot} wild-bootstrap replications failed "
+            f"({100 * n_failed / n_boot:.1f}%). SE estimates use the "
+            "successful subset.",
+            RuntimeWarning, stacklevel=2,
+        )
+    arr = np.asarray(out, dtype=float)
+    if arr.ndim == 1:
+        arr = arr[:, None]
+    return arr
+
+
 def bootstrap_ci(
     boot: np.ndarray,
     point: np.ndarray,
@@ -423,6 +507,16 @@ def statistic_value(
             return float("nan")
         return float(1.0 - np.exp(np.average(np.log(yp), weights=w)) / mu)
     raise ValueError(f"unknown statistic {stat!r}")
+
+
+def analytical_ci(
+    point: Union[float, np.ndarray],
+    se: Union[float, np.ndarray],
+    alpha: float = 0.05,
+) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+    """Two-sided normal confidence interval ``point ± z * se``."""
+    z = float(stats.norm.ppf(1 - alpha / 2))
+    return point - z * se, point + z * se
 
 
 def sig_stars(pval: float) -> str:

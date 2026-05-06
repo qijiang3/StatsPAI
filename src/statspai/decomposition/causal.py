@@ -28,11 +28,12 @@ Identify Intervention Targets for Reducing Disparities." *Epidemiology*,
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
+from ._results import DecompResultMixin
 from ._common import (
     add_constant,
     bootstrap_ci,
@@ -49,7 +50,10 @@ from ._common import (
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class GapClosingResult:
+class GapClosingResult(DecompResultMixin):
+    method_name: ClassVar[str] = "Gap-Closing Estimand"
+    bib_keys: ClassVar[Tuple[str, ...]] = ("lundberg2021gap",)
+
     observed_gap: float
     counterfactual_gap: float
     closed_gap: float
@@ -270,15 +274,24 @@ def gap_closing(
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class MediationDecompResult:
-    total: float
-    nde: float    # natural direct effect
-    nie: float    # natural indirect effect
-    cde: float    # controlled direct effect
-    propn_mediated: float
+class MediationDecompResult(DecompResultMixin):
+    method_name: ClassVar[str] = "Causal Mediation Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "vanderweele2014unification",
+    )
+
+    total: float = 0.0
+    nde: float = 0.0    # natural direct effect
+    nie: float = 0.0    # natural indirect effect
+    cde: float = 0.0    # controlled direct effect
+    propn_mediated: float = 0.0
     se: Optional[Dict[str, float]] = None
     ci: Optional[Dict[str, Tuple[float, float]]] = None
     method: str = "linear_nested"
+
+    @property
+    def total_effect(self) -> float:  # alias for plots.mediation_forest
+        return self.total
 
     def summary(self) -> str:
         lines = [
@@ -453,7 +466,14 @@ def mediation_decompose(
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class DisparityDecompResult:
+class DisparityDecompResult(DecompResultMixin):
+    method_name: ClassVar[str] = (
+        "Jackson-VanderWeele Causal Disparity Decomposition"
+    )
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "jackson2018decomposition", "park2024choosing",
+    )
+
     total_disparity: float
     initial_disparity: float
     mediator_attributable: float

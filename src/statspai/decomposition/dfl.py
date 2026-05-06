@@ -19,11 +19,12 @@ Economics." In *Handbook of Labor Economics*, Vol. 4A, Ch. 1. [@fortin2011decomp
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
+from ._results import DecompResultMixin
 from ._common import (
     add_constant,
     bootstrap_ci,
@@ -45,8 +46,13 @@ from ._common import (
 # ════════════════════════════════════════════════════════════════════════
 
 @dataclass
-class DFLResult:
+class DFLResult(DecompResultMixin):
     """Container for DFL reweighting decomposition results."""
+    method_name: ClassVar[str] = "DFL Reweighting Decomposition"
+    bib_keys: ClassVar[Tuple[str, ...]] = (
+        "dinardo1996labor", "fortin2011decomposition",
+    )
+
     gap: float
     composition: float
     structure: float
