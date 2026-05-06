@@ -31,6 +31,7 @@ def test_jax_device_info_string():
 
 
 def test_jax_demean_matches_rust():
+    pytest.importorskip("statspai_hdfe")
     df = _panel(seed=1)
     y = df["y"].to_numpy()
     fe = df[["i", "t"]].to_numpy()

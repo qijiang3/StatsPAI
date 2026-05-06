@@ -45,7 +45,12 @@ def test_blp_detects_heterogeneity(fitted_cf):
 
 def test_blp_returns_full_table(fitted_cf):
     blp = fitted_cf.best_linear_projection()
-    assert set(blp.columns) == {"coef", "se", "t", "p"}
+    # v1.15 ML+causal polish: BLP rewritten to AIPW pseudo-outcome with
+    # HC1 SEs and now reports a 95% CI (ci_lower / ci_upper) alongside
+    # the legacy coef / se / t / p columns.
+    assert set(blp.columns) == {
+        "coef", "se", "t", "p", "ci_lower", "ci_upper",
+    }
     assert "Intercept" in blp.index
     assert "X0" in blp.index
 
