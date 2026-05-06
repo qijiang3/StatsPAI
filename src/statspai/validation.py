@@ -75,6 +75,8 @@ class ValidationReport:
             f"| Hand-written specs | {reg.get('handwritten_specs', 0)} |",
             f"| Auto specs | {reg.get('auto_specs', 0)} |",
             f"| Agent cards | {reg.get('agent_cards', 0)} |",
+            f"| Certified functions | {reg.get('per_validation_status', {}).get('certified', 0)} |",
+            f"| Validated functions | {reg.get('per_validation_status', {}).get('validated', 0)} |",
             "",
             "## Validation Evidence",
             "",
@@ -103,6 +105,10 @@ class ValidationReport:
             (
                 "| Agent benchmark | "
                 f"{ev.get('agent_bench', {}).get('trials', 0)} trials |"
+            ),
+            (
+                "| Open parity/convention gap rows | "
+                f"{ev.get('parity_gaps', {}).get('rows', 0)} rows |"
             ),
         ]
         if self.warnings:
@@ -207,6 +213,9 @@ def validation_report(
 
     registry = _registry_snapshot(sp)
     evidence = _validation_evidence(root, warnings)
+    evidence["parity_gaps"] = {
+        "rows": len(parity_gap_report(root, fmt="records")) if root is not None else 0,
+    }
     artifacts = _artifact_snapshot(root) if include_files else {}
     report = ValidationReport(
         generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -327,6 +336,57 @@ def coverage_matrix(
 
     if fmt == "records":
         return rows
+    df = pd.DataFrame(rows)
+    if fmt == "dataframe":
+        return df
+    if fmt == "markdown":
+        return df.to_markdown(index=False)
+    raise ValueError("fmt must be one of 'dataframe', 'records', or 'markdown'")
+
+
+def parity_gap_report(
+    repo_root: Optional[Union[str, Path]] = None,
+    *,
+    fmt: str = "dataframe",
+) -> Any:
+    """Return the open parity/convention gaps from Track A artifacts.
+
+    The report is metadata-only: it parses already-generated
+    ``tests/r_parity/results/parity_table_3way.md`` plus the R/Stata
+    coverage matrix. It does not run Python/R/Stata.
+    """
+    root, _warnings = _coerce_repo_root(repo_root)
+    rows: List[Dict[str, Any]] = []
+    if root is not None:
+        rows.extend(_documented_gap_rows(root))
+
+        import statspai as sp
+        for parity in _parity_module_rows(root, sp):
+            if parity.get("has_stata_bridge"):
+                continue
+            module_id = parity.get("module_id", "")
+            status = (
+                "no_canonical_stata_reference"
+                if module_id in {"08_dml", "13_causal_forest", "18_augsynth", "19_gsynth"}
+                else "stata_harness_missing"
+            )
+            rows.append({
+                "module_id": module_id,
+                "method": parity.get("method", ""),
+                "kind": status,
+                "gap": status,
+                "description": (
+                    "No authoritative Stata reference was selected."
+                    if status == "no_canonical_stata_reference"
+                    else "Feasible Stata sibling has not been built yet."
+                ),
+                "priority": "medium" if status == "stata_harness_missing" else "low",
+                "next_action": _gap_next_action(status),
+            })
+
+    if fmt == "records":
+        return rows
+    import pandas as pd
     df = pd.DataFrame(rows)
     if fmt == "dataframe":
         return df
@@ -529,6 +589,7 @@ def _registry_snapshot(sp: Any) -> Dict[str, Any]:
     names = sp.list_functions()
     category_counts: Counter = Counter()
     stability_counts: Counter = Counter()
+    validation_counts: Counter = Counter()
     limitations = 0
     handwritten = 0
     auto = 0
@@ -537,6 +598,7 @@ def _registry_snapshot(sp: Any) -> Dict[str, Any]:
         spec = reg._REGISTRY[name]
         category_counts[spec.category] += 1
         stability_counts[spec.stability] += 1
+        validation_counts[getattr(spec, "validation_status", "api_stable")] += 1
         limitations += int(bool(spec.limitations))
         if getattr(spec, "_auto", False):
             auto += 1
@@ -548,6 +610,7 @@ def _registry_snapshot(sp: Any) -> Dict[str, Any]:
         "total_categories": len(category_counts),
         "per_category": dict(sorted(category_counts.items())),
         "per_stability": dict(sorted(stability_counts.items())),
+        "per_validation_status": dict(sorted(validation_counts.items())),
         "handwritten_specs": handwritten,
         "auto_specs": auto,
         "agent_cards": len(sp.agent_cards()),
@@ -658,6 +721,87 @@ def _parity_module_rows(root: Path, sp: Any) -> List[Dict[str, Any]]:
             "has_stata_bridge": module_id in stata_modules,
         })
     return rows
+
+
+def _documented_gap_rows(root: Path) -> List[Dict[str, Any]]:
+    path = root / "tests" / "r_parity" / "results" / "parity_table_3way.md"
+    if not path.exists():
+        return []
+    rows: List[Dict[str, Any]] = []
+    module_id = ""
+    method = ""
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## Module "):
+            rest = line.replace("## Module ", "", 1).strip()
+            module_id = rest.split()[0]
+            method = rest
+            continue
+        if not line.startswith("- **") or "**:" not in line:
+            continue
+        key = line.split("**", 2)[1]
+        description = line.split("**:", 1)[1].strip()
+        if not _is_gap_note(key, description):
+            continue
+        rows.append({
+            "module_id": module_id,
+            "method": method,
+            "kind": "documented_gap",
+            "gap": key,
+            "description": description,
+            "priority": _gap_priority(key, description),
+            "next_action": _gap_next_action(key, description),
+        })
+    return rows
+
+
+def _is_gap_note(key: str, description: str) -> bool:
+    text = f"{key} {description}".lower()
+    markers = (
+        "gap", "warning", "non-uniqueness", "differs",
+        "overlap", "convention", "bandwidth",
+    )
+    return any(marker in text for marker in markers)
+
+
+def _gap_priority(key: str, description: str) -> str:
+    text = f"{key} {description}".lower()
+    if any(tok in text for tok in ("bandwidth", "aggregation", "overlap")):
+        return "high"
+    if any(tok in text for tok in ("non-uniqueness", "convention", "differs")):
+        return "medium"
+    return "low"
+
+
+def _gap_next_action(key: str, description: str = "") -> str:
+    text = f"{key} {description}".lower()
+    if "bandwidth" in text:
+        return (
+            "Add an explicit parity bandwidth mode and isolate the selector "
+            "regularisation convention in a unit test."
+        )
+    if "aggregation" in text:
+        return (
+            "Expose R/Stata-compatible aggregation switches and record the "
+            "chosen convention in model_info."
+        )
+    if "scm" in text or "non-uniqueness" in text:
+        return (
+            "Use deterministic multi-start solver diagnostics and report "
+            "donor-weight equivalence classes."
+        )
+    if "overlap" in text:
+        return (
+            "Default reviewer output to overlap diagnostics and ATO/overlap "
+            "target summaries when propensities are extreme."
+        )
+    if "stata_harness_missing" in text:
+        return (
+            "Add the feasible .do sibling, write *_Stata.json, then rerun "
+            "tests/r_parity/compare.py."
+        )
+    if "no_canonical_stata_reference" in text:
+        return "Keep documented as no canonical Stata reference unless the literature changes."
+    return "Document the convention or close it with a common-specification test."
 
 
 def _extract_api_name(text: str) -> str:

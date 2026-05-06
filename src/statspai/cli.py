@@ -44,11 +44,18 @@ def _make_parser() -> argparse.ArgumentParser:
         "--stability", "-s", default=None,
         choices=["stable", "experimental", "deprecated"],
         help=(
-            "Filter by stability tier. 'stable' = parity-grade "
-            "(numerically aligned with R/Stata or analytic reference); "
-            "'experimental' = frontier-grade (implemented but not yet "
-            "parity-tested or API may shift); 'deprecated' = scheduled "
-            "for removal."
+            "Filter by API lifecycle tier. 'stable' = public signature "
+            "locked; 'experimental' = API/method may shift; "
+            "'deprecated' = scheduled for removal."
+        ),
+    )
+    p_list.add_argument(
+        "--validation", default=None,
+        dest="validation_status",
+        choices=["certified", "validated", "api_stable", "experimental", "deprecated"],
+        help=(
+            "Filter by numerical evidence tier. Use 'certified' for "
+            "cross-language or published-reference parity evidence."
         ),
     )
     p_list.add_argument("--json", action="store_true",
@@ -98,6 +105,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         names = sp.list_functions(
             category=args.category,
             stability=args.stability,
+            validation_status=args.validation_status,
         )
         if args.json:
             print(json.dumps(names))
@@ -108,6 +116,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 filt.append(f"category={args.category!r}")
             if args.stability:
                 filt.append(f"stability={args.stability!r}")
+            if args.validation_status:
+                filt.append(f"validation_status={args.validation_status!r}")
             tag = ", ".join(filt) if filt else "(no filter)"
             print(f"(no functions matching {tag})")
             return 0

@@ -1,26 +1,26 @@
-"""Cross-check ``FunctionSpec.stability == 'stable'`` claims against
-parity-test coverage in ``tests/reference_parity/`` + ``tests/external_parity/``.
+"""Reverse-audit stable API entries against parity-test evidence.
 
-A function classified as ``stability='stable'`` claims to be
-*parity-grade* — numerically aligned with R / Stata / a published
-reference, with a locked signature. By design that is the SLA an agent
-relies on when filtering ``sp.list_functions(stability='stable')`` for
-production use.
+StatsPAI now separates API lifecycle from numerical validation evidence:
+``stability='stable'`` means the public signature is locked, while
+``validation_status='certified'`` / ``'validated'`` carries the
+parity-evidence signal. This script keeps the old risk visible by
+counting stable API entries that still lack a parity-test reference in
+``tests/reference_parity/`` + ``tests/external_parity/``.
 
 The catch: until v1.13 every newly-registered function was *implicitly*
 ``stable`` (the field's default), so the catalogue's ~970 stable
 entries currently mix two populations:
 
-* **Truly parity-backed** — at least one test in
+* **Parity-test backed** — at least one test in
   ``tests/reference_parity/`` or ``tests/external_parity/`` exercises
   the function with R / Stata / paper-replication numbers.
-* **Stability-by-default** — never explicitly classified, never
-  parity-tested; the ``stable`` label is a placeholder waiting for
-  someone to decide.
+* **API-stable but unbacked** — the public API is stable, but no
+  machine-readable parity-test evidence has been found by this audit.
 
 This script makes the split visible so a maintainer can either (a) add
-a parity test to back the claim or (b) flip the entry to
-``stability='experimental'`` until one exists.
+a parity/reference test, (b) attach validation evidence through the
+registry, or (c) flip genuinely immature APIs to
+``stability='experimental'``.
 
 It does **not** auto-downgrade. The decision belongs to a human:
 something can be analytically correct without a published reference,
@@ -37,10 +37,9 @@ Usage
     python scripts/stability_audit.py --check          # exit 1 if regression vs floor
 
 The ``--check`` mode is meant for CI: it succeeds as long as the count
-of *unbacked, hand-written* stable claims has not increased beyond a
-loose floor.  Auto-registered specs are excluded from the floor because
-classifying ~700 of them is a separate (large) project — see ``Step H``
-in the v1.13 stability roadmap.
+of *unbacked, hand-written* stable API entries has not increased beyond
+a loose floor. Auto-registered specs are excluded from the floor because
+classifying hundreds of them is a separate validation project.
 """
 from __future__ import annotations
 
@@ -57,7 +56,7 @@ PARITY_DIRS: Tuple[Path, ...] = (
     REPO_ROOT / "tests" / "external_parity",
 )
 
-#: Loose ceiling on how many *hand-written* stable specs may go without
+#: Loose ceiling on how many *hand-written* stable APIs may go without
 #: a parity test before --check fails.  Bumped when we deliberately add
 #: hand-written entries faster than parity tests.  Decrease over time as
 #: the audit gets cleaned up.
@@ -194,7 +193,7 @@ def render_report(stats: dict, *, show_unbacked: bool = False) -> str:
     t = stats["totals"]
     p = stats["parity_coverage"]
     lines: List[str] = []
-    lines.append("StatsPAI stability reverse-audit")
+    lines.append("StatsPAI stability/validation reverse-audit")
     lines.append("=" * 50)
     lines.append(
         f"Registry         : {t['registry']} functions"
@@ -238,14 +237,15 @@ def render_report(stats: dict, *, show_unbacked: bool = False) -> str:
     lines.append("Interpretation")
     lines.append("-" * 50)
     lines.append(
-        "* UNBACKED hand-written: a maintainer wrote a parity-grade "
-        "spec but no parity test exists. Either add a test or flip "
-        "the entry to stability='experimental'."
+        "* UNBACKED hand-written: a maintainer wrote a stable public "
+        "API, but this audit found no parity-test reference. Add a "
+        "test, attach validation evidence, or mark immature APIs "
+        "experimental."
     )
     lines.append(
-        "* UNBACKED auto-registered: silently classified as stable "
-        "by default. Most are probably correct (analytic) but the "
-        "claim is unenforced. See Step H roadmap for the bulk audit."
+        "* UNBACKED auto-registered: classified as stable by default. "
+        "Most are API-compatible wrappers, but numerical evidence is "
+        "not yet machine-readable."
     )
     lines.append("")
     if show_unbacked:
@@ -262,14 +262,14 @@ def check_drift(stats: dict) -> int:
     floor = stats["floor"]["unbacked_handwritten"]
     if n > floor:
         print(
-            f"FAIL: {n} hand-written stable functions lack parity tests "
-            f"(floor: {floor}). Either add tests or downgrade to "
-            f"stability='experimental'.",
+            f"FAIL: {n} hand-written stable API entries lack parity tests "
+            f"(floor: {floor}). Either add tests, attach validation "
+            f"evidence, or downgrade immature APIs to experimental.",
             file=sys.stderr,
         )
         return 1
     print(
-        f"OK: {n} hand-written stable functions lack parity tests "
+        f"OK: {n} hand-written stable API entries lack parity tests "
         f"(floor: {floor})."
     )
     return 0

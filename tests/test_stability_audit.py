@@ -1,10 +1,10 @@
-"""Smoke + contract tests for the stability reverse-audit script.
+"""Smoke + contract tests for the stability/validation reverse-audit script.
 
 The audit at ``scripts/stability_audit.py`` walks the registry and
-flags ``stability='stable'`` claims that lack a parity test in
-``tests/reference_parity/`` or ``tests/external_parity/``. These tests
-guard the script's basic contract so a refactor doesn't silently
-disable the audit.
+flags stable API entries that lack a parity test in
+``tests/reference_parity/`` or ``tests/external_parity/``. The registry's
+``validation_status`` field is the authoritative evidence tier; this
+script is a compatibility guard for old stable-by-default risk.
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def test_audit_default_renders_human_report() -> None:
     res = _run([])
     assert res.returncode == 0, res.stderr
     out = res.stdout
-    assert "StatsPAI stability reverse-audit" in out
+    assert "StatsPAI stability/validation reverse-audit" in out
     assert "stable" in out
     assert "experimental" in out
     # The human-readable report includes the floor so a reader can see

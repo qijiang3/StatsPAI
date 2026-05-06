@@ -376,6 +376,7 @@ from .registry import (
     agent_cards,
     FailureMode,
     STABILITY_TIERS,
+    VALIDATION_STATUSES,
 )
 from ._agent_docs import render_agent_block, render_agent_blocks
 from .validation import (
@@ -383,6 +384,7 @@ from .validation import (
     ReproductionStep,
     ValidationReport,
     coverage_matrix,
+    parity_gap_report,
     reproduce_jss_tables,
     validation_report,
 )
@@ -1030,12 +1032,14 @@ __all__ = [
     "agent_cards",
     "FailureMode",
     "STABILITY_TIERS",
+    "VALIDATION_STATUSES",
     "render_agent_block",
     "render_agent_blocks",
     "ReproductionResult",
     "ReproductionStep",
     "ValidationReport",
     "coverage_matrix",
+    "parity_gap_report",
     "reproduce_jss_tables",
     "validation_report",
     "help",

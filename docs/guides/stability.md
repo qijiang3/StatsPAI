@@ -1,247 +1,79 @@
-# Stability tiers — parity-grade vs. frontier-grade
+# Stability and Validation Tiers
 
-> Why a single "function exists" bit is not enough.
+StatsPAI now separates **API lifecycle** from **numerical validation evidence**. This is the main correction to the older catalogue: `stability='stable'` no longer means "R/Stata parity-grade" by itself.
 
-StatsPAI ships **975+ public functions** across 50+ subpackages. Some are
-numerically aligned with R/Stata or a published reference implementation
-and have a locked signature. Others are recent or first-class
-implementations of frontier methods — they work, but they are not yet
-parity-tested or the API may shift.
+## Three Fields
 
-Until v1.13 these were treated identically by `sp.list_functions()`,
-`sp.help()`, and `sp.describe_function()`. That made it hard for a
-human (or an LLM agent) to answer the most basic catalogue question:
-
-> *Which of these can I trust for a publication-grade analysis, and
-> which are research-grade conveniences I should report with caveats?*
-
-This page documents the contract that makes that question answerable.
-
----
-
-## The two-axis model
-
-A function's maturity has two distinct dimensions, surfaced as two
-separate fields on every `FunctionSpec`:
-
-| Field | Scope | Question it answers |
+| Field | Scope | Meaning |
 | --- | --- | --- |
-| `stability` | **Whole function** | "Is the *function as a whole* parity-grade or frontier-grade?" |
-| `limitations` | **Inside an otherwise-stable function** | "Which `param=value` combinations are documented as not-yet-implemented?" |
+| `stability` | whole function API | `stable`, `experimental`, or `deprecated` |
+| `validation_status` | evidence for numerical output | `certified`, `validated`, `api_stable`, `experimental`, or `deprecated` |
+| `limitations` | parameter/variant gaps | documented unsupported variants inside an otherwise usable function |
 
-Conflating these is what made the older catalogue hard to navigate. A
-function can be perfectly parity-grade for its primary code path and
-still raise `NotImplementedError` on a less-common variant — that is a
-**limitation on a stable function**, not a reason to demote the whole
-function to experimental.
+Use `stability` when you care about public API compatibility. Use `validation_status` when you care about publication-grade numerical evidence.
 
----
+## Stability
 
-## Stability tiers
+- `stable`: public signature is locked under SemVer minor releases.
+- `experimental`: method/API may shift across minor versions.
+- `deprecated`: scheduled for removal; replacement should be documented in `MIGRATION.md`.
 
-The `stability` field takes one of three values
-(`statspai.STABILITY_TIERS`):
+## Validation
 
-### `stable` (default)
+- `certified`: cross-language or published-reference parity evidence exists, usually from `tests/r_parity/`, `tests/stata_parity/`, or published-replication fixtures.
+- `validated`: analytic/reference parity tests exist in `tests/reference_parity/` or `tests/external_parity/`, but the function is not in the main Track A R/Stata harness.
+- `api_stable`: stable public API, but no machine-readable parity evidence has been attached yet.
+- `experimental`: mirrors `stability='experimental'`.
+- `deprecated`: mirrors `stability='deprecated'`.
 
-- Numerically aligned with R / Stata / a published reference, or with
-  an analytic ground-truth result.
-- Public signature is locked under SemVer minor releases.
-- Safe to use for publication-grade analysis without a methodological
-  caveat (beyond the function's documented assumptions, which are
-  already exposed via `sp.describe_function(name)['assumptions']`).
-
-This is the **default** — most of the catalogue (~970 functions) lives
-here. You don't need to set it explicitly when registering a new
-function.
-
-### `experimental`
-
-- Method is implemented and tested for correctness on synthetic /
-  illustrative data, but it is **not (yet) parity-tested** against a
-  published reference; **or** the function is an MVP whose signature
-  may shift between minor versions.
-- Safe to *try*, but report results as "based on StatsPAI
-  experimental implementation of <method>" if you publish them, and
-  pin the StatsPAI version.
-
-Current entries (v1.13):
-
-- `text_treatment_effect` — Veitch-Wang-Blei (2020) text-as-treatment,
-  hash-embedder fallback.
-- `llm_annotator_correct` — Egami et al. (2024) LLM-annotator
-  measurement-error correction.
-- `did_multiplegt_dyn` — dCDH (2024) intertemporal event-study DiD MVP
-  (switch-on only, bootstrap SE, no analytical influence-function
-  variance).
-
-### `deprecated`
-
-- Scheduled for removal. The function still works for the duration of
-  the deprecation window and emits a `DeprecationWarning` at call
-  time. The replacement is documented in
-  [`MIGRATION.md`](https://github.com/brycewang-stanford/StatsPAI/blob/main/MIGRATION.md).
-- No entries are deprecated as of v1.13 — the field exists so the
-  registry can express deprecation explicitly when we need to.
-
----
-
-## `limitations` — variant-level gaps inside stable functions
-
-`limitations` is a list of one-line strings describing **specific
-parameter values or feature combinations that are not yet
-implemented** inside an otherwise stable function. Each entry should
-be agent-readable and follow the pattern:
-
-```
-"<param>=<value>: <what's missing>"
-```
-
-Examples in v1.13:
-
-```python
->>> import statspai as sp
->>> sp.describe_function('hal_tmle')['limitations']
-["variant='projection' raises NotImplementedError — the Riesz-projection
-  targeting step from Li-Qiu-Wang-vdL (2025) §3.2 is not yet ported …"]
-
->>> sp.describe_function('principal_strat')['limitations']
-["instrument= (explicit two-layer IV + treatment setup) is not yet
-  implemented; for encouragement-design LATE use sp.iv or sp.dml(model='iivm')"]
-
->>> sp.describe_function('rdrobust')['limitations']
-["observation-level weights are not yet supported — passing a weight
-  column raises NotImplementedError"]
-```
-
-Why surface these as data and not just as runtime exceptions?
-
-1. **Agents read schemas before calling.** An agent that only learns
-   `variant='projection'` is unsupported by triggering
-   `NotImplementedError` mid-pipeline burns a tool-call round-trip and
-   may pollute downstream reasoning. The same fact in the schema lets
-   the agent route around the gap on the *first* attempt.
-2. **Humans read help.** `sp.help('hal_tmle')` now shows a "Known
-   limitations" section between the description and the parameter
-   table — you see the gap before you read the signature.
-3. **`function_schema()` carries the limitation into the LLM
-   tool-call description automatically**, so any framework that feeds
-   `sp.all_schemas()` to an LLM (OpenAI / Anthropic / LangChain /
-   LangGraph) inherits the gap visibility for free.
-
----
-
-## How to filter
-
-### Python
+## Filtering
 
 ```python
 import statspai as sp
 
-sp.list_functions()                            # all (default)
-sp.list_functions(stability='stable')          # parity-grade only
-sp.list_functions(stability='experimental')    # frontier-grade only
-sp.list_functions(category='causal',
-                  stability='stable')          # parity-grade causal subset
-sp.agent_cards(stability='stable')             # bulk agent-card export, parity-grade only
+sp.list_functions()                              # all registered functions
+sp.list_functions(stability="stable")            # stable API
+sp.list_functions(validation_status="certified") # parity-backed functions
+sp.agent_cards(validation_status="certified")    # parity-backed agent cards
 
-# Per-function inspection
-spec = sp.describe_function('hal_tmle')
-spec['stability']      # 'stable'
-spec['limitations']    # ['variant=projection ...']
-
-# Search results now carry stability so you can post-filter
-hits = sp.search_functions('treatment')
-[h for h in hits if h['stability'] == 'stable']
+spec = sp.describe_function("regress")
+spec["stability"]          # "stable"
+spec["validation_status"]  # "certified"
+spec["validation_notes"]   # parity artifact / reference notes
 ```
-
-### CLI
 
 ```bash
-$ statspai list --stability experimental
-did_multiplegt_dyn
-llm_annotator_correct
-text_treatment_effect
-
-$ statspai list --category causal --stability stable | head
-$ statspai describe hal_tmle    # shows the Known limitations section
+statspai list --stability experimental
+statspai list --validation certified
+statspai describe rdrobust
 ```
 
-### sp.help() overview
+`sp.help()` prints both `STABILITY` and `VALIDATION` count blocks. Per-function help shows `Stability:`, `Validation:`, `Evidence:`, and `Known limitations` when available.
 
-`sp.help()` (no arguments) now prints a `STABILITY` block with the
-count per tier, immediately under the `CATEGORIES` block. Per-function
-detail (`sp.help('hal_tmle')`) prints a `Stability:` line as the first
-substantive content and a `Known limitations` section if applicable.
+## Promotion Path
 
----
+1. Promote `experimental` to `stable` when the public API is ready for SemVer compatibility.
+2. Promote `api_stable` to `validated` when analytic/reference parity tests exist.
+3. Promote `validated` to `certified` when the function enters the cross-language or published-reference parity harness.
+4. Remove a `limitation` only when the unsupported variant lands with its own test.
 
-## What to do if you maintain a StatsPAI extension
-
-If you register your own functions via `statspai.registry.register`,
-set `stability` and `limitations` deliberately:
-
-```python
-from statspai.registry import register, FunctionSpec, ParamSpec
-
-register(FunctionSpec(
-    name="my_estimator",
-    category="causal",
-    description="Doe (2026) double-debiased estimator for setting X.",
-    params=[...],
-    # Pick the right tier:
-    stability="experimental",   # not yet parity-tested
-    # And surface partial-implementation gaps explicitly:
-    limitations=[
-        "method='kernel' is implemented; method='spline' raises "
-        "NotImplementedError pending the v2.0 release.",
-    ],
-))
-```
-
-A typo in `stability` raises `ValueError` at `register()` time, so
-you find out at import time — not at the moment an agent tries to
-filter on it.
-
----
-
-## Promotion path
-
-- An `experimental` function is promoted to `stable` once it has at
-  least one **parity test** in `tests/reference_parity/` matching a
-  published number, plus its public signature has been stable across
-  one minor version.
-- A `limitation` is removed once the unimplemented variant lands and
-  has its own test (parity or analytic).
-- `deprecated` enters via a `DeprecationWarning` + a `MIGRATION.md`
-  entry, with the removal version explicit in the warning text.
-
-## Auditing the catalogue
-
-Two CI-friendly scripts cross-check the contract:
+## Auditing
 
 ```bash
-# Cross-check stable claims against parity-test coverage. Lists the
-# hand-written stable functions that have no test in
-# tests/reference_parity/ or tests/external_parity/. The --check mode
-# fails if the unbacked count exceeds a loose floor (default 220).
 python scripts/stability_audit.py
 python scripts/stability_audit.py --unbacked
-python scripts/stability_audit.py --check        # CI mode
-python scripts/stability_audit.py --json         # machine-readable
-
-# Runtime consistency for limitations — every entry must use vetted
-# vocabulary, and every entry must be either runtime-tested (call
-# raises documented exception) or declared "descriptive only".
-pytest tests/test_limitations_consistency.py
+python scripts/stability_audit.py --check
+python scripts/stability_audit.py --json
 ```
 
-The reverse-audit deliberately does **not** auto-downgrade — the
-decision to flip a function from `stable` to `experimental` belongs to
-a maintainer who has read the code and decided the gap is
-load-bearing. The script's job is to make the gap visible so it
-doesn't sit forever.
+Programmatic evidence summaries:
 
----
+```python
+sp.validation_report()
+sp.coverage_matrix(level="parity")
+sp.parity_gap_report()
+```
 
-*Last updated: v1.13 (2026-05-03).*
+`sp.parity_gap_report()` parses the already-generated 3-way parity table and reports documented convention gaps, missing Stata siblings, priorities, and next actions.
+
+*Last updated: v1.13.1+validation split (2026-05-05).*

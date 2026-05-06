@@ -10,8 +10,10 @@ def test_validation_report_summarizes_source_tree_evidence():
 
     assert report.registry["total_functions"] >= 900
     assert report.registry["total_categories"] > 10
+    assert report.registry["per_validation_status"]["certified"] >= 30
     assert report.evidence["r_parity"]["matched_modules"] >= 30
     assert report.evidence["stata_parity"]["modules"] >= 20
+    assert report.evidence["parity_gaps"]["rows"] >= 1
     assert "jss_appendix_b" in report.artifacts
     assert "StatsPAI Validation Report" in report.to_markdown()
 
@@ -40,6 +42,15 @@ def test_coverage_matrix_markdown_output():
 
     assert "module_id" in markdown
     assert "has_r_parity" in markdown
+
+
+def test_parity_gap_report_surfaces_open_gaps():
+    rows = sp.parity_gap_report(fmt="records")
+    assert rows
+    assert any(row["kind"] == "documented_gap" for row in rows)
+    assert any("next_action" in row for row in rows)
+    md = sp.parity_gap_report(fmt="markdown")
+    assert "next_action" in md
 
 
 def test_reproduce_jss_tables_dry_run_core_plan():

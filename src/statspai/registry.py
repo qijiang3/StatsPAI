@@ -17,7 +17,9 @@ Usage
 from __future__ import annotations
 
 import inspect
+import re
 from dataclasses import dataclass, field, asdict
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
@@ -63,6 +65,18 @@ class FailureMode:
 STABILITY_TIERS: frozenset = frozenset({"stable", "experimental", "deprecated"})
 
 
+#: Validation evidence tiers. ``stability`` remains the API lifecycle
+#: contract for backwards compatibility; ``validation_status`` is the
+#: numerical-evidence contract used by agents and validation reports.
+VALIDATION_STATUSES: frozenset = frozenset({
+    "certified",      # cross-language or published-reference parity evidence
+    "validated",      # analytic / reference-test evidence in this checkout
+    "api_stable",     # stable public API, but no machine-readable evidence yet
+    "experimental",   # follows FunctionSpec.stability
+    "deprecated",     # follows FunctionSpec.stability
+})
+
+
 @dataclass
 class FunctionSpec:
     """Machine-readable specification for a StatsPAI function.
@@ -72,18 +86,23 @@ class FunctionSpec:
     optional — any entry without them still renders correctly; only
     the agent-card layer surfaces the extras.
 
-    Stability layering
+    Stability and validation layering
     ------------------
-    Two fields make the parity-grade vs. frontier-grade split visible
-    to humans and agents *before* a call is made:
+    Three fields make the API lifecycle, validation evidence, and
+    variant-level gaps visible to humans and agents *before* a call is
+    made:
 
     * ``stability`` (``"stable"`` | ``"experimental"`` | ``"deprecated"``)
-      classifies the function as a whole.  ``"stable"`` (default) means
-      numerically aligned with R / Stata or an analytic reference and
-      the public signature is locked.  ``"experimental"`` means the
-      method is implemented but not (yet) parity-tested or the API may
-      shift between minor versions — agents should hold its outputs to
-      a lower trust bar.
+      classifies the function's public API lifecycle. ``"stable"``
+      means the signature is locked for SemVer minor releases.
+      ``"experimental"`` means the method or API may still shift.
+    * ``validation_status`` (``"certified"`` | ``"validated"`` |
+      ``"api_stable"`` | ``"experimental"`` | ``"deprecated"``)
+      classifies the evidence backing the implementation. ``certified``
+      means cross-language or published-reference parity evidence;
+      ``validated`` means analytic/reference-test evidence; ``api_stable``
+      means the public API is stable but no machine-readable parity
+      evidence has been attached yet.
     * ``limitations`` enumerates **partial-implementation gaps inside
       an otherwise stable function** — typically a parameter value that
       raises :class:`NotImplementedError` (e.g.
@@ -118,6 +137,10 @@ class FunctionSpec:
     # ------------------------------------------------------------------ #
     stability: str = "stable"
     """Maturity tier — see :data:`STABILITY_TIERS`."""
+    validation_status: str = "api_stable"
+    """Numerical validation tier — see :data:`VALIDATION_STATUSES`."""
+    validation_notes: List[str] = field(default_factory=list)
+    """Short evidence notes such as parity artifact paths or convention gaps."""
     limitations: List[str] = field(default_factory=list)
     """Known-unimplemented variants / parameter values inside an
     otherwise stable function.  Each entry is one short sentence; the
@@ -130,6 +153,14 @@ class FunctionSpec:
             raise ValueError(
                 f"FunctionSpec(name={self.name!r}).stability={self.stability!r} "
                 f"is not one of {sorted(STABILITY_TIERS)}"
+            )
+        if self.stability in {"experimental", "deprecated"}:
+            self.validation_status = self.stability
+        if self.validation_status not in VALIDATION_STATUSES:
+            raise ValueError(
+                f"FunctionSpec(name={self.name!r}).validation_status="
+                f"{self.validation_status!r} is not one of "
+                f"{sorted(VALIDATION_STATUSES)}"
             )
 
     def to_openai_schema(self) -> Dict[str, Any]:
@@ -166,6 +197,10 @@ class FunctionSpec:
         description = self.description
         if self.stability != "stable":
             description = f"[{self.stability}] {description}"
+        if self.validation_status not in {"certified", "api_stable"}:
+            description = f"{description} Validation: {self.validation_status}."
+        elif self.validation_status == "certified":
+            description = f"{description} Validation: certified parity evidence."
         if self.limitations:
             joined = "; ".join(self.limitations)
             description = f"{description} Known limitations: {joined}."
@@ -197,6 +232,8 @@ class FunctionSpec:
             "name": self.name,
             "category": self.category,
             "stability": self.stability,
+            "validation_status": self.validation_status,
+            "validation_notes": list(self.validation_notes),
             "limitations": list(self.limitations),
             "description": self.description,
             "signature": self.to_openai_schema(),
@@ -216,6 +253,7 @@ class FunctionSpec:
 
 _REGISTRY: Dict[str, FunctionSpec] = {}
 _BASE_REGISTRY_BUILT = False
+_VALIDATION_EVIDENCE_APPLIED = False
 
 
 def register(spec: FunctionSpec) -> FunctionSpec:
@@ -7919,6 +7957,47 @@ def _build_registry():
 _FULL_REGISTRY_BUILT = False
 
 
+# Public symbols whose Track A parity is represented by the R/Stata
+# harness. This conservative seed is supplemented by parsing the live
+# harness artifacts when the source tree is available.
+_CERTIFIED_SEED_FUNCTIONS: frozenset = frozenset({
+    "regress",
+    "iv",
+    "ivreg",
+    "feols",
+    "hdfe_ols",
+    "callaway_santanna",
+    "sun_abraham",
+    "rdrobust",
+    "synth",
+    "dml",
+    "rddensity",
+    "honest_did",
+    "psm",
+    "causal_forest",
+    "did_imputation",
+    "wooldridge_did",
+    "augsynth",
+    "gsynth",
+    "bacon_decomposition",
+    "sensemakr",
+    "evalue",
+    "mixed",
+    "melogit",
+    "frontier",
+    "xtfrontier",
+    "oaxaca",
+    "dfl_decompose",
+    "rif_decomposition",
+    "var",
+    "local_projections",
+    "panel",
+    "mediate",
+})
+
+_SP_CALL_RE = re.compile(r"\bsp\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
+
+
 def _stringify_annotation(ann: Any) -> str:
     if ann is inspect._empty:
         return "Any"
@@ -7990,6 +8069,137 @@ def _auto_spec_from_callable(name: str, obj: Any) -> Optional[FunctionSpec]:
     return spec
 
 
+def _repo_root() -> Optional[Path]:
+    """Return the source-tree root when this package is imported in-place."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (
+            (parent / "pyproject.toml").exists()
+            and (parent / "src" / "statspai" / "__init__.py").exists()
+        ):
+            return parent
+    return None
+
+
+def _strip_markdown(text: str) -> str:
+    return text.replace("`", "").replace("\\", "").strip()
+
+
+def _api_name_from_readme_cell(text: str) -> str:
+    clean = _strip_markdown(text)
+    clean = re.sub(r"\(.*$", "", clean).strip()
+    if clean.startswith("sp."):
+        clean = clean[3:]
+    return clean.split(".")[-1]
+
+
+def _scan_parity_readme(root: Path) -> Dict[str, List[str]]:
+    """Map API names to Track A parity evidence from tests/r_parity."""
+    readme = root / "tests" / "r_parity" / "README.md"
+    if not readme.exists():
+        return {}
+
+    r_results = root / "tests" / "r_parity" / "results"
+    py_modules = {p.stem.replace("_py", "") for p in r_results.glob("*_py.json")}
+    r_modules = {p.stem.replace("_R", "") for p in r_results.glob("*_R.json")}
+    matched = py_modules & r_modules
+    number_to_module = {module.split("_", 1)[0]: module for module in py_modules}
+
+    evidence: Dict[str, List[str]] = {}
+    for line in readme.read_text(encoding="utf-8").splitlines():
+        parts = [part.strip() for part in line.strip().strip("|").split("|")]
+        if len(parts) < 4 or not parts[0].isdigit():
+            continue
+        number, _method, api_cell, _reference = parts[:4]
+        module_id = number_to_module.get(number, number)
+        api_name = _api_name_from_readme_cell(api_cell)
+        if api_name and module_id in matched:
+            evidence.setdefault(api_name, []).append(
+                f"R parity module {module_id}"
+            )
+
+    st_results = root / "tests" / "stata_parity" / "results"
+    stata_modules = {p.stem.replace("_Stata", "") for p in st_results.glob("*_Stata.json")}
+    for name, notes in list(evidence.items()):
+        for note in list(notes):
+            module_id = note.split(" ", 3)[-1]
+            if module_id in stata_modules:
+                notes.append(f"Stata parity module {module_id}")
+    return evidence
+
+
+def _scan_reference_tests(root: Path) -> Dict[str, List[str]]:
+    """Map sp.* calls in parity pytest suites to reference-test evidence."""
+    evidence: Dict[str, List[str]] = {}
+    for rel_dir in ("tests/reference_parity", "tests/external_parity"):
+        base = root / rel_dir
+        if not base.exists():
+            continue
+        for path in sorted(base.rglob("test_*.py")):
+            try:
+                text = path.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            rel = str(path.relative_to(root))
+            for name in sorted(set(_SP_CALL_RE.findall(text))):
+                evidence.setdefault(name, []).append(rel)
+    return evidence
+
+
+def _apply_validation_evidence() -> None:
+    """Attach validation evidence tiers after full registry expansion.
+
+    The registry is usable from an installed wheel with no test tree; in
+    that case the conservative seed still marks the flagship Track A
+    functions. In a source checkout, live parity artifacts add file-level
+    notes and reference-parity tests upgrade additional functions to
+    ``validated``.
+    """
+    global _VALIDATION_EVIDENCE_APPLIED
+    if _VALIDATION_EVIDENCE_APPLIED:
+        return
+
+    for spec in _REGISTRY.values():
+        if spec.stability in {"experimental", "deprecated"}:
+            spec.validation_status = spec.stability
+        elif spec.validation_status in {"experimental", "deprecated"}:
+            spec.validation_status = "api_stable"
+
+    certified: Dict[str, List[str]] = {
+        name: ["Track A parity seed"] for name in _CERTIFIED_SEED_FUNCTIONS
+    }
+    validated: Dict[str, List[str]] = {}
+    root = _repo_root()
+    if root is not None:
+        for name, notes in _scan_parity_readme(root).items():
+            certified.setdefault(name, []).extend(notes)
+        validated.update(_scan_reference_tests(root))
+
+    for name, notes in certified.items():
+        spec = _REGISTRY.get(name)
+        if spec is None or spec.stability != "stable":
+            continue
+        spec.validation_status = "certified"
+        for note in notes:
+            if note not in spec.validation_notes:
+                spec.validation_notes.append(note)
+
+    for name, notes in validated.items():
+        spec = _REGISTRY.get(name)
+        if (
+            spec is None
+            or spec.stability != "stable"
+            or spec.validation_status == "certified"
+        ):
+            continue
+        spec.validation_status = "validated"
+        for note in notes[:5]:
+            if note not in spec.validation_notes:
+                spec.validation_notes.append(note)
+
+    _VALIDATION_EVIDENCE_APPLIED = True
+
+
 def _ensure_full_registry() -> None:
     """Populate the registry with hand-written specs + auto-registered tail.
 
@@ -7999,6 +8209,7 @@ def _ensure_full_registry() -> None:
     global _FULL_REGISTRY_BUILT
     _build_registry()
     if _FULL_REGISTRY_BUILT:
+        _apply_validation_evidence()
         return
 
     import statspai as _sp  # safe: called post-import from user code
@@ -8023,6 +8234,7 @@ def _ensure_full_registry() -> None:
             _REGISTRY[name] = spec
 
     _FULL_REGISTRY_BUILT = True
+    _apply_validation_evidence()
 
 
 # ====================================================================== #
@@ -8033,6 +8245,7 @@ def list_functions(
     category: Optional[str] = None,
     *,
     stability: Optional[str] = None,
+    validation_status: Optional[str] = None,
 ) -> List[str]:
     """
     List all registered StatsPAI functions, optionally filtered.
@@ -8048,9 +8261,13 @@ def list_functions(
     stability : str, optional
         Limit to one tier — one of :data:`STABILITY_TIERS`
         (``"stable"`` / ``"experimental"`` / ``"deprecated"``).  This
-        is the agent-facing filter for "give me only parity-grade
-        functions" (``stability='stable'``) versus "show me what's on
-        the frontier" (``stability='experimental'``).
+        is the API-lifecycle filter.
+    validation_status : str, optional
+        Limit to one evidence tier — one of :data:`VALIDATION_STATUSES`
+        (``"certified"`` / ``"validated"`` / ``"api_stable"`` /
+        ``"experimental"`` / ``"deprecated"``). Use
+        ``validation_status='certified'`` for parity-backed tool
+        catalogs.
     """
     _ensure_full_registry()
     if stability is not None and stability not in STABILITY_TIERS:
@@ -8058,11 +8275,21 @@ def list_functions(
             f"stability={stability!r} must be one of {sorted(STABILITY_TIERS)} "
             f"or None"
         )
+    if (
+        validation_status is not None
+        and validation_status not in VALIDATION_STATUSES
+    ):
+        raise ValueError(
+            f"validation_status={validation_status!r} must be one of "
+            f"{sorted(VALIDATION_STATUSES)} or None"
+        )
     out: List[str] = []
     for k, v in _REGISTRY.items():
         if category and v.category != category:
             continue
         if stability and v.stability != stability:
+            continue
+        if validation_status and v.validation_status != validation_status:
             continue
         out.append(k)
     return out
@@ -8132,6 +8359,7 @@ def search_functions(query: str) -> List[Dict[str, str]]:
                 "description": spec.description,
                 "category": spec.category,
                 "stability": spec.stability,
+                "validation_status": spec.validation_status,
             }))
 
     # Sort by score descending (most relevant first)
@@ -8174,6 +8402,7 @@ def agent_cards(
     category: Optional[str] = None,
     *,
     stability: Optional[str] = None,
+    validation_status: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Bulk export of agent cards, optionally filtered.
 
@@ -8187,8 +8416,10 @@ def agent_cards(
         Limit to one category.
     stability : str, optional
         Limit to one stability tier (see :data:`STABILITY_TIERS`).
-        ``stability='stable'`` is the standard "production-only"
-        filter for agent tool catalogs.
+    validation_status : str, optional
+        Limit to one validation tier. ``validation_status='certified'``
+        is the standard cross-language parity-backed filter for agent
+        tool catalogs.
 
     >>> cards = sp.agent_cards(category='causal', stability='stable')
     >>> # Feed to an agent's tool catalog or doc generator
@@ -8199,11 +8430,21 @@ def agent_cards(
             f"stability={stability!r} must be one of {sorted(STABILITY_TIERS)} "
             f"or None"
         )
+    if (
+        validation_status is not None
+        and validation_status not in VALIDATION_STATUSES
+    ):
+        raise ValueError(
+            f"validation_status={validation_status!r} must be one of "
+            f"{sorted(VALIDATION_STATUSES)} or None"
+        )
     out: List[Dict[str, Any]] = []
     for spec in _REGISTRY.values():
         if category and spec.category != category:
             continue
         if stability and spec.stability != stability:
+            continue
+        if validation_status and spec.validation_status != validation_status:
             continue
         if not (spec.assumptions or spec.failure_modes
                 or spec.alternatives or spec.pre_conditions

@@ -275,12 +275,10 @@ def _top_overview() -> str:
         lines.append(f"  {cat:<{width}}  ({count:>3} fns)  {desc}")
     lines.append("")
 
-    # Stability layering — surface parity-grade vs. frontier-grade so an
-    # agent reading the catalog can pick the right trust bar without
-    # opening every entry.
+    # Stability = API lifecycle. Validation = numerical evidence tier.
     tiers = _stability_with_counts()
     if tiers:
-        lines.append("STABILITY  (use sp.list_functions(stability='<tier>') to filter)")
+        lines.append("STABILITY  (API lifecycle; use sp.list_functions(stability='<tier>'))")
         lines.append("---------")
         order = ["stable", "experimental", "deprecated"]
         for tier in order:
@@ -289,6 +287,20 @@ def _top_overview() -> str:
                 continue
             badge = _stability_badge(tier, prefix="  ")
             blurb = _STABILITY_BLURBS[tier]
+            lines.append(f"{badge} ({n:>3} fns)  {blurb}")
+        lines.append("")
+
+    validation = _validation_with_counts()
+    if validation:
+        lines.append("VALIDATION  (evidence; use sp.list_functions(validation_status='<tier>'))")
+        lines.append("----------")
+        order = ["certified", "validated", "api_stable", "experimental", "deprecated"]
+        for tier in order:
+            n = validation.get(tier, 0)
+            if n == 0:
+                continue
+            badge = _validation_badge(tier, prefix="  ")
+            blurb = _VALIDATION_BLURBS[tier]
             lines.append(f"{badge} ({n:>3} fns)  {blurb}")
         lines.append("")
 
@@ -318,6 +330,7 @@ def _top_overview() -> str:
     lines.append("CLI")
     lines.append("---")
     lines.append("  $ statspai list [--category <cat>] [--stability stable|experimental|deprecated]")
+    lines.append("  $ statspai list --validation certified")
     lines.append("  $ statspai describe <name>")
     lines.append("  $ statspai search <query>")
     lines.append("  $ statspai help [<name>]")
@@ -342,8 +355,8 @@ def _categories_with_counts() -> Dict[str, int]:
 # looks in text.  No emoji, by CLAUDE.md house rule.
 
 _STABILITY_BLURBS: Dict[str, str] = {
-    "stable": "parity-grade — numerically aligned with R/Stata or analytic reference; signature locked",
-    "experimental": "frontier-grade — implemented but not (yet) parity-tested; API may shift across minor versions",
+    "stable": "public signature locked under SemVer minor releases",
+    "experimental": "method/API may shift across minor versions",
     "deprecated": "scheduled for removal — see MIGRATION.md for the replacement",
 }
 
@@ -366,6 +379,38 @@ def _stability_with_counts() -> Dict[str, int]:
     counts: Dict[str, int] = {}
     for spec in _REGISTRY.values():
         counts[spec.stability] = counts.get(spec.stability, 0) + 1
+    return counts
+
+
+_VALIDATION_BLURBS: Dict[str, str] = {
+    "certified": "cross-language or published-reference parity evidence",
+    "validated": "analytic/reference parity tests in this checkout",
+    "api_stable": "stable public API; parity evidence not yet attached",
+    "experimental": "frontier implementation; lower evidence tier",
+    "deprecated": "deprecated implementation",
+}
+
+_VALIDATION_BADGES: Dict[str, str] = {
+    "certified": "[certified]  ",
+    "validated": "[validated]  ",
+    "api_stable": "[api_stable] ",
+    "experimental": "[experimental]",
+    "deprecated": "[deprecated]  ",
+}
+
+
+def _validation_badge(tier: str, *, prefix: str = "") -> str:
+    return f"{prefix}{_VALIDATION_BADGES.get(tier, f'[{tier}]')}"
+
+
+def _validation_with_counts() -> Dict[str, int]:
+    """Count functions per validation tier in the expanded registry."""
+    from .registry import _REGISTRY  # noqa: WPS433
+
+    counts: Dict[str, int] = {}
+    for spec in _REGISTRY.values():
+        status = getattr(spec, "validation_status", "api_stable")
+        counts[status] = counts.get(status, 0) + 1
     return counts
 
 
@@ -396,7 +441,12 @@ def _category_listing(category: str) -> Optional[str]:
         # Show a stability prefix only for non-stable entries so the
         # ~85% of stable functions stay visually quiet; experimental and
         # deprecated entries jump out.
-        marker = "" if spec.stability == "stable" else f" {_stability_badge(spec.stability)}"
+        markers: List[str] = []
+        if spec.stability != "stable":
+            markers.append(_stability_badge(spec.stability).strip())
+        if spec.validation_status in {"certified", "validated"}:
+            markers.append(_validation_badge(spec.validation_status).strip())
+        marker = f" {' '.join(markers)}" if markers else ""
         lines.append(f"  {name:<{width}}  {short}{marker}")
 
     lines.append("")
@@ -422,6 +472,14 @@ def _function_detail(name: str, verbose: bool = False) -> Optional[str]:
     # the trust bar before reading the first sentence.
     blurb = _STABILITY_BLURBS.get(spec.stability, "")
     lines.append(f"Stability : {spec.stability}  ({blurb})")
+    vstatus = getattr(spec, "validation_status", "api_stable")
+    vblurb = _VALIDATION_BLURBS.get(vstatus, "")
+    lines.append(f"Validation: {vstatus}  ({vblurb})")
+    if getattr(spec, "validation_notes", None):
+        shown = "; ".join(spec.validation_notes[:3])
+        if len(spec.validation_notes) > 3:
+            shown += f"; +{len(spec.validation_notes) - 3} more"
+        lines.append(f"Evidence  : {shown}")
     lines.append("")
     lines.append(textwrap.fill(spec.description, width=78))
     lines.append("")
@@ -489,7 +547,9 @@ def _search_results(query: str) -> str:
     width = max(len(h["name"]) for h in hits)
     for h in hits[:50]:
         short = h["description"].split(".")[0][:80]
-        lines.append(f"  {h['name']:<{width}}  [{h['category']}]  {short}")
+        v = h.get("validation_status", "")
+        suffix = f" [{v}]" if v in {"certified", "validated", "experimental"} else ""
+        lines.append(f"  {h['name']:<{width}}  [{h['category']}]  {short}{suffix}")
     if len(hits) > 50:
         lines.append(f"  ... and {len(hits) - 50} more. Use sp.search_functions(query).")
     return "\n".join(lines)
