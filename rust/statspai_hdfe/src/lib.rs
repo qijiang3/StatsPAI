@@ -27,11 +27,13 @@ mod sort_perm;
 mod cholesky;
 mod irls;
 mod separation;
+mod cluster;
 
 use numpy::{
-    PyArray1, PyReadonlyArray1, PyReadonlyArray2, PyReadwriteArray1,
+    PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2, PyReadwriteArray1,
     PyReadwriteArray2, PyUntypedArrayMethods,
 };
+use numpy::ndarray::Array2;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::wrap_pyfunction;
@@ -670,6 +672,103 @@ fn separation_mask<'py>(
     Ok(PyArray1::from_vec_bound(py, as_u8))
 }
 
+/// Cluster-robust sandwich "meat" matrix.
+///
+/// ``X`` and ``residuals`` must be **pre-sorted by cluster** (the
+/// Python wrapper at ``statspai.core._numba_kernels.cluster_meat`` does
+/// this with ``np.argsort(cluster_ids, kind='mergesort')``).
+/// ``cluster_starts[g] .. cluster_ends[g]`` is the row range of cluster
+/// ``g`` (half-open).
+///
+/// Parallelism: clusters are summed independently with Rayon over a
+/// thread-local k×k upper-tri accumulator and reduced.
+///
+/// Parameters
+/// ----------
+/// x : 2-D float64 ndarray, shape (n, k), C-contiguous
+///     Pre-sorted design matrix.
+/// residuals : 1-D float64 ndarray, shape (n,)
+///     Pre-sorted residuals.
+/// cluster_starts : 1-D int64 ndarray, shape (G,)
+/// cluster_ends   : 1-D int64 ndarray, shape (G,)
+///     Half-open row ranges per cluster.
+///
+/// Returns
+/// -------
+/// (k, k) float64 ndarray (fully symmetric).
+#[pyfunction]
+fn cluster_meat<'py>(
+    py: Python<'py>,
+    x: PyReadonlyArray2<'py, f64>,
+    residuals: PyReadonlyArray1<'py, f64>,
+    cluster_starts: PyReadonlyArray1<'py, i64>,
+    cluster_ends: PyReadonlyArray1<'py, i64>,
+) -> PyResult<Bound<'py, PyArray2<f64>>> {
+    if !x.is_c_contiguous() {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "x must be C-contiguous; pass np.ascontiguousarray(X)",
+        ));
+    }
+    let arr = x.as_array();
+    let shape = arr.shape();
+    if shape.len() != 2 {
+        return Err(pyo3::exceptions::PyValueError::new_err("x must be 2-D"));
+    }
+    let n = shape[0];
+    let k = shape[1];
+
+    let r = residuals.as_slice()?;
+    if r.len() != n {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "len(residuals)={} but n={}",
+            r.len(),
+            n
+        )));
+    }
+    let starts_i = cluster_starts.as_slice()?;
+    let ends_i = cluster_ends.as_slice()?;
+    if starts_i.len() != ends_i.len() {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "len(cluster_starts)={} but len(cluster_ends)={}",
+            starts_i.len(),
+            ends_i.len()
+        )));
+    }
+    // Validate cluster bounds before going into ``allow_threads``: any
+    // out-of-range index would otherwise panic inside the parallel
+    // section, which is harder to surface as a Python exception.
+    for (g, (&s, &e)) in starts_i.iter().zip(ends_i.iter()).enumerate() {
+        if s < 0 || e < 0 {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "cluster {g}: negative start/end ({s},{e})"
+            )));
+        }
+        let (su, eu) = (s as usize, e as usize);
+        if eu < su || eu > n {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "cluster {g}: invalid range [{su},{eu}) with n={n}"
+            )));
+        }
+    }
+    let starts: Vec<usize> = starts_i.iter().map(|&v| v as usize).collect();
+    let ends: Vec<usize> = ends_i.iter().map(|&v| v as usize).collect();
+
+    let x_slice = arr.as_slice().ok_or_else(|| {
+        pyo3::exceptions::PyValueError::new_err(
+            "internal: x.as_slice() failed despite C-contiguous check",
+        )
+    })?;
+
+    let meat_flat = py.allow_threads(|| {
+        cluster::cluster_meat_sorted(x_slice, n, k, r, &starts, &ends)
+    });
+
+    let arr2 = Array2::from_shape_vec((k, k), meat_flat).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("from_shape_vec: {e}"))
+    })?;
+    Ok(PyArray2::from_owned_array_bound(py, arr2))
+}
+
 /// Python module definition.
 #[pymodule]
 fn statspai_hdfe(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -679,7 +778,8 @@ fn statspai_hdfe(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(demean_2d_weighted_sorted, m)?)?;
     m.add_function(wrap_pyfunction!(fepois_irls, m)?)?;
     m.add_function(wrap_pyfunction!(singleton_mask, m)?)?;
-    m.add_function(wrap_pyfunction!(separation_mask, m)?)?;  // NEW
-    m.add("__version__", "0.6.0")?;                          // BUMPED 0.5.0 → 0.6.0
+    m.add_function(wrap_pyfunction!(separation_mask, m)?)?;
+    m.add_function(wrap_pyfunction!(cluster_meat, m)?)?;  // Phase 2
+    m.add("__version__", "0.7.0-alpha.1")?;               // BUMPED 0.6.0 → 0.7.0-alpha.1
     Ok(())
 }

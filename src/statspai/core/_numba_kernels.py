@@ -45,6 +45,20 @@ except ImportError:  # pragma: no cover
 
 
 # --------------------------------------------------------------------------- #
+#  Optional Rust HDFE backend — provides cluster_meat with Rayon parallelism
+#  over clusters. Falls through to the numba kernel below if the wheel is not
+#  built (in which case numerics are bit-identical to the previous release).
+# --------------------------------------------------------------------------- #
+try:
+    import statspai_hdfe as _rust_hdfe  # type: ignore
+
+    _HAS_RUST_CLUSTER = hasattr(_rust_hdfe, "cluster_meat")
+except ImportError:  # pragma: no cover
+    _rust_hdfe = None  # type: ignore[assignment]
+    _HAS_RUST_CLUSTER = False
+
+
+# --------------------------------------------------------------------------- #
 #  Core OLS kernel
 # --------------------------------------------------------------------------- #
 
@@ -211,7 +225,9 @@ def cluster_meat(
     """
     Cluster-robust meat matrix.
 
-    Sorts data by *cluster_ids* once, then delegates to the JIT kernel.
+    Sorts data by *cluster_ids* once, then delegates to either the
+    Rust+Rayon kernel (preferred when ``statspai_hdfe`` is built) or
+    the numba JIT kernel (always-on fallback).
 
     Parameters
     ----------
@@ -224,8 +240,8 @@ def cluster_meat(
     meat : (k, k) array
     """
     order = np.argsort(cluster_ids, kind="mergesort")
-    X_s = np.ascontiguousarray(X[order])
-    r_s = np.ascontiguousarray(residuals[order])
+    X_s = np.ascontiguousarray(X[order], dtype=np.float64)
+    r_s = np.ascontiguousarray(residuals[order], dtype=np.float64)
     c_s = cluster_ids[order]
 
     # Identify cluster boundaries
@@ -237,6 +253,14 @@ def cluster_meat(
     ends[:-1] = starts[1:]
     ends[-1] = len(c_s)
 
+    if _HAS_RUST_CLUSTER:
+        # Rust kernel takes int64 cluster boundaries.
+        return _rust_hdfe.cluster_meat(
+            X_s,
+            r_s,
+            starts.astype(np.int64),
+            ends.astype(np.int64),
+        )
     return _cluster_meat_sorted(X_s, r_s, starts, ends)
 
 
