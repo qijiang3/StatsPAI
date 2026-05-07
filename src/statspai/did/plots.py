@@ -1309,7 +1309,7 @@ def ggdid(
                 markersize=7, linewidth=2, label='Post-treatment')
         ax.axhline(0, color='gray', linestyle='--', linewidth=0.8)
         ax.axvline(-0.5, color='#7F8C8D', linestyle=':', linewidth=1, alpha=0.5)
-        ax.set_xlabel('Event time e = t − g')
+        ax.set_xlabel('Event time e = t - g')
         ax.set_ylabel('ATT(e)')
         ax.set_title(title or "Callaway-Sant'Anna — dynamic (event study)")
         ax.legend(frameon=False, fontsize=9)

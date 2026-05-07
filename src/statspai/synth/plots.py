@@ -497,7 +497,7 @@ def _plot_gap(
         fontsize=13,
     )
     ax.set_xlabel("Time", fontsize=11)
-    ax.set_ylabel("Gap (Treated \u2212 Synthetic)", fontsize=11)
+    ax.set_ylabel("Gap (Treated - Synthetic)", fontsize=11)
     _clean_spines(ax)
     fig.tight_layout()
     return fig, ax
@@ -679,7 +679,7 @@ def _plot_placebo_gap(result, ax=None, figsize=(10, 6), title=None,
     ax.set_title(title or f"Placebo Gaps ({method_short}){suffix}",
                  fontsize=13)
     ax.set_xlabel("Time", fontsize=11)
-    ax.set_ylabel("Gap (Treated − Synthetic)", fontsize=11)
+    ax.set_ylabel("Gap (Treated - Synthetic)", fontsize=11)
     ax.legend(fontsize=9.5, frameon=False)
     _clean_spines(ax)
     fig.tight_layout()

@@ -619,7 +619,7 @@ def discos_plot(
         ax.axvline(x=treatment_time, color="#E74C3C", linestyle=":",
                    linewidth=1, alpha=0.6, label="Treatment onset")
         ax.set_xlabel("Time", fontsize=11)
-        ax.set_ylabel("Gap (Treated − Synthetic)", fontsize=11)
+        ax.set_ylabel("Gap (Treated - Synthetic)", fontsize=11)
         ax.set_title(title or "Gap Plot", fontsize=13)
         ax.legend(fontsize=9, frameon=False)
 

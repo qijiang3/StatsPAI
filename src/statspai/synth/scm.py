@@ -1094,7 +1094,7 @@ def _gap_panel(ax, times, gap, treatment_time):
         ax.axvline(x=treatment_time, color='gray', linestyle=':',
                    linewidth=1, alpha=0.7)
     ax.set_xlabel('Time', fontsize=11)
-    ax.set_ylabel('Gap (Treated − Synthetic)', fontsize=11)
+    ax.set_ylabel('Gap (Treated - Synthetic)', fontsize=11)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
