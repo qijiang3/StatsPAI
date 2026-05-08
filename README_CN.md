@@ -1,5 +1,9 @@
 [English](https://github.com/brycewang-stanford/statspai/blob/main/README.md) | [中文](https://github.com/brycewang-stanford/statspai/blob/main/README_CN.md)
 
+<p align="center">
+  <img src="docs/logo/readme-1.png" alt="StatsPAI — 面向 Agent 的 Python 因果推断工具包" width="780">
+</p>
+
 # StatsPAI：面向 Agent 的因果推断与计量经济学 Python 工具包
 
 [![PyPI version](https://img.shields.io/pypi/v/StatsPAI.svg)](https://pypi.org/project/StatsPAI/)

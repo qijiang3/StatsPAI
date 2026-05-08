@@ -1,5 +1,9 @@
 [English](https://github.com/brycewang-stanford/statspai/blob/main/README.md) | [中文](https://github.com/brycewang-stanford/statspai/blob/main/README_CN.md)
 
+<p align="center">
+  <img src="docs/logo/readme-1.png" alt="StatsPAI — Agent-Native Causal Inference for Python" width="780">
+</p>
+
 # StatsPAI: The Agent-Native Causal Inference & Econometrics Toolkit for Python
 
 [![PyPI version](https://img.shields.io/pypi/v/StatsPAI.svg)](https://pypi.org/project/StatsPAI/)
