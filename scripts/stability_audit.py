@@ -3,15 +3,17 @@
 StatsPAI now separates API lifecycle from numerical validation evidence:
 ``stability='stable'`` means the public signature is locked, while
 ``validation_status='certified'`` / ``'validated'`` carries the
-parity-evidence signal. This script keeps the old risk visible by
-counting stable API entries that still lack a parity-test reference in
+validation-evidence signal. This script keeps the old risk visible by
+counting stable API entries that still lack either registry-attached
+validation evidence or a parity-test reference in
 ``tests/reference_parity/`` + ``tests/external_parity/``.
 
 The catch: until v1.13 every newly-registered function was *implicitly*
 ``stable`` (the field's default), so the catalogue's ~970 stable
 entries currently mix two populations:
 
-* **Parity-test backed** — at least one test in
+* **Validation-backed** — the registry marks the function
+  ``certified`` / ``validated`` or at least one test in
   ``tests/reference_parity/`` or ``tests/external_parity/`` exercises
   the function with R / Stata / paper-replication numbers.
 * **API-stable but unbacked** — the public API is stable, but no
@@ -60,7 +62,7 @@ PARITY_DIRS: Tuple[Path, ...] = (
 #: a parity test before --check fails.  Bumped when we deliberately add
 #: hand-written entries faster than parity tests.  Decrease over time as
 #: the audit gets cleaned up.
-UNBACKED_HANDWRITTEN_FLOOR = 220
+UNBACKED_HANDWRITTEN_FLOOR = 190
 
 #: Regex matching ``sp.<name>(`` references in test source.  Used to
 #: attribute parity coverage to public ``sp.*`` symbols.
@@ -125,6 +127,7 @@ def _registry_specs():
 def collect() -> dict:
     registry, hand_written = _registry_specs()
     backed, sources = _backed_functions()
+    evidence_sources: Dict[str, List[str]] = {k: list(v) for k, v in sources.items()}
 
     stable_handwritten: List[str] = []
     stable_auto: List[str] = []
@@ -144,12 +147,22 @@ def collect() -> dict:
             continue
         # spec.stability == "stable"
         is_hand = name in hand_written
+        registry_backed = spec.validation_status in {"certified", "validated"}
+        if registry_backed:
+            notes = list(getattr(spec, "validation_notes", []) or [])
+            if not notes:
+                notes = [f"registry validation_status={spec.validation_status}"]
+            evidence_sources.setdefault(name, [])
+            for note in notes:
+                if note not in evidence_sources[name]:
+                    evidence_sources[name].append(note)
+        is_backed = name in backed or registry_backed
         if is_hand:
             stable_handwritten.append(name)
-            (backed_handwritten if name in backed else unbacked_handwritten).append(name)
+            (backed_handwritten if is_backed else unbacked_handwritten).append(name)
         else:
             stable_auto.append(name)
-            (backed_auto if name in backed else unbacked_auto).append(name)
+            (backed_auto if is_backed else unbacked_auto).append(name)
 
     return {
         "totals": {
@@ -170,6 +183,11 @@ def collect() -> dict:
                 for _ in p.rglob("test_*.py")
             ),
             "symbols_referenced_in_parity_tests": len(backed),
+            "registry_validated_symbols": sum(
+                1 for spec in registry.values()
+                if spec.stability == "stable"
+                and spec.validation_status in {"certified", "validated"}
+            ),
         },
         "lists": {
             "unbacked_handwritten": sorted(unbacked_handwritten),
@@ -178,7 +196,7 @@ def collect() -> dict:
             "deprecated": sorted(deprecated),
         },
         "sources": {
-            name: srcs for name, srcs in sources.items()
+            name: srcs for name, srcs in evidence_sources.items()
             # Only carry backed-handwritten sources in the JSON payload —
             # auto-registered specs aren't the focus of this audit.
             if name in set(backed_handwritten)
@@ -206,7 +224,7 @@ def render_report(stats: dict, *, show_unbacked: bool = False) -> str:
     lines.append(f"  experimental   : {t['experimental']}")
     lines.append(f"  deprecated     : {t['deprecated']}")
     lines.append("")
-    lines.append("Parity coverage  (sp.<name> referenced in parity tests)")
+    lines.append("Validation coverage")
     lines.append("-" * 50)
     lines.append(
         f"  parity test files                : "
@@ -215,6 +233,10 @@ def render_report(stats: dict, *, show_unbacked: bool = False) -> str:
     lines.append(
         f"  distinct sp.* symbols referenced : "
         f"{p['symbols_referenced_in_parity_tests']}"
+    )
+    lines.append(
+        f"  registry certified/validated     : "
+        f"{p['registry_validated_symbols']}"
     )
     lines.append(
         f"  stable hand-written, BACKED      : "
@@ -238,9 +260,9 @@ def render_report(stats: dict, *, show_unbacked: bool = False) -> str:
     lines.append("-" * 50)
     lines.append(
         "* UNBACKED hand-written: a maintainer wrote a stable public "
-        "API, but this audit found no parity-test reference. Add a "
-        "test, attach validation evidence, or mark immature APIs "
-        "experimental."
+        "API, but this audit found no registry validation evidence and "
+        "no parity-test reference. Add evidence, add a test, or mark "
+        "immature APIs experimental."
     )
     lines.append(
         "* UNBACKED auto-registered: classified as stable by default. "
@@ -263,14 +285,15 @@ def check_drift(stats: dict) -> int:
     if n > floor:
         print(
             f"FAIL: {n} hand-written stable API entries lack parity tests "
-            f"(floor: {floor}). Either add tests, attach validation "
-            f"evidence, or downgrade immature APIs to experimental.",
+            f"or registry validation evidence (floor: {floor}). Either "
+            f"add evidence, add tests, or downgrade immature APIs to "
+            f"experimental.",
             file=sys.stderr,
         )
         return 1
     print(
         f"OK: {n} hand-written stable API entries lack parity tests "
-        f"(floor: {floor})."
+        f"or registry validation evidence (floor: {floor})."
     )
     return 0
 

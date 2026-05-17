@@ -105,11 +105,11 @@ SERVER_VERSION = _resolve_server_version()
 # ═══════════════════════════════════════════════════════════════════════
 
 def _jsonrpc_result(request_id: Any, result: Any) -> str:
-    return json.dumps({
+    return json.dumps(_clean_floats({
         "jsonrpc": "2.0",
         "id": request_id,
         "result": result,
-    }, default=_json_default)
+    }), default=_json_default, allow_nan=False)
 
 
 def _jsonrpc_error(request_id: Any, code: int, message: str,
@@ -117,11 +117,40 @@ def _jsonrpc_error(request_id: Any, code: int, message: str,
     err: Dict[str, Any] = {"code": code, "message": message}
     if data is not None:
         err["data"] = data
-    return json.dumps({
+    return json.dumps(_clean_floats({
         "jsonrpc": "2.0",
         "id": request_id,
         "error": err,
-    }, default=_json_default)
+    }), default=_json_default, allow_nan=False)
+
+
+def _clean_floats(o: Any) -> Any:
+    """Recursively replace native float NaN/Inf with ``None``.
+
+    json.dumps' ``default=`` callback is **not** invoked for native
+    Python ``float`` values — they are "natively serialisable" as the
+    non-standard literals ``NaN`` / ``Infinity`` / ``-Infinity``. Strict
+    JSON parsers (RFC 8259, including Claude Desktop's ``JSON.parse``)
+    reject those tokens — typically with "No number after minus sign"
+    when they hit ``-Infinity``.
+
+    Walk dicts / lists / tuples (the only Python-native containers
+    json.dumps recurses into) before serialising so nan/inf can never
+    reach the output. Strings, bytes, and any non-container leaf pass
+    through untouched — numpy arrays / DataFrames / etc. are still
+    routed through :func:`_json_default`, which itself returns cleaned
+    Python structures.
+    """
+    if isinstance(o, float):
+        import math
+        if math.isnan(o) or math.isinf(o):
+            return None
+        return o
+    if isinstance(o, dict):
+        return {k: _clean_floats(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_clean_floats(v) for v in o]
+    return o
 
 
 def _json_default(o: Any) -> Any:
@@ -139,6 +168,11 @@ def _json_default(o: Any) -> Any:
     A bare ``__dict__`` fallback is risky on heavy result objects (live
     DataFrames recursing into themselves), so it's reached last and only
     walks public attributes one level deep.
+
+    Any branch that produces a Python list/dict (numpy arrays, pandas
+    Series/DataFrame/Index/Categorical) routes its return through
+    :func:`_clean_floats` so nan/inf inside the produced container are
+    scrubbed before json.dumps re-walks them.
     """
     # NaN/Inf — JSON has no representation; emit ``None`` so json.dumps
     # without ``allow_nan=False`` doesn't silently round-trip 'NaN'.
@@ -158,38 +192,40 @@ def _json_default(o: Any) -> Any:
             import math
             return None if (math.isnan(v) or math.isinf(v)) else v
         if isinstance(o, _np.complexfloating):
-            return {"real": float(o.real), "imag": float(o.imag)}
+            return _clean_floats({"real": float(o.real), "imag": float(o.imag)})
         if isinstance(o, _np.datetime64):
             # ns-precision ISO-8601 string; stable across pandas versions
             return str(o)
         if isinstance(o, _np.timedelta64):
             return str(o)
         if isinstance(o, _np.ndarray):
-            return o.tolist()
+            return _clean_floats(o.tolist())
     except ImportError:  # pragma: no cover
         pass
 
     try:
         import pandas as _pd
         if isinstance(o, _pd.DataFrame):
-            return o.to_dict(orient="list")
+            return _clean_floats(o.to_dict(orient="list"))
         if isinstance(o, _pd.Series):
-            return o.to_dict()
+            return _clean_floats(o.to_dict())
         if isinstance(o, _pd.Index):
-            return o.tolist()
+            return _clean_floats(o.tolist())
         if isinstance(o, _pd.Timestamp):
             return o.isoformat()
         if isinstance(o, _pd.Timedelta):
             return o.isoformat()
         if isinstance(o, _pd.Categorical):
-            return list(o)
+            return _clean_floats(list(o))
         if isinstance(o, _pd.Interval):
-            return {"left": o.left, "right": o.right, "closed": o.closed}
+            return _clean_floats(
+                {"left": o.left, "right": o.right, "closed": o.closed}
+            )
     except ImportError:  # pragma: no cover
         pass
 
     if isinstance(o, (set, frozenset)):
-        return sorted(o, key=str)
+        return _clean_floats(sorted(o, key=str))
     if isinstance(o, bytes):
         # Round-trippable; agents reading JSON shouldn't get garbled UTF-8
         import base64
@@ -198,7 +234,9 @@ def _json_default(o: Any) -> Any:
     try:
         from decimal import Decimal
         if isinstance(o, Decimal):
-            return float(o)
+            v = float(o)
+            import math
+            return None if (math.isnan(v) or math.isinf(v)) else v
     except Exception:  # pragma: no cover
         pass
 
@@ -215,17 +253,20 @@ def _json_default(o: Any) -> Any:
     try:
         from enum import Enum
         if isinstance(o, Enum):
-            return o.value
+            return _clean_floats(o.value)
     except Exception:  # pragma: no cover
         pass
 
     # dataclasses (without using asdict, which recurses and re-hits us)
     if hasattr(o, "__dataclass_fields__"):
-        return {f: getattr(o, f, None) for f in o.__dataclass_fields__}
+        return _clean_floats(
+            {f: getattr(o, f, None) for f in o.__dataclass_fields__}
+        )
 
     if hasattr(o, "__dict__"):
-        return {k: v for k, v in vars(o).items()
-                if not k.startswith("_")}
+        return _clean_floats(
+            {k: v for k, v in vars(o).items() if not k.startswith("_")}
+        )
     return str(o)
 
 
@@ -476,6 +517,7 @@ def _handle_resources_read(params):
         server_version=SERVER_VERSION,
         InvalidParamsError=_InvalidParamsError,
         ResourceNotFoundError=_ResourceNotFoundError,
+        clean_for_json=_clean_floats,
     )
 
 
@@ -552,11 +594,11 @@ def _make_progress_drain():
         return lambda payload: None
 
     def _drain(payload):
-        msg = json.dumps({
+        msg = json.dumps(_clean_floats({
             "jsonrpc": "2.0",
             "method": "notifications/progress",
             "params": payload,
-        }, default=_json_default)
+        }), default=_json_default, allow_nan=False)
         try:
             sink.write(msg + "\n")
             sink.flush()
@@ -640,7 +682,8 @@ def _handle_tools_call(params: Dict[str, Any]) -> Dict[str, Any]:
         raise payload
 
     result = payload
-    text = json.dumps(result, indent=2, default=_json_default)
+    text = json.dumps(_clean_floats(result), indent=2,
+                      default=_json_default, allow_nan=False)
 
     content: List[Dict[str, Any]] = [{"type": "text", "text": text}]
 
@@ -661,8 +704,9 @@ def _handle_tools_call(params: Dict[str, Any]) -> Dict[str, Any]:
         # Re-serialise the JSON payload without the binary blob so the
         # text content stays readable.
         clean = {k: v for k, v in result.items() if k != "_plot_png"}
-        content[0]["text"] = json.dumps(clean, indent=2,
-                                          default=_json_default)
+        content[0]["text"] = json.dumps(_clean_floats(clean), indent=2,
+                                          default=_json_default,
+                                          allow_nan=False)
 
     return {
         "content": content,

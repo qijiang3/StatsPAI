@@ -423,6 +423,7 @@ pip install statspai[plotting]    # matplotlib, seaborn
 pip install statspai[fixest]      # pyfixest 高维固定效应
 pip install statspai[deepiv]      # PyTorch (Deep IV)
 pip install statspai[neural]      # PyTorch (TARNet / CFRNet / DragonNet)
+pip install statspai[text]        # sentence-transformers，用于 sbert 文本嵌入
 pip install statspai[performance] # JAX CPU 后端，用于 sp.fast.demean
 ```
 

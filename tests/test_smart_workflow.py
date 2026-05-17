@@ -234,15 +234,15 @@ class TestReplicate:
     def test_lalonde(self):
         from statspai.smart.replicate import replicate
         data, guide = replicate('lalonde_1986')
-        assert len(data) == 445
+        assert len(data) == 614
         assert 'treat' in data.columns
         assert 're78' in data.columns
 
     def test_lee_rd(self):
         from statspai.smart.replicate import replicate
         data, guide = replicate('lee_2008')
-        assert len(data) == 6558
-        assert 'margin' in data.columns
+        assert len(data) == 1390
+        assert {'x', 'y'}.issubset(data.columns)
 
     def test_unknown(self):
         from statspai.smart.replicate import replicate

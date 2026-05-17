@@ -1,6 +1,8 @@
 """Tests for P1-B (causal_text MVP, experimental)."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -452,6 +454,20 @@ def test_llm_annotator_registered():
     spec = sp.describe_function("llm_annotator_correct")
     assert spec["category"] == "causal_text"
     assert any("Egami" in r for r in [spec.get("reference", "")])
+
+
+def test_text_extra_declared_for_sbert_install_hint():
+    try:
+        import tomllib  # type: ignore[attr-defined]
+    except ImportError:  # pragma: no cover - Python 3.9/3.10
+        import tomli as tomllib  # type: ignore
+
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    with pyproject.open("rb") as f:
+        cfg = tomllib.load(f)
+    extras = cfg["project"]["optional-dependencies"]
+    assert "text" in extras
+    assert any("sentence-transformers" in dep for dep in extras["text"])
 
 
 def test_top_level_imports_present():

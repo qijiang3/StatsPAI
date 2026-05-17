@@ -15,6 +15,7 @@ from statspai.registry import (
     FunctionSpec,
     ParamSpec,
     _REGISTRY,
+    _auto_spec_from_callable,
     register,
 )
 
@@ -147,6 +148,43 @@ class TestBackwardCompatibility:
         schema = sp.function_schema("regress")
         assert schema["name"] == "regress"
         assert "parameters" in schema
+
+    def test_schema_parameters_have_descriptions(self):
+        total = 0
+        described = 0
+        for name in sp.list_functions():
+            schema = sp.function_schema(name)
+            props = schema.get("parameters", {}).get("properties", {})
+            for prop in props.values():
+                total += 1
+                if isinstance(prop.get("description"), str) and prop["description"].strip():
+                    described += 1
+        assert total > 0
+        assert described / total >= 0.95
+
+    def test_auto_spec_extracts_docstring_param_metadata(self):
+        def demo(data, method="a", n_boot=10):
+            """Demo estimator.
+
+            Parameters
+            ----------
+            data : pandas.DataFrame
+                Input frame containing the analysis variables.
+            method : {'a', 'b'}, default 'a'
+                Algorithm variant.
+            n_boot : int, optional
+                Number of bootstrap draws.
+            """
+            return None
+
+        spec = _auto_spec_from_callable("__demo_schema_fn__", demo)
+        assert spec is not None
+        params = {p.name: p for p in spec.params}
+        assert params["data"].description.startswith("Input frame")
+        assert params["data"].type == "DataFrame"
+        assert params["method"].enum == ["a", "b"]
+        assert params["method"].type == "str"
+        assert params["n_boot"].description == "Number of bootstrap draws."
 
 
 class TestFlagshipPopulated:

@@ -156,6 +156,7 @@ pip install statspai                       # core
 pip install 'statspai[plotting]'           # matplotlib + seaborn
 pip install 'statspai[fixest]'             # pyfixest HDFE
 pip install 'statspai[deepiv]'             # PyTorch (Deep IV, TARNet)
+pip install 'statspai[text]'               # sentence-transformers for sbert
 ```
 
 ## Citation

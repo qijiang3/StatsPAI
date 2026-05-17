@@ -229,6 +229,7 @@ class TestReplicateLee2008:
     @pytest.mark.filterwarnings('ignore')
     def test_cct_bandwidth_recovers_paper(self):
         """Conventional jump at CCT bandwidth ≈ 7.41 (Lee Table 1: 7.99)."""
+        pytest.importorskip("rdrobust")
         data, _ = sp.replicate('lee_2008')
         rd = sp.rdrobust(data, y='y', x='x', c=0,
                          kernel='triangular', bwselect='cct')

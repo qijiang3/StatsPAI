@@ -830,6 +830,7 @@ pip install statspai[plotting]    # matplotlib, seaborn
 pip install statspai[fixest]      # pyfixest for high-dimensional FE
 pip install statspai[deepiv]      # PyTorch for DeepIV
 pip install statspai[neural]      # PyTorch for TARNet/CFRNet/DragonNet
+pip install statspai[text]        # sentence-transformers for sbert text embeddings
 pip install statspai[performance] # JAX CPU backend for sp.fast.demean
 ```
 

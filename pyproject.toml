@@ -94,6 +94,9 @@ bayes = [
     "pymc>=5.0",
     "arviz>=0.15",
 ]
+text = [
+    "sentence-transformers>=2.2.0",
+]
 tune = [
     "optuna>=3.0",
 ]

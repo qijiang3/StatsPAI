@@ -156,12 +156,19 @@ def handle_resources_read(
     server_version: str,
     InvalidParamsError,
     ResourceNotFoundError,
+    clean_for_json: Optional[Callable[[Any], Any]] = None,
 ) -> Dict[str, Any]:
     """Dispatch a ``resources/read`` URI to its renderer.
 
     The encoder + error classes are passed in to avoid a circular
     import through ``mcp_server`` — this module is meant to be a leaf.
+
+    ``clean_for_json`` is the recursive nan/inf scrubber from
+    ``mcp_server`` — passed in (rather than imported) for the same
+    leaf-module reason as ``json_default``. Falls back to identity when
+    the caller doesn't supply one (older callers / legacy tests).
     """
+    _clean = clean_for_json if clean_for_json is not None else (lambda x: x)
     uri = params.get("uri")
     if not isinstance(uri, str):
         raise InvalidParamsError(
@@ -183,8 +190,9 @@ def handle_resources_read(
                 {
                     "uri": uri,
                     "mimeType": "application/json",
-                    "text": json.dumps(functions_index(),
-                                       default=json_default),
+                    "text": json.dumps(_clean(functions_index()),
+                                       default=json_default,
+                                       allow_nan=False),
                 },
             ],
         }
@@ -212,7 +220,8 @@ def handle_resources_read(
                 {
                     "uri": uri,
                     "mimeType": "application/json",
-                    "text": json.dumps(card, default=json_default),
+                    "text": json.dumps(_clean(card), default=json_default,
+                                       allow_nan=False),
                 },
             ],
         }
@@ -247,7 +256,9 @@ def handle_resources_read(
                 {
                     "uri": uri,
                     "mimeType": "application/json",
-                    "text": json.dumps(payload, default=json_default),
+                    "text": json.dumps(_clean(payload),
+                                       default=json_default,
+                                       allow_nan=False),
                 },
             ],
         }

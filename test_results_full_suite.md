@@ -1,10 +1,13 @@
 # StatsPAI 全量测试结果报告
 
-> **维护说明（2026-05-10）**: 本文件保留为历史全量回归记录；它不是
-> 当前 `StatsPAI v1.15.1` 的发布验收凭据。v1.15.1 的最终发布前应在
-> 已安装完整依赖的环境中重新运行全量测试矩阵并覆盖本报告。
-> 本次本地修复已创建 `.venv` 并完成针对性验证，但尚未重跑下方
-> 17 批次全量矩阵。
+> **维护说明（2026-05-17）**: 本次 hardening 已在本地 `.venv` 完成默认全量回归。
+> **命令**: `.venv/bin/python -m pytest -q --no-cov`
+> **环境**: Python 3.9.6 · StatsPAI v1.15.1
+> **最终结果**: ✅ **5200 passed, 98 skipped, 13 deselected, 1 xfailed, 2 xpassed, 1062 warnings** · **26m20s**
+> **补充校验**: `scripts/schema_quality.py`、`scripts/stability_audit.py --check`、`git diff --check`、
+> 以及语法级 `flake8 --select=E9,F63,F7,F82` 均通过。
+>
+> 下方 2026-05-03 的分批结果保留为历史基线；当前验收以本段 2026-05-17 记录为准。
 
 > **自动生成**: 2026-05-03 全量回归（含 ObjSense 修复后验证）
 > **测试环境**: Python 3.13.5 · StatsPAI v1.12.2 · **scipy ObjSense 冲突已修复**

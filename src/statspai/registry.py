@@ -174,15 +174,11 @@ class FunctionSpec:
         properties = {}
         required = []
         for p in self.params:
-            prop: Dict[str, Any] = {"description": p.description}
-            # Map Python types to JSON schema types
-            type_map = {
-                "str": "string", "int": "integer", "float": "number",
-                "bool": "boolean", "DataFrame": "string",
-                "ndarray": "string", "list": "array",
-                "EconometricResults": "string",
+            prop: Dict[str, Any] = {
+                "description": _param_description(p.name, p.type, p.description)
             }
-            prop["type"] = type_map.get(p.type, "string")
+            # Map Python types to JSON schema types
+            prop["type"] = _json_schema_type(p.type)
             # JSON schema requires "items" for array types
             if prop["type"] == "array":
                 prop["items"] = {"type": "string"}
@@ -8391,6 +8387,259 @@ def _stringify_annotation(ann: Any) -> str:
     return str(ann).replace("typing.", "")
 
 
+_COMMON_PARAM_DESCRIPTIONS: Dict[str, str] = {
+    "data": "pandas DataFrame containing the variables used by the estimator.",
+    "df": "pandas DataFrame containing the variables used by the estimator.",
+    "formula": "Model formula using patsy/R-style syntax.",
+    "y": "Outcome variable column name or outcome array.",
+    "outcome": "Outcome variable column name or outcome array.",
+    "outcome_col": "Outcome variable column name.",
+    "treatment": "Treatment indicator, treatment variable, or treatment array.",
+    "treat": "Treatment indicator or first-treatment-period column.",
+    "treatment_col": "Treatment variable column name.",
+    "x": "Primary running variable, regressor, or feature input for this estimator.",
+    "X": "Feature matrix or covariate DataFrame.",
+    "w": "Weights, spatial weights, or balancing-weight input for this estimator.",
+    "W": "Covariates, proxy variables, or weights used by this estimator.",
+    "z": "Instrument, proxy, or auxiliary variable used by this estimator.",
+    "Z": "Instrument matrix or auxiliary covariate matrix.",
+    "id": "Unit, subject, or panel identifier column.",
+    "unit": "Unit identifier column.",
+    "entity": "Panel entity identifier column.",
+    "time": "Time period column.",
+    "cluster": "Cluster identifier column for clustered standard errors.",
+    "clusters": "Cluster labels for clustered inference.",
+    "group": "Group or cohort identifier.",
+    "cohort": "Treatment cohort or group identifier.",
+    "subgroup": "Subgroup identifier used for heterogeneity or DDD analyses.",
+    "method": "Estimator or algorithm variant to use.",
+    "model": "Model variant or parameterisation to fit.",
+    "robust": "Robust standard-error or covariance estimator option.",
+    "cov_type": "Covariance estimator type.",
+    "vcov": "Variance-covariance estimator option.",
+    "kernel": "Kernel function used for weighting or smoothing.",
+    "bandwidth": "Bandwidth used for local smoothing or kernel weighting.",
+    "h": "Bandwidth used for local smoothing or kernel weighting.",
+    "alpha": "Significance level for confidence intervals and tests.",
+    "level": "Confidence level or reporting level.",
+    "q": "Quantile level.",
+    "tau": "Quantile level or target treatment-effect index.",
+    "seed": "Random seed for reproducible stochastic steps.",
+    "random_state": "Random seed or RandomState for reproducible stochastic steps.",
+    "n_boot": "Number of bootstrap replications.",
+    "n_bootstrap": "Number of bootstrap replications.",
+    "n_perm": "Number of permutation replications.",
+    "permutations": "Number of permutation replications.",
+    "n_folds": "Number of cross-fitting or cross-validation folds.",
+    "max_iter": "Maximum number of optimisation iterations.",
+    "tol": "Numerical convergence tolerance.",
+    "weights": "Observation weights.",
+    "weight": "Observation weight column or vector.",
+    "offset": "Offset term or offset column.",
+    "exposure": "Exposure term or exposure column.",
+    "controls": "Control-variable column names.",
+    "covariates": "Covariate matrix, DataFrame, or column names.",
+    "features": "Feature matrix or feature column names.",
+    "text_col": "Text column used by causal-text estimators.",
+    "embedder": "Text embedding backend or custom embedding callable.",
+    "n_components": "Number of generated components or embedding dimensions.",
+    "detail": "Amount of result detail to return.",
+    "as_handle": "Return an MCP result handle instead of the full payload.",
+    "data_path": "Path to a CSV/Parquet data file loaded by the MCP server.",
+}
+
+
+def _param_description(name: str, typ: str, explicit: str = "") -> str:
+    """Return a non-empty, agent-useful parameter description."""
+    if isinstance(explicit, str) and explicit.strip():
+        return explicit.strip()
+    if name in _COMMON_PARAM_DESCRIPTIONS:
+        return _COMMON_PARAM_DESCRIPTIONS[name]
+    lower = name.lower()
+    if lower.endswith("_col") or lower.endswith("_column"):
+        stem = lower.rsplit("_", 1)[0].replace("_", " ")
+        return f"Column name for {stem}."
+    if lower.startswith("n_"):
+        return f"Number of {lower[2:].replace('_', ' ')}."
+    if lower.endswith("_formula"):
+        stem = lower[:-8].replace("_", " ")
+        return f"Formula for the {stem} component."
+    if lower.endswith("_path"):
+        stem = lower[:-5].replace("_", " ")
+        return f"Filesystem path for {stem or 'input/output'}."
+    if lower.endswith("_grid"):
+        stem = lower[:-5].replace("_", " ")
+        return f"Grid of {stem} values to evaluate."
+    if lower.startswith("include_"):
+        return f"Whether to include {lower[8:].replace('_', ' ')}."
+    if lower.startswith("return_"):
+        return f"Whether to return {lower[7:].replace('_', ' ')}."
+    if typ and typ != "Any":
+        return f"{name} parameter ({typ})."
+    return f"{name} parameter."
+
+
+def _json_schema_type(type_name: str) -> str:
+    """Map Python-ish annotation strings to JSON-schema primitive types."""
+    t = (type_name or "").replace("typing.", "")
+    lower = t.lower()
+    if "bool" in lower:
+        return "boolean"
+    if "int" in lower and "interval" not in lower:
+        return "integer"
+    if any(token in lower for token in ("float", "double", "number")):
+        return "number"
+    if any(token in lower for token in ("list", "sequence", "iterable", "tuple", "set")):
+        return "array"
+    if any(token in lower for token in ("dict", "mapping")):
+        return "object"
+    if any(token in lower for token in ("dataframe", "ndarray", "array")):
+        return "string"
+    return "string"
+
+
+def _enum_from_text(text: str) -> Optional[List[str]]:
+    """Extract simple string-choice enums from docstring type text.
+
+    Handles common forms such as ``{'a', 'b'}``, ``{"a", "b"}``, and
+    ``{a, b}``. Numeric sets and shape placeholders are ignored because
+    they are usually mathematical notation rather than tool choices.
+    """
+    if not text:
+        return None
+    match = re.search(r"\{([^{}]{1,240})\}", text)
+    if not match:
+        return None
+    raw = match.group(1)
+    quoted = re.findall(r"""['"]([^'"]+)['"]""", raw)
+    if quoted:
+        choices = quoted
+    else:
+        choices = [part.strip() for part in raw.split(",")]
+    clean: List[str] = []
+    for item in choices:
+        val = item.strip().strip("`'\"")
+        if not val:
+            continue
+        if val.lower() in {"none", "optional", "default"}:
+            continue
+        if not re.fullmatch(r"[A-Za-z0-9_.:+/\-]+", val):
+            continue
+        clean.append(val)
+    clean = list(dict.fromkeys(clean))
+    if 2 <= len(clean) <= 20:
+        return clean
+    return None
+
+
+def _normalise_doc_type(text: str) -> str:
+    """Convert a docstring type phrase into our compact type vocabulary."""
+    lower = (text or "").lower()
+    if "dataframe" in lower:
+        return "DataFrame"
+    if any(tok in lower for tok in ("array", "ndarray", "series")):
+        return "ndarray"
+    if any(tok in lower for tok in ("list", "sequence", "iterable", "tuple", "set")):
+        return "list"
+    if "bool" in lower:
+        return "bool"
+    if "int" in lower:
+        return "int"
+    if any(tok in lower for tok in ("float", "double", "number")):
+        return "float"
+    if "str" in lower or "string" in lower:
+        return "str"
+    if "dict" in lower or "mapping" in lower:
+        return "dict"
+    return ""
+
+
+def _parse_docstring_params(doc: str) -> Dict[str, Dict[str, Any]]:
+    """Parse NumPy- and Google-style parameter docs.
+
+    This intentionally stays conservative: it extracts descriptions and
+    obvious string-choice enums but does not try to fully understand
+    every docstring dialect. The fallback descriptions above still cover
+    common names when a docstring omits a parameter section.
+    """
+    if not doc:
+        return {}
+    lines = doc.expandtabs().splitlines()
+    out: Dict[str, Dict[str, Any]] = {}
+    section_names = {
+        "parameters", "args", "arguments", "keyword arguments",
+        "other parameters",
+    }
+    end_sections = {
+        "returns", "return", "yields", "raises", "notes", "examples",
+        "see also", "references", "attributes",
+    }
+
+    in_params = False
+    current_names: List[str] = []
+    current_type = ""
+    current_desc: List[str] = []
+
+    header_re = re.compile(
+        r"^\s*([*]{0,2}[A-Za-z_][A-Za-z0-9_]*(?:\s*,\s*[*]{0,2}[A-Za-z_][A-Za-z0-9_]*)*)\s*:\s*(.+?)\s*$"
+    )
+    google_re = re.compile(
+        r"^\s*([*]{0,2}[A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\):\s*(.*)$"
+    )
+
+    def flush() -> None:
+        nonlocal current_names, current_type, current_desc
+        if not current_names:
+            return
+        desc = " ".join(s.strip() for s in current_desc if s.strip())
+        desc = re.sub(r"\s+", " ", desc).strip()
+        enum = _enum_from_text(current_type)
+        typ = _normalise_doc_type(current_type)
+        for raw_name in current_names:
+            pname = raw_name.lstrip("*")
+            out[pname] = {
+                "description": desc,
+                "type": typ,
+                "enum": enum,
+            }
+        current_names = []
+        current_type = ""
+        current_desc = []
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        lower = stripped.lower().rstrip(":")
+        if not in_params:
+            if lower in section_names:
+                in_params = True
+            continue
+        if lower in end_sections and stripped and not line.startswith((" ", "\t")):
+            flush()
+            break
+        if stripped and set(stripped) <= {"-", "="}:
+            continue
+
+        m = header_re.match(line)
+        g = google_re.match(line)
+        if m:
+            flush()
+            current_names = [n.strip() for n in m.group(1).split(",")]
+            current_type = m.group(2).strip()
+            continue
+        if g:
+            flush()
+            current_names = [g.group(1).strip()]
+            current_type = g.group(2).strip()
+            if g.group(3).strip():
+                current_desc.append(g.group(3).strip())
+            continue
+        if current_names and (line.startswith(" ") or line.startswith("\t")):
+            current_desc.append(stripped)
+
+    flush()
+    return out
+
+
 def _first_doc_line(doc: Optional[str]) -> str:
     if not doc:
         return ""
@@ -8413,6 +8662,9 @@ def _auto_spec_from_callable(name: str, obj: Any) -> Optional[FunctionSpec]:
     except (TypeError, ValueError):
         sig = None
 
+    doc = inspect.getdoc(obj) or ""
+    doc_params = _parse_docstring_params(doc)
+
     params: List[ParamSpec] = []
     if sig is not None:
         for p in sig.parameters.values():
@@ -8423,15 +8675,22 @@ def _auto_spec_from_callable(name: str, obj: Any) -> Optional[FunctionSpec]:
                 continue
             required = p.default is inspect._empty
             default = None if required else p.default
+            doc_meta = doc_params.get(p.name, {})
+            doc_type = doc_meta.get("type") or ""
+            typ = _stringify_annotation(p.annotation)
+            if typ == "Any" and doc_type:
+                typ = str(doc_type)
+            if typ == "Any" and doc_meta.get("enum"):
+                typ = "str"
             params.append(ParamSpec(
                 name=p.name,
-                type=_stringify_annotation(p.annotation),
+                type=typ,
                 required=required,
                 default=default,
-                description="",
+                description=str(doc_meta.get("description") or ""),
+                enum=doc_meta.get("enum"),
             ))
 
-    doc = inspect.getdoc(obj) or ""
     desc = _first_doc_line(doc) or f"({name} — no description)"
     category = _infer_category(obj)
     spec = FunctionSpec(
