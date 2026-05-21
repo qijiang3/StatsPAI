@@ -190,11 +190,15 @@ edge looks spurious.
 **Pre-conditions**
 - data has at least 2 numeric columns intersecting `variables`
 - n_obs >> number of variables (PC unstable when p ~ n)
+- Provide allowed variables and any forbidden or required edges.
+- Record the model provider and prompt for reproducibility.
 
 **Identifying assumptions**
 - Faithfulness (PC's CI tests reflect d-separation)
 - Causal sufficiency (no unmeasured confounder among `variables`)
 - Linear/Gaussian relationships (Fisher-Z partial correlation)
+- Constraints encode domain knowledge correctly.
+- LLM output is a proposal to validate, not a substitute for identification analysis.
 
 **Failure modes → recovery**
 
@@ -202,11 +206,14 @@ edge looks spurious.
 | --- | --- | --- | --- |
 | ValueError 'Variable X not in data.columns' | `ValueError` | Pass only column names that exist in data |  |
 | Loop never converges (max_iter reached) | `(none — returns converged=False)` | Inspect iteration_log for oscillating edges; raise alpha or lower high_conf_threshold | `sp.llm_dag_propose (single-shot)` |
+| Returned graph violates required or forbidden edge constraints | `ValueError` | Tighten constraints and validate the returned graph before estimation. | `sp.llm_dag_validate` |
 
 **Alternatives (ranked)**
 - `sp.sp.llm_dag_propose: single-shot LLM proposal without CI loop`
 - `sp.sp.pc_algorithm: data-only PC (no LLM)`
 - `sp.sp.causal_mas: multi-agent LLM consensus`
+- `sp.dag`
+- `sp.causal_mas`
 
 **Typical minimum N**: 200
 
@@ -216,15 +223,24 @@ edge looks spurious.
 
 ## For Agents
 
+**Pre-conditions**
+- A candidate DAG and explicit validation criteria are available.
+
 **Identifying assumptions**
 - Faithfulness
 - Linear/Gaussian (Fisher-Z)
+- Validation checks only the encoded criteria; omitted domain constraints remain untested.
 
 **Failure modes → recovery**
 
 | Symptom | Exception | Remedy | Try next |
 | --- | --- | --- | --- |
 | Many supported=False edges | `(none — informational)` | DAG may be misspecified; rerun discovery or check for nonlinearity / unmeasured confounders | `sp.llm_dag_constrained` |
+| Graph fails acyclicity, variable, or edge-policy checks | `ValueError` | Revise the graph or feed failures back into the constrained DAG generator. | `sp.llm_dag_constrained` |
+
+**Alternatives (ranked)**
+- `sp.dag`
+- `sp.identify`
 
 **Typical minimum N**: 200
 

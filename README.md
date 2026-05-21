@@ -14,7 +14,7 @@
 [![status](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332/status.svg)](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19933900.svg)](https://doi.org/10.5281/zenodo.19933900)
 
-StatsPAI is the **first agent-native** Python platform for causal inference and applied econometrics. One `import`, **950+ registered functions** across **80+ submodules** (live count: `python scripts/registry_stats.py`), covering the complete empirical research workflow — from classical econometrics to cutting-edge ML/AI causal methods to publication-ready tables in Word, Excel, and LaTeX.
+StatsPAI is the **first agent-native** Python platform for causal inference and applied econometrics. One `import`, **1,000+ registered functions** across **80 submodules** (live count: `python scripts/registry_stats.py`), covering the complete empirical research workflow — from classical econometrics to cutting-edge ML/AI causal methods to publication-ready tables in Word, Excel, and LaTeX.
 
 **Built for AI agents**: every function returns structured result objects with machine-readable schemas (`list_functions()`, `describe_function()`, `function_schema()`) and is numerically validated against R and Stata reference implementations — purpose-built for LLM-driven research workflows while remaining fully ergonomic for human researchers.
 
@@ -124,7 +124,26 @@ StatsPAI's focus is **causal inference** — and on this axis we aim to be the m
 
 **Legend**: 🏆 most complete across ecosystems · ✅ full coverage · ⚠️ partial / scattered / single algorithm · ❌ not available.
 
-**StatsPAI at a glance**: 950+ registered functions in the live agent registry · 80+ submodules · ~230k LOC (core) + ~70k LOC (tests). All four numbers are reproducible from the canonical generator (`python scripts/registry_stats.py`); the per-module table in [`docs/stats.md`](docs/stats.md) is regenerated from the same script. For the full coverage matrix (23 method families) and cross-ecosystem line-count comparison, see [`docs/stats.md`](docs/stats.md).
+**StatsPAI at a glance**: 1,018 registered functions in the live agent registry · 80 submodules · ~249k LOC (core) + ~86k LOC (tests). All four numbers are reproducible from the canonical generator (`python scripts/registry_stats.py`); the per-module table in [`docs/stats.md`](docs/stats.md) is regenerated from the same script. For the full coverage matrix (23 method families) and cross-ecosystem line-count comparison, see [`docs/stats.md`](docs/stats.md).
+
+**📦 v1.15.5 (2026-05-21) — Agent-card coverage ratchet**
+
+StatsPAI now ships a CI-ratcheted agent-card coverage audit, generated
+baseline cards for the 1,018-function registry, and inherited agent-card
+metadata for canonical estimator variants. This release is registry /
+metadata infrastructure: estimator numerical paths are unchanged. Full
+notes in [`CHANGELOG.md`](CHANGELOG.md) under `[1.15.5]`.
+
+---
+
+**📦 v1.15.4 (2026-05-18) — Auto-CJK plot font fallback**
+
+`import statspai as sp` now auto-registers a detected CJK font as a
+matplotlib fallback, so Chinese labels in plots render correctly on
+systems with standard CJK fonts installed. English-only plots keep the
+user's primary font unchanged, and users can opt out with
+`STATSPAI_NO_AUTO_CJK=1`. Full notes in [`CHANGELOG.md`](CHANGELOG.md)
+under `[1.15.4]`.
 
 ---
 
@@ -392,7 +411,7 @@ StatsPAI 1.4.0 is Sprint 2 of the 知识地图 v3 roadmap. Closes the four secon
 | **Particle-filter assimilation** | **`sp.assimilation.particle_filter`** — bootstrap-SIR particle filter with systematic resampling (Gordon-Salmond-Smith 1993; Douc-Cappé 2005). Non-Gaussian priors, heavy-tailed observation noise, nonlinear dynamics via pluggable callbacks. Agrees with exact Kalman to ~0.003 under Gaussian DGPs. **`sp.assimilative_causal(..., backend='particle')`** routes the end-to-end wrapper. |
 | **Documentation (v3 frontier guides)** | `docs/guides/synth_experimental.md` (Abadie-Zhao inverse-SC workflow), `docs/guides/harvest_did.md` (Borusyak-Hull-Jaravel harvesting DID), `docs/guides/assimilative_ci.md` (Nature Comms 2026 streaming CI, Kalman + particle backends). Wired into `mkdocs.yml` nav. |
 | **v1.3 stable foundation (carried forward)** | 11 2025-2026 frontier methods from Sprint 1: `synth_experimental_design`, `rdrobust(..., bootstrap='rbc')`, `evidence_without_injustice`, `target_trial.to_paper(fmt='jama'/'bmj')`, `harvest_did`, `bcf_ordinal`, `bcf_factor_exposure`, `causal_mas`, `shift_share_political`, `causal_kalman`. All v1.0 capstone surfaces (`sp.bridge`, `sp.fairness`, `sp.surrogate`, `sp.epi`, `sp.longitudinal`, `sp.question`, full MR suite, TARGET checklist) remain intact. |
-| **Agent-native platform** | `sp.list_functions()` / `sp.describe_function()` / `sp.function_schema()` expose OpenAI/Anthropic tool-calling schemas for 874+ registered estimators. 5 new hand-written `FunctionSpec` entries this release. `sp.agent.mcp_server` MCP scaffold lets external LLMs call every StatsPAI function via natural-language tool invocation. |
+| **Agent-native platform** | `sp.list_functions()` / `sp.describe_function()` / `sp.function_schema()` expose OpenAI/Anthropic tool-calling schemas for 1,018 registered public functions. 145 curated or explicitly inherited `FunctionSpec` entries carry at least one of assumptions, preconditions, failure modes, limitations, `typical_n_min`, and validation tiers for the flagship surface. `sp.agent.mcp_server` MCP scaffold lets external LLMs call every StatsPAI function via natural-language tool invocation. |
 | **CI/CD hygiene** | `tabulate` hard-dep from v1.3.0 carried forward. Deflaked `test_forest_ate_recovers_average_tau` by seeding the forest explicitly (`random_state=0`, `n_estimators=300`, larger `n`). 2 699+ tests passing across all OS × Python matrix entries. |
 
 **Previously in v0.9.2 — Decomposition Analysis**: **18 first-class decomposition methods across 13 modules (~6,200 LOC, 54 tests)**, unified under `sp.decompose(method=...)`. Mean (Blinder-Oaxaca/Gelbach/Fairlie/Bauer-Sinning/Yun), distributional (RIF/FFL/DFL/Machado-Mata/Melly/CFM), inequality (Theil/Atkinson/Dagum/Shapley/Lerman-Yitzhaki), demographic (Kitagawa/Das-Gupta), and causal (gap_closing/mediation_decompose/disparity_decompose). Closed-form influence functions for Theil/Atkinson, weighted O(n log n) Dagum Gini, cross-method consistency checks.
@@ -1375,7 +1394,7 @@ resolves to the latest version):
   author       = {Wang, Biaoyue},
   title        = {StatsPAI: The Agent-Native Causal Inference \& Econometrics Toolkit for Python},
   year         = {2026},
-  version      = {1.15.3},
+  version      = {1.15.5},
   doi          = {10.5281/zenodo.19933900},
   url          = {https://doi.org/10.5281/zenodo.19933900},
   license      = {MIT},

@@ -13,16 +13,17 @@ intensity varies continuously across units:
 
 **Not** the Callaway, Goodman-Bacon & Sant'Anna (2024) ATT(d|g,t) /
 ACRT(d|g,t) estimator with strong parallel trends and influence-function
-variance — a paper-faithful ``method='cgs'`` is tracked in
-``docs/rfc/continuous_did_cgs.md`` and will land in a later sprint. The
-current ``method='att_gt'`` is a dose-bin heuristic, not the CGS 2024
+variance.  ``method='cgs'`` is available as an MVP but remains
+non-parity: OR only, bootstrap SE, and paper-formula details tracked in
+``docs/rfc/continuous_did_cgs.md`` with ``[待核验]`` markers. The current
+default ``method='att_gt'`` is a dose-bin heuristic, not the CGS 2024
 group-time estimand.
 
 References
 ----------
 Callaway, B., Goodman-Bacon, A. & Sant'Anna, P.H.C. (2024).
 "Difference-in-Differences with a Continuous Treatment."
-[@callaway2024difference] — the target of the forthcoming ``method='cgs'``.
+[@callaway2024difference] — the target of the MVP ``method='cgs'``.
 
 de Chaisemartin, C. & D'Haultfœuille, X. (2018).
 "Fuzzy Differences-in-Differences." [@dechaisemartin2018fuzzy].

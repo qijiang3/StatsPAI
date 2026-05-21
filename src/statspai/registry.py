@@ -20,7 +20,7 @@ import inspect
 import re
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -145,6 +145,21 @@ class FunctionSpec:
     """Known-unimplemented variants / parameter values inside an
     otherwise stable function.  Each entry is one short sentence; the
     canonical pattern is ``"<param>=<value>: <what's missing>"``."""
+    inherits_from: Optional[str] = None
+    """Name of another registered FunctionSpec whose agent-native
+    fields (``assumptions`` / ``pre_conditions`` / ``failure_modes`` /
+    ``alternatives`` / ``typical_n_min``) should be merged into this
+    one's :meth:`agent_card` view.
+
+    Used for dispatcher variants — e.g. ``did_callaway_santanna``
+    sets ``inherits_from='did'`` to absorb the parent's parallel-trends
+    / no-anticipation assumptions without restating them.  The variant
+    keeps its own ``description`` / ``params`` / ``example`` /
+    ``reference`` (those are method-specific) and *adds* its own
+    entries to the agent-native lists; the merger unions them.
+
+    Set to ``None`` (default) for top-level estimators or when no
+    sensible parent exists.  Cycles are blocked at render time."""
 
     def __post_init__(self) -> None:
         # Validate stability tier early so a typo fails at import / first
@@ -214,16 +229,39 @@ class FunctionSpec:
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
-    def agent_card(self) -> Dict[str, Any]:
+    def agent_card(self, *, merge_inherited: bool = True) -> Dict[str, Any]:
         """Return the agent-native view of this function.
 
-        This is the structured payload rendered into guide
-        ``## For Agents`` sections, surfaced by :func:`sp.describe_function`
-        and consumed by :func:`sp.recommend` / agent code. It is a
-        superset of :meth:`to_openai_schema` plus the agent-native
-        fields (``assumptions`` / ``failure_modes`` / ``alternatives`` /
-        ``typical_n_min`` / ``pre_conditions``).
+        Structured payload rendered into guide ``## For Agents``
+        sections, surfaced by :func:`sp.describe_function` and consumed
+        by :func:`sp.recommend` / agent code.  A superset of
+        :meth:`to_openai_schema` plus the agent-native fields.
+
+        Parameters
+        ----------
+        merge_inherited : bool, default True
+            When True and :attr:`inherits_from` resolves to another
+            registered spec, merge that parent's agent-native lists
+            (``assumptions`` / ``pre_conditions`` / ``failure_modes`` /
+            ``alternatives``) into the result.  Method-specific fields
+            (``description`` / ``example`` / ``params`` / ``reference``)
+            never inherit — variants always speak for themselves there.
+            ``typical_n_min`` inherits only when this spec leaves it
+            ``None``.  Cycles are blocked silently at depth 5.
+
+            Pass ``merge_inherited=False`` for debugging "did this
+            child's own ``assumptions`` list pick up content yet?".
         """
+        merged = _merge_inherited_view(self) if merge_inherited else None
+        if merged is None:
+            assumptions = list(self.assumptions)
+            pre_conditions = list(self.pre_conditions)
+            failure_modes = [fm.to_dict() for fm in self.failure_modes]
+            alternatives = list(self.alternatives)
+            typical_n_min = self.typical_n_min
+        else:
+            assumptions, pre_conditions, failure_modes, alternatives, typical_n_min = merged
+
         return {
             "name": self.name,
             "category": self.category,
@@ -233,14 +271,96 @@ class FunctionSpec:
             "limitations": list(self.limitations),
             "description": self.description,
             "signature": self.to_openai_schema(),
-            "pre_conditions": list(self.pre_conditions),
-            "assumptions": list(self.assumptions),
-            "failure_modes": [fm.to_dict() for fm in self.failure_modes],
-            "alternatives": list(self.alternatives),
-            "typical_n_min": self.typical_n_min,
+            "pre_conditions": pre_conditions,
+            "assumptions": assumptions,
+            "failure_modes": failure_modes,
+            "alternatives": alternatives,
+            "typical_n_min": typical_n_min,
             "reference": self.reference,
             "example": self.example,
+            "inherits_from": self.inherits_from,
         }
+
+
+#: Maximum depth of ``inherits_from`` chains we follow before bailing.
+#: Set conservatively; real inheritance is rarely deeper than 2 hops
+#: (variant → family → root).  Cycles get capped silently.
+_INHERIT_MAX_DEPTH = 5
+
+
+def _merge_inherited_view(
+    spec: "FunctionSpec",
+) -> Optional[
+    "Tuple[List[str], List[str], List[Dict[str, Any]], List[str], Optional[int]]"
+]:
+    """Walk ``spec.inherits_from`` and union the agent-native lists.
+
+    Returns ``None`` when no inheritance is declared (caller falls back
+    to the raw fields).  Otherwise returns the five merged lists/value
+    in the same order as the unpacked tuple in :meth:`agent_card`.
+
+    Merge semantics:
+
+    * ``assumptions`` / ``pre_conditions`` / ``alternatives`` — child's
+      own entries first, then parent's, deduped while preserving order.
+    * ``failure_modes`` — concatenated, deduped by ``(symptom, exception)``.
+    * ``typical_n_min`` — child's value wins if not ``None``; otherwise
+      take the first non-``None`` value found walking the chain.
+    """
+    if not spec.inherits_from:
+        return None
+
+    chain: List["FunctionSpec"] = [spec]
+    visited: set[str] = {spec.name}
+    current = spec
+    for _ in range(_INHERIT_MAX_DEPTH):
+        parent_name = current.inherits_from
+        if not parent_name or parent_name in visited:
+            break
+        parent = _REGISTRY.get(parent_name)
+        if parent is None:
+            break
+        chain.append(parent)
+        visited.add(parent_name)
+        current = parent
+
+    if len(chain) == 1:
+        # inherits_from was set but parent wasn't registered (yet) —
+        # behave as if no inheritance.  Don't error: the parent may
+        # show up after the auto-pass and a later lookup will resolve.
+        return None
+
+    def _union_strs(extractor) -> List[str]:
+        seen: set[str] = set()
+        out: List[str] = []
+        for s in chain:
+            for item in extractor(s):
+                if item not in seen:
+                    seen.add(item)
+                    out.append(item)
+        return out
+
+    assumptions = _union_strs(lambda s: s.assumptions)
+    pre_conditions = _union_strs(lambda s: s.pre_conditions)
+    alternatives = _union_strs(lambda s: s.alternatives)
+
+    fm_seen: set[Tuple[str, str]] = set()
+    failure_modes: List[Dict[str, Any]] = []
+    for s in chain:
+        for fm in s.failure_modes:
+            key = (fm.symptom, fm.exception)
+            if key in fm_seen:
+                continue
+            fm_seen.add(key)
+            failure_modes.append(fm.to_dict())
+
+    typical_n_min: Optional[int] = None
+    for s in chain:
+        if s.typical_n_min is not None:
+            typical_n_min = s.typical_n_min
+            break
+
+    return assumptions, pre_conditions, failure_modes, alternatives, typical_n_min
 
 
 # ====================================================================== #
@@ -250,6 +370,8 @@ class FunctionSpec:
 _REGISTRY: Dict[str, FunctionSpec] = {}
 _BASE_REGISTRY_BUILT = False
 _VALIDATION_EVIDENCE_APPLIED = False
+_AGENT_CARD_SEEDS_APPLIED = False
+_BASELINE_CARDS_APPLIED = False
 
 
 def register(spec: FunctionSpec) -> FunctionSpec:
@@ -293,6 +415,7 @@ def _build_registry():
         returns="EconometricResults",
         example='sp.regress("wage ~ education + experience", data=df, robust="hc1")',
         tags=["regression", "ols", "linear", "robust"],
+        reference="wooldridge2010econometric",
         pre_conditions=[
             "data is a pandas DataFrame with every variable in formula as a column",
             "outcome is numeric; non-numeric regressors should be categorical (handled via patsy)",
@@ -8374,6 +8497,1101 @@ _CERTIFIED_SEED_FUNCTIONS: frozenset = frozenset({
     "mediate",
 })
 
+_VALIDATED_TEST_SEED_FUNCTIONS: Dict[str, List[str]] = {
+    # DiD long tail with deterministic unit / numerical regression tests.
+    "did": ["tests/reference_parity/test_did_parity.py", "tests/test_did.py"],
+    "did_2x2": ["tests/reference_parity/test_did_parity.py", "tests/coverage_monte_carlo/test_coverage.py"],
+    "continuous_did": ["tests/test_continuous_did_heuristics.py", "tests/test_continuous_did_cgs.py"],
+    "cic": ["tests/test_did_frontiers.py"],
+    "ddd": ["tests/test_did.py", "tests/test_did_frontiers.py"],
+    "ddd_heterogeneous": ["tests/test_ddd_heterogeneous.py"],
+    "event_study": ["tests/test_did.py", "tests/test_fast_event_study.py"],
+    "did_analysis": ["tests/test_did.py", "tests/test_did_imputation_branches.py"],
+    "did_bcf": ["tests/test_did_frontiers.py"],
+    "did_misclassified": ["tests/test_did_frontiers.py"],
+    "did_timevarying_covariates": ["tests/test_did_timevarying_covariates.py"],
+    "cohort_anchored_event_study": ["tests/test_did_frontiers.py"],
+    "design_robust_event_study": ["tests/test_did_frontiers.py"],
+    "harvest_did": ["tests/test_harvest_did.py"],
+    "lp_did": ["tests/test_lp_did.py"],
+    "stacked_did": ["tests/test_did.py"],
+    "pretrends_test": ["tests/test_did.py", "tests/test_did_advanced.py"],
+
+    # Reporting / publication-output layer.
+    "cite": ["tests/test_cite_inline.py"],
+    "collect": ["tests/test_collection.py"],
+    "esttab": ["tests/test_v093_bugfixes.py", "tests/test_regtable_alpha.py"],
+    "mean_comparison": ["tests/test_v093_bugfixes.py", "tests/test_collection.py"],
+    "modelsummary": ["tests/test_modelsummary.py", "tests/test_regtable_fmt_auto.py"],
+    "outreg2": ["tests/test_fixest.py"],
+    "paper_tables": ["tests/test_paper_tables.py", "tests/test_paper_tables_export.py"],
+    "regtable": ["tests/test_regtable_snapshots.py", "tests/test_regtable_round4_extensions.py"],
+    "replication_pack": ["tests/test_replication_pack.py"],
+
+    # Production-function / structural estimators.
+    "prod_fn": ["tests/test_prod_fn.py"],
+    "olley_pakes": ["tests/test_prod_fn.py"],
+    "opreg": ["tests/test_prod_fn.py"],
+    "levinsohn_petrin": ["tests/test_prod_fn.py"],
+    "levpet": ["tests/test_prod_fn.py"],
+    "acf": ["tests/test_prod_fn.py"],
+    "ackerberg_caves_frazer": ["tests/test_prod_fn.py"],
+    "markup": ["tests/test_prod_fn.py"],
+    "wooldridge_prod": ["tests/test_prod_fn.py"],
+
+    # Epidemiology primitives with formula-level tests.
+    "odds_ratio": ["tests/test_epi.py"],
+    "relative_risk": ["tests/test_epi.py"],
+    "risk_difference": ["tests/test_epi.py"],
+    "attributable_risk": ["tests/test_epi.py"],
+    "incidence_rate_ratio": ["tests/test_epi.py"],
+    "mantel_haenszel": ["tests/test_epi.py"],
+    "breslow_day_test": ["tests/test_epi.py", "tests/test_epi_diagnostic.py"],
+    "cohen_kappa": ["tests/test_epi_diagnostic.py"],
+    "sensitivity_specificity": ["tests/test_epi_diagnostic.py"],
+    "roc_curve": ["tests/test_epi_diagnostic.py"],
+    "direct_standardize": ["tests/test_epi.py"],
+    "indirect_standardize": ["tests/test_epi.py"],
+    "bradford_hill": ["tests/test_epi.py"],
+
+    # Core causal / inference families with recovery or contract tests.
+    "bootstrap": ["tests/test_round3.py"],
+    "front_door": ["tests/test_front_door.py", "tests/test_review_fixes_round2.py"],
+    "g_computation": ["tests/test_g_computation.py"],
+    "ipw": ["tests/test_new_features.py"],
+    "iv_diag": ["tests/iv/test_iv_diag.py"],
+    "iv_compare": ["tests/iv/test_iv_diag.py"],
+    "kernel_iv": ["tests/test_kernel_iv.py", "tests/test_iv_frontiers.py"],
+    "continuous_iv_late": ["tests/test_continuous_iv_late.py"],
+    "mccrary_test": ["tests/test_diagnostics.py", "tests/test_estimator_provenance_round10.py"],
+    "diagnose_result": ["tests/test_diagnose_result_closed_loop.py", "tests/test_workflow_sprint_b.py"],
+    "qreg": ["tests/test_quantile.py", "tests/test_decomposition_tier_c.py"],
+    "qte": ["tests/test_qte.py"],
+    "qdid": ["tests/test_qte.py"],
+    "beyond_average_late": ["tests/test_v101_verified_fixes.py"],
+    "tmle": ["tests/test_tmle.py", "tests/test_low_cov_battery.py"],
+    "hal_tmle": ["tests/test_hal_tmle.py"],
+    "proximal": ["tests/test_proximal.py"],
+    "fortified_pci": ["tests/test_proximal_frontiers.py"],
+    "bidirectional_pci": ["tests/test_proximal_frontiers.py"],
+    "pci_mtp": ["tests/test_proximal_frontiers.py"],
+    "principal_strat": ["tests/test_principal_strat.py"],
+    "msm": ["tests/test_msm.py", "tests/test_escape_hatches.py"],
+    "surrogate_index": ["tests/test_surrogate.py"],
+    "proximal_surrogate_index": ["tests/test_surrogate.py"],
+    "long_term_from_short": ["tests/test_surrogate.py"],
+
+    # Bayesian / BCF / neural causal frontiers with unit and regression tests.
+    "OPEResult": ["tests/test_ml_causal_polish.py"],
+    "bayes_did": ["tests/test_bayes_did.py", "tests/test_low_cov_battery.py"],
+    "bayes_dml": ["tests/test_bayes_dml.py"],
+    "bayes_fuzzy_rd": ["tests/test_bayes_fuzzy_rd.py"],
+    "bayes_iv": ["tests/test_bayes_iv.py", "tests/test_bayes_iv_per_instrument.py"],
+    "bayes_mte": ["tests/test_bayes_mte.py", "tests/test_bayes_mte_multi_iv.py"],
+    "bayes_rd": ["tests/test_bayes_rd.py"],
+    "bcf_factor_exposure": ["tests/test_bcf_ordinal.py"],
+    "bcf_longitudinal": ["tests/test_bcf_longitudinal.py"],
+    "bcf_ordinal": ["tests/test_bcf_ordinal.py"],
+    "cevae": ["tests/test_ope_cevae.py", "tests/test_neural_causal_exports.py"],
+
+    # DAG, LLM, workflow, and paper-generation surfaces.
+    "bridge": ["tests/test_bridge.py", "tests/test_bridge_full.py"],
+    "causal_mas": ["tests/test_causal_mas.py"],
+    "causal_question": ["tests/test_question_dsl.py", "tests/test_paper_from_question.py"],
+    "dag": ["tests/test_dag_scm.py", "tests/test_dag_recommend_and_tte_report.py"],
+    "identify": ["tests/test_dag_scm.py"],
+    "swig": ["tests/test_dag_scm.py", "tests/test_transport.py"],
+    "llm_causal_assess": ["tests/test_llm_evaluator.py"],
+    "llm_dag_constrained": ["tests/test_llm_dag_loop.py"],
+    "llm_dag_validate": ["tests/test_llm_dag_loop.py"],
+    "pairwise_causal_benchmark": ["tests/test_llm_evaluator.py"],
+    "paper": ["tests/test_paper_from_question.py", "tests/test_paper_branches.py"],
+    "preregister": ["tests/test_preregister.py"],
+    "load_preregister": ["tests/test_preregister.py"],
+
+    # Fairness, evidence synthesis, and policy / OPE.
+    "counterfactual_fairness": ["tests/test_fairness.py"],
+    "demographic_parity": ["tests/test_fairness.py"],
+    "equalized_odds": ["tests/test_fairness.py"],
+    "fairness_audit": ["tests/test_fairness.py"],
+    "orthogonal_to_bias": ["tests/test_fairness.py"],
+    "heterogeneity_of_effect": ["tests/test_evidence_synthesis.py"],
+    "rwd_rct_concordance": ["tests/test_evidence_synthesis.py"],
+    "synthesise_evidence": ["tests/test_evidence_synthesis.py"],
+    "causal_policy_forest": ["tests/test_ope_extensions.py"],
+    "sharp_ope_unobserved": ["tests/test_ope_extensions.py"],
+
+    # Causal RL / sequential decision frontiers.
+    "causal_bandit": ["tests/test_causal_rl_core.py"],
+    "causal_dqn": ["tests/test_causal_rl.py"],
+    "counterfactual_policy_optimization": ["tests/test_causal_rl_core.py"],
+    "structural_mdp": ["tests/test_causal_rl_core.py"],
+
+    # Conformal, interference, and transport-family tests.
+    "conformal": ["tests/test_dispatchers_v150.py"],
+    "conformal_continuous": ["tests/test_conformal_extended.py"],
+    "conformal_fair_ite": ["tests/test_conformal_frontiers.py"],
+    "conformal_interference": ["tests/test_conformal_extended.py"],
+    "cluster_cross_interference": ["tests/test_cluster_rct.py"],
+    "interference": ["tests/test_dispatchers_v150.py"],
+    "inward_outward_spillover": ["tests/test_interference_extensions.py"],
+    "network_exposure": ["tests/test_dispatchers_v150.py"],
+    "network_hte": ["tests/test_interference_extensions.py"],
+    "spillover": ["tests/test_phase9to14.py", "tests/test_dispatchers_v150.py"],
+    "identify_transport": ["tests/test_transport.py"],
+
+    # MR and IV diagnostics not already covered by Track A seeds.
+    "mr": ["tests/test_mr_frontier.py", "tests/test_dispatchers_v150.py"],
+    "mr_bma": ["tests/test_mr_extensions.py"],
+    "mr_clust": ["tests/test_mr_extensions.py"],
+    "mr_cml": ["tests/test_mr_frontier.py"],
+    "mr_f_statistic": ["tests/test_mr_extras.py"],
+    "mr_heterogeneity": ["tests/test_mr_diagnostics.py"],
+    "mr_lap": ["tests/test_mr_frontier.py"],
+    "mr_mediation": ["tests/test_mr_extensions.py"],
+    "mr_mode": ["tests/test_mr_extras.py"],
+    "mr_multivariable": ["tests/test_mr_extensions.py"],
+    "mr_pleiotropy_egger": ["tests/test_mr_diagnostics.py", "tests/test_correctness_v150.py"],
+    "mr_raps": ["tests/test_mr_frontier.py"],
+    "mr_steiger": ["tests/test_mr_diagnostics.py"],
+
+    # RD / synthetic / panel / spatial / time-series / count-model surfaces.
+    "bartik": ["tests/test_bartik.py"],
+    "causal_impact": ["tests/test_causal_impact.py"],
+    "dl_propensity_score": ["tests/test_overlap_did.py"],
+    "dml_model_averaging": ["tests/test_dml_model_averaging.py"],
+    "dml_panel": ["tests/test_dml_panel.py"],
+    "dose_response": ["tests/test_phase9to14.py"],
+    "drdid": ["tests/test_estimator_provenance_round3.py"],
+    "dynotears": ["tests/test_causal_discovery_ts.py"],
+    "grapple": ["tests/test_mr_frontier.py"],
+    "icp": ["tests/test_icp.py"],
+    "lpcmci": ["tests/test_causal_discovery_ts.py"],
+    "multi_treatment": ["tests/test_phase9to14.py"],
+    "nbreg": ["tests/test_count_panel_nbreg.py"],
+    "oster_bounds": ["tests/test_diagnostics.py", "tests/test_workflow_degradations.py"],
+    "overlap_weighted_did": ["tests/test_overlap_did.py"],
+    "particle_filter": ["tests/reference_parity/test_assimilation_parity.py"],
+    "rd_bias_aware_fuzzy": ["tests/test_rd_polish.py"],
+    "rd_discrete": ["tests/test_rd_polish.py"],
+    "rd_flex": ["tests/test_rd_polish.py"],
+    "rd_honest": ["tests/test_rd_validation.py"],
+    "sar": ["tests/spatial/test_models_ml.py"],
+    "sdm": ["tests/spatial/test_models_ml.py"],
+    "sem": ["tests/spatial/test_models_ml.py"],
+    "sequential_sdid": ["tests/test_sequential_sdid.py"],
+    "shift_share_political": ["tests/test_shift_share_political.py"],
+    "shift_share_political_panel": ["tests/test_shift_share_political.py"],
+    "spec_curve": ["tests/test_spec_curve.py"],
+    "synth_survival": ["tests/test_synth_survival.py"],
+    "tobit": ["tests/test_weakiv_tobit.py"],
+    "wild_cluster_bootstrap": ["tests/test_inference.py"],
+    "xtabond": ["tests/test_gmm.py"],
+    "xtnbreg": ["tests/test_count_panel_nbreg.py"],
+
+    # Longitudinal / target-trial / survey / mediation contracts.
+    "clone_censor_weight": ["tests/test_target_trial.py"],
+    "ipcw": ["tests/test_target_trial.py"],
+    "longitudinal_analyze": ["tests/test_longitudinal.py"],
+    "longitudinal_contrast": ["tests/test_longitudinal.py"],
+    "mediate_interventional": ["tests/test_mediate_interventional.py"],
+    "regime": ["tests/test_longitudinal.py"],
+    "svydesign": ["tests/test_survey.py"],
+    "target_trial_protocol": ["tests/test_target_trial.py"],
+    "unified_sensitivity": ["tests/test_unified_sensitivity.py"],
+}
+
+#: Variant → canonical parent mapping for ``inherits_from``.
+#:
+#: Wires up dispatcher children (alternative estimators in the same
+#: design family) so their :meth:`FunctionSpec.agent_card` view inherits
+#: the parent's identifying assumptions / failure modes / fallback list
+#: without restating them.  Method-specific assumptions still belong on
+#: the child directly (parallel trends with anticipation, kernel choice,
+#: etc.); inheritance only fills the *family-shared* knowledge.
+#:
+#: Add a new entry here whenever you introduce another canonical
+#: estimator in a family that already has a curated parent.
+_INHERITANCE_SEEDS: Dict[str, str] = {
+    # ----- Difference-in-Differences family ----- #
+    "callaway_santanna": "did",
+    "sun_abraham": "did",
+    "borusyak_jaravel_spiess": "did",
+    "did_imputation": "did",
+    "did_2stage": "did",
+    "did_2x2": "did",
+    "did_bcf": "did",
+    "did_misclassified": "did",
+    "did_timevarying_covariates": "did",
+    "did_multiplegt": "did",
+    "did_multiplegt_dyn": "did",
+    # ----- Instrumental Variables family ----- #
+    "ivreg": "iv",
+    "liml": "iv",
+    "kernel_iv": "iv",
+    "lasso_iv": "iv",
+    "dist_iv": "iv",
+    "continuous_iv_late": "iv",
+    # ----- Regression Discontinuity family ----- #
+    "rd_honest": "rdrobust",
+    "rd_discrete": "rdrobust",
+    "rd_bias_aware_fuzzy": "rdrobust",
+    "rd_extrapolate": "rdrobust",
+    "rd_distribution": "rdrobust",
+    # ----- Synthetic Control family ----- #
+    "synthdid_estimate": "synth",
+    "synth_survival": "synth",
+    # ----- Mendelian Randomization family ----- #
+    "mr_ivw": "mr",
+    "mr_egger": "mr",
+    "mr_median": "mr",
+    "mr_mode": "mr",
+    "mr_presso": "mr",
+    "mr_raps": "mr",
+    "mr_cml": "mr",
+    "mr_clust": "mr",
+    "mr_lap": "mr",
+    "mr_radial": "mr",
+    "mr_bma": "mr",
+    "mr_multivariable": "mr",
+    "mr_steiger": "mr",
+    "mr_pleiotropy_egger": "mr",
+    "mr_heterogeneity": "mr",
+    "mr_f_statistic": "mr",
+    "mr_leave_one_out": "mr",
+    "grapple": "mr",
+}
+
+
+_AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
+    "causal_question": {
+        "pre_conditions": [
+            "Declare treatment, outcome, design, and available data before estimating.",
+            "Run identify() before estimate() when the design is not obvious.",
+        ],
+        "assumptions": [
+            "The declared design matches the data-generating study design.",
+            "Identification assumptions are checked separately by the selected estimator.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "identify() selects an estimator inconsistent with the study design",
+                "exception": "AssumptionWarning",
+                "remedy": "Override design or estimator explicitly and rerun the diagnostic plan.",
+                "alternative": "sp.recommend",
+            },
+        ],
+        "alternatives": ["paper", "recommend", "preflight"],
+        "typical_n_min": 50,
+    },
+    "paper": {
+        "pre_conditions": [
+            "A fitted StatsPAI result or CausalQuestion is available.",
+            "Citations and identifying assumptions have been attached or can be inferred.",
+        ],
+        "assumptions": [
+            "Generated prose is a draft; authors remain responsible for causal claims.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Missing citations, assumptions, or validation notes in generated text",
+                "exception": "AssumptionWarning",
+                "remedy": "Call audit_result() or attach citations before rendering the paper section.",
+                "alternative": "sp.audit_result",
+            },
+        ],
+        "alternatives": ["paper_tables", "modelsummary", "replication_pack"],
+        "typical_n_min": 1,
+    },
+    "preregister": {
+        "pre_conditions": [
+            "Specify estimand, design, outcomes, exclusion rules, and primary analysis plan.",
+        ],
+        "assumptions": [
+            "Pre-analysis plans should be frozen before outcome-driven model selection.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Ambiguous estimand or missing exclusion rule",
+                "exception": "ValueError",
+                "remedy": "Fill the missing design fields before exporting the preregistration.",
+                "alternative": "sp.causal_question",
+            },
+        ],
+        "alternatives": ["load_preregister", "causal_question"],
+        "typical_n_min": 1,
+    },
+    "dag": {
+        "pre_conditions": [
+            "Nodes and directed edges encode a substantive causal model.",
+            "Treatment and outcome nodes are named consistently.",
+        ],
+        "assumptions": [
+            "The graph is acyclic and contains the relevant common causes.",
+            "Adjustment-set validity depends on the supplied graph being substantively correct.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "No valid adjustment set or cycle detected",
+                "exception": "IdentificationError",
+                "remedy": "Inspect graph structure, remove cycles, or use sensitivity analysis for unobserved common causes.",
+                "alternative": "sp.identify",
+            },
+        ],
+        "alternatives": ["identify", "dag_recommend_estimator", "swig"],
+        "typical_n_min": 1,
+    },
+    "causal_mas": {
+        "pre_conditions": [
+            "Provide domain context and a bounded variable list for the LLM agents.",
+            "Use a deterministic or logged LLM backend when results must be reproducible.",
+        ],
+        "assumptions": [
+            "LLM-proposed graphs are hypotheses, not statistical identification proof.",
+            "Human review or downstream falsification is required before causal claims.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Unstable graph proposals across repeated runs",
+                "exception": "AssumptionWarning",
+                "remedy": "Increase critique rounds, fix the random seed/model release, and compare with constraint-based discovery.",
+                "alternative": "sp.causal_discovery",
+            },
+        ],
+        "alternatives": ["llm_dag_constrained", "llm_dag_validate", "dag"],
+        "typical_n_min": 1,
+    },
+    "llm_dag_constrained": {
+        "pre_conditions": [
+            "Provide allowed variables and any forbidden or required edges.",
+            "Record the model provider and prompt for reproducibility.",
+        ],
+        "assumptions": [
+            "Constraints encode domain knowledge correctly.",
+            "LLM output is a proposal to validate, not a substitute for identification analysis.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Returned graph violates required or forbidden edge constraints",
+                "exception": "ValueError",
+                "remedy": "Tighten constraints and validate the returned graph before estimation.",
+                "alternative": "sp.llm_dag_validate",
+            },
+        ],
+        "alternatives": ["dag", "causal_mas"],
+        "typical_n_min": 1,
+    },
+    "llm_dag_validate": {
+        "pre_conditions": [
+            "A candidate DAG and explicit validation criteria are available.",
+        ],
+        "assumptions": [
+            "Validation checks only the encoded criteria; omitted domain constraints remain untested.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Graph fails acyclicity, variable, or edge-policy checks",
+                "exception": "ValueError",
+                "remedy": "Revise the graph or feed failures back into the constrained DAG generator.",
+                "alternative": "sp.llm_dag_constrained",
+            },
+        ],
+        "alternatives": ["dag", "identify"],
+        "typical_n_min": 1,
+    },
+    "fairness_audit": {
+        "pre_conditions": [
+            "Predictions, outcomes, and protected-group labels are aligned by row.",
+            "Each protected group has enough observations for metric estimates.",
+        ],
+        "assumptions": [
+            "Protected attributes and outcome labels are measured consistently.",
+            "Fairness metrics are descriptive unless tied to a causal estimand.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "A group has zero positives, zero negatives, or no predictions",
+                "exception": "ValueError",
+                "remedy": "Aggregate sparse groups or report the metric as undefined for that group.",
+                "alternative": "sp.demographic_parity",
+            },
+        ],
+        "alternatives": ["demographic_parity", "equalized_odds", "counterfactual_fairness"],
+        "typical_n_min": 100,
+    },
+    "counterfactual_fairness": {
+        "pre_conditions": [
+            "A causal graph or structural model links protected attributes, mediators, and outcomes.",
+        ],
+        "assumptions": [
+            "Counterfactual fairness depends on a correctly specified causal model.",
+            "Protected-attribute interventions are well-defined in the application context.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "No structural path model or unresolved descendants of protected attribute",
+                "exception": "IdentificationError",
+                "remedy": "Specify the structural graph and decide which descendants are admissible.",
+                "alternative": "sp.fairness_audit",
+            },
+        ],
+        "alternatives": ["fairness_audit", "orthogonal_to_bias"],
+        "typical_n_min": 100,
+    },
+    "causal_impact": {
+        "pre_conditions": [
+            "Observed time series has a clearly defined intervention date.",
+            "Pre-intervention period is long enough to fit the counterfactual model.",
+        ],
+        "assumptions": [
+            "No simultaneous shocks affect treated and control series differently at intervention.",
+            "Pre-period relationship extrapolates into the post-period absent treatment.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Poor pre-period fit or unstable posterior predictive interval",
+                "exception": "AssumptionWarning",
+                "remedy": "Add controls, lengthen the pre-period, or use synthetic control as a robustness check.",
+                "alternative": "sp.synth",
+            },
+        ],
+        "alternatives": ["synth", "sequential_sdid", "local_projections"],
+        "typical_n_min": 30,
+    },
+    "synth_experimental_design": {
+        "pre_conditions": [
+            "One treated unit, multiple donor units, and pre-treatment outcomes are available.",
+            "Treatment timing is known and donor units are untreated in the analysis window.",
+        ],
+        "assumptions": [
+            "A convex donor combination can approximate the treated unit's counterfactual path.",
+            "No spillovers from treated to donor units.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Large pre-treatment imbalance after optimization",
+                "exception": "AssumptionWarning",
+                "remedy": "Revise donor pool, add predictors, or report the design as weakly supported.",
+                "alternative": "sp.synth",
+            },
+        ],
+        "alternatives": ["synth", "augsynth", "gsynth"],
+        "typical_n_min": 10,
+    },
+    "target_trial_protocol": {
+        "pre_conditions": [
+            "Eligibility, treatment strategies, time zero, follow-up, outcome, and contrast are specified.",
+        ],
+        "assumptions": [
+            "The emulation target trial is defined before fitting the observational analysis.",
+            "Eligibility and time-zero rules avoid immortal-time bias.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Missing protocol field or inconsistent time-zero definition",
+                "exception": "ValueError",
+                "remedy": "Fill every TARGET protocol field before emulation.",
+                "alternative": "sp.target_trial_checklist",
+            },
+        ],
+        "alternatives": ["target_trial_checklist", "target_trial_report"],
+        "typical_n_min": 50,
+    },
+    "target_trial_checklist": {
+        "pre_conditions": [
+            "A target-trial protocol or emulation result is available.",
+        ],
+        "assumptions": [
+            "Checklist items marked TODO require human completion before submission.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Checklist contains many TODO fields",
+                "exception": "AssumptionWarning",
+                "remedy": "Complete protocol, assignment, censoring, and analysis-plan fields before reporting.",
+                "alternative": "sp.target_trial_protocol",
+            },
+        ],
+        "alternatives": ["target_trial_protocol", "target_trial_report"],
+        "typical_n_min": 1,
+    },
+    "clone_censor_weight": {
+        "pre_conditions": [
+            "Long-format observational data contain eligibility, treatment, censoring, and follow-up columns.",
+        ],
+        "assumptions": [
+            "Sequential exchangeability after measured covariate adjustment.",
+            "Correct censoring and treatment-weight models.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Extreme or non-finite inverse-probability weights",
+                "exception": "NumericalInstability",
+                "remedy": "Inspect positivity, truncate weights, or simplify the censoring model.",
+                "alternative": "sp.ipcw",
+            },
+        ],
+        "alternatives": ["ipcw", "target_trial_protocol"],
+        "typical_n_min": 200,
+    },
+    "longitudinal_analyze": {
+        "pre_conditions": [
+            "Panel or person-period data identify unit, time, treatment, outcome, and covariate history.",
+        ],
+        "assumptions": [
+            "Sequential exchangeability conditional on recorded history.",
+            "No structural positivity violations over treatment histories.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Sparse treatment histories or exploding weights",
+                "exception": "AssumptionWarning",
+                "remedy": "Coarsen histories, truncate weights, or switch to a simpler MSM/g-formula specification.",
+                "alternative": "sp.msm",
+            },
+        ],
+        "alternatives": ["msm", "g_computation", "gformula_ice_fn"],
+        "typical_n_min": 200,
+    },
+    "svydesign": {
+        "pre_conditions": [
+            "Survey weights and, when available, strata and PSU identifiers are present.",
+        ],
+        "assumptions": [
+            "Weights represent the intended sampling design.",
+            "Variance estimates require correct strata/cluster structure.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Singleton PSU or missing survey weights",
+                "exception": "ValueError",
+                "remedy": "Collapse sparse strata, provide weights, or report unweighted analysis explicitly.",
+                "alternative": "sp.svymean",
+            },
+        ],
+        "alternatives": ["svymean", "svyglm"],
+        "typical_n_min": 30,
+    },
+    "causal_policy_forest": {
+        "pre_conditions": [
+            "Treatment, outcome, and feature matrix are aligned and overlap is plausible.",
+            "A policy value or treatment-effect target is defined before tuning.",
+        ],
+        "assumptions": [
+            "Unconfoundedness conditional on supplied features.",
+            "Sufficient overlap for learned policy comparisons.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Near-deterministic treatment propensity or unstable policy value",
+                "exception": "AssumptionWarning",
+                "remedy": "Audit overlap, trim unsupported regions, or report policy results as exploratory.",
+                "alternative": "sp.causal_forest",
+            },
+        ],
+        "alternatives": ["causal_forest", "policy_tree"],
+        "typical_n_min": 500,
+    },
+    "causal_bandit": {
+        "pre_conditions": [
+            "Rewards, actions, and context features are logged by decision round.",
+        ],
+        "assumptions": [
+            "Logged actions and rewards are correctly aligned over time.",
+            "Offline evaluation needs support for candidate actions in the logged policy.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Candidate policy selects actions absent from logs",
+                "exception": "AssumptionWarning",
+                "remedy": "Restrict action space or use conservative off-policy evaluation.",
+                "alternative": "sp.ope_ipw",
+            },
+        ],
+        "alternatives": ["sharp_ope_unobserved", "structural_mdp"],
+        "typical_n_min": 500,
+    },
+    "structural_mdp": {
+        "pre_conditions": [
+            "States, actions, transitions, and rewards are available or simulatable.",
+        ],
+        "assumptions": [
+            "Markov state captures all reward- and transition-relevant history.",
+            "Transition model is stable over the evaluation horizon.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Sparse transitions or non-ergodic state-action graph",
+                "exception": "AssumptionWarning",
+                "remedy": "Aggregate states, shorten horizon, or use off-policy bounds instead of point policy value.",
+                "alternative": "sp.sharp_ope_unobserved",
+            },
+        ],
+        "alternatives": ["causal_bandit", "sharp_ope_unobserved"],
+        "typical_n_min": 500,
+    },
+    "conformal_interference": {
+        "pre_conditions": [
+            "Units, exposure mapping, and network or cluster structure are specified.",
+        ],
+        "assumptions": [
+            "Exchangeability holds under the chosen exposure mapping.",
+            "Interference is captured by the supplied network or cluster summary.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Exposure cells are too sparse for conformal calibration",
+                "exception": "AssumptionWarning",
+                "remedy": "Coarsen exposure mapping or use cluster-level analysis.",
+                "alternative": "sp.interference",
+            },
+        ],
+        "alternatives": ["interference", "spillover", "network_exposure"],
+        "typical_n_min": 100,
+    },
+    "identify_transport": {
+        "pre_conditions": [
+            "Source/target selection node and causal graph are specified.",
+            "Treatment and outcome nodes exist in the graph.",
+        ],
+        "assumptions": [
+            "The selection diagram correctly encodes distribution shifts.",
+            "Transport formula validity depends on the supplied graph.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Selection node opens an unblocked path to the outcome",
+                "exception": "IdentificationError",
+                "remedy": "Find additional adjustment variables or report non-transportability.",
+                "alternative": "sp.transport_weights_fn",
+            },
+        ],
+        "alternatives": ["transport_weights_fn", "dag"],
+        "typical_n_min": 1,
+    },
+    "tobit": {
+        "pre_conditions": [
+            "Outcome censoring point and censoring direction are known.",
+            "Covariates are numeric or properly encoded.",
+        ],
+        "assumptions": [
+            "Latent outcome is linear in covariates with normally distributed errors.",
+            "Censoring threshold is known and exogenous.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "MLE fails to converge or sigma is near zero",
+                "exception": "NumericalInstability",
+                "remedy": "Rescale covariates, simplify the model, or compare with censored quantile alternatives.",
+                "alternative": "sp.qreg",
+            },
+        ],
+        "alternatives": ["qreg", "regress"],
+        "typical_n_min": 100,
+    },
+    "xtabond": {
+        "pre_conditions": [
+            "Panel data include unit, time, outcome, and lagged dependent variable structure.",
+            "Number of time periods is moderate relative to units.",
+        ],
+        "assumptions": [
+            "No second-order serial correlation in differenced errors.",
+            "Internal instruments are valid and not too numerous.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Instrument proliferation or AR(2) test rejects",
+                "exception": "AssumptionWarning",
+                "remedy": "Collapse instruments, reduce lag depth, or compare with fixed-effects estimates.",
+                "alternative": "sp.panel",
+            },
+        ],
+        "alternatives": ["panel", "feols"],
+        "typical_n_min": 100,
+    },
+    # ------------------------------------------------------------------ #
+    #  Panel dispatcher + HDFE family
+    # ------------------------------------------------------------------ #
+    "panel": {
+        "example": "sp.panel(data=df, formula='y ~ x1 + x2', entity='firm', time='year', method='fe')",
+        "reference": "wooldridge2010econometric",
+        "pre_conditions": [
+            "Data is a long-format panel keyed by (entity, time) with at least 2 time periods per entity.",
+            "Outcome and regressors are numeric or properly encoded.",
+            "Method-specific structure satisfied (e.g. dynamic GMM needs T moderate, system GMM needs initial-condition validity).",
+        ],
+        "assumptions": [
+            "Static FE: strict exogeneity of regressors conditional on unit fixed effects (E[u_it | x_i, alpha_i] = 0).",
+            "Random effects: unit effect uncorrelated with regressors; relax with Mundlak / Chamberlain.",
+            "Dynamic GMM: weak exogeneity and no second-order serial correlation in differenced errors.",
+            "Enough clusters (>= 30-50) for cluster-robust SEs to be valid.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Hausman test rejects RE",
+                "exception": "AssumptionWarning",
+                "remedy": "Switch to fixed effects (method='fe') or correlated random effects (method='mundlak').",
+                "alternative": "sp.panel",
+            },
+            {
+                "symptom": "Few clusters (< 30) inflate Type I error with cluster-robust SEs",
+                "exception": "AssumptionWarning",
+                "remedy": "Use wild-cluster bootstrap or CR2/CR3 small-sample corrections.",
+                "alternative": "sp.wild_cluster_bootstrap",
+            },
+            {
+                "symptom": "High-dimensional fixed effects make the design singular",
+                "exception": "NumericalInstability",
+                "remedy": "Switch to method='hdfe' / feols for absorption, or drop singletons.",
+                "alternative": "sp.feols",
+            },
+        ],
+        "alternatives": ["feols", "fixest_in_r", "regress"],
+        "typical_n_min": 100,
+    },
+    "feols": {
+        "example": "sp.feols('y ~ x1 + x2 | firm + year', data=df, vcov={'CRV1': 'firm'})",
+        "reference": "correia2017linear",
+        "pre_conditions": [
+            "Data is a long-format DataFrame; FE columns are categorical or convertible.",
+            "Every absorbed FE level has more than one observation (singleton dropping behaviour controlled by `drop_singletons`).",
+            "Optional IV stage: instruments are at least as many as endogenous regressors.",
+        ],
+        "assumptions": [
+            "Strict exogeneity conditional on the absorbed fixed effects.",
+            "No perfect collinearity after FE absorption (within-transformation rank).",
+            "Cluster structure for `vcov={'CRV1': '...'}` matches the relevant dependence.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Singleton groups dropped warning",
+                "exception": "AssumptionWarning",
+                "remedy": "Aggregate small categories or accept the drop; verify estimand is unchanged.",
+                "alternative": "sp.panel",
+            },
+            {
+                "symptom": "Slow convergence on > 3 high-cardinality FEs",
+                "exception": "NumericalInstability",
+                "remedy": "Reduce FE dimension, switch to Rust HDFE backend, or simplify the model.",
+                "alternative": "sp.fast.feols",
+            },
+        ],
+        "alternatives": ["panel", "regress", "fixest_in_r"],
+        "typical_n_min": 100,
+    },
+    "fepois": {
+        "example": "sp.fepois('trade ~ log_dist | origin + destination', data=df)",
+        "reference": "silva2006log",
+        "pre_conditions": [
+            "Outcome is a non-negative count or non-negative continuous variable.",
+            "Fixed effects columns are categorical; absorbed groups exist.",
+        ],
+        "assumptions": [
+            "Conditional mean exponential link: E[y | x, alpha] = exp(x'beta + alpha).",
+            "Strict exogeneity conditional on the absorbed fixed effects (PPML consistency).",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Convergence failure or extreme exponentiated predictions",
+                "exception": "NumericalInstability",
+                "remedy": "Drop large-magnitude regressors, rescale, or switch to OLS on log(1+y) (with caveats).",
+                "alternative": "sp.regress",
+            },
+            {
+                "symptom": "Separation: some FE level perfectly predicts zero outcomes",
+                "exception": "AssumptionWarning",
+                "remedy": "Drop perfectly-predicted groups and rerun; document the restriction.",
+                "alternative": "",
+            },
+        ],
+        "alternatives": ["feols", "regress", "panel"],
+        "typical_n_min": 200,
+    },
+    # ------------------------------------------------------------------ #
+    #  Decomposition dispatcher + key methods
+    # ------------------------------------------------------------------ #
+    "decompose": {
+        "example": "sp.decompose('oaxaca', data=df, y='log_wage', group='female', x=['education', 'experience'])",
+        "reference": "fortin2011decomposition",
+        "pre_conditions": [
+            "Data contains a binary or categorical group indicator with both groups represented.",
+            "Outcome and covariates are numeric (or properly encoded) and finite.",
+            "Sample sizes per group are large enough to estimate group-specific moments (rule of thumb: each group >= 100).",
+        ],
+        "assumptions": [
+            "Overlapping support of covariates across groups (reweighting / RIF methods are invalid outside overlap).",
+            "Linearity assumption holds for Oaxaca-Blinder-type decompositions; non-linear methods (FFL/DFL/Machado-Mata) relax this.",
+            "Conditional independence of group membership for causal interpretation (otherwise: descriptive decomposition only).",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Trimming warning at common-support boundaries",
+                "exception": "AssumptionWarning",
+                "remedy": "Inspect propensity-score support; restrict the analysis sample or use bounds.",
+                "alternative": "sp.dfl_decompose",
+            },
+            {
+                "symptom": "RIF coefficients explode at distribution tails",
+                "exception": "NumericalInstability",
+                "remedy": "Use higher-bandwidth kernel density, restrict quantile range, or switch to FFL.",
+                "alternative": "sp.ffl_decompose",
+            },
+        ],
+        "alternatives": ["dfl_decompose", "ffl_decompose", "oaxaca", "rif_regression"],
+        "typical_n_min": 200,
+    },
+    "dfl_decompose": {
+        "example": "sp.dfl_decompose(data=df, y='log_wage', group='female', x=['education', 'experience'])",
+        "reference": "dinardo1996labor",
+        "pre_conditions": [
+            "Binary group indicator with sufficient overlap on covariates.",
+            "Outcome distribution to decompose is continuous (typically log-wage).",
+        ],
+        "assumptions": [
+            "DiNardo-Fortin-Lemieux reweighting: ignorable group assignment given covariates.",
+            "Propensity-score model is correctly specified for the reweighting kernel.",
+            "Common support across groups (no extrapolation beyond observed covariate range).",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Extreme propensity-score weights inflate variance",
+                "exception": "NumericalInstability",
+                "remedy": "Trim or stabilize weights, or restrict to the common-support region.",
+                "alternative": "sp.ffl_decompose",
+            },
+        ],
+        "alternatives": ["ffl_decompose", "oaxaca", "machado_mata"],
+        "typical_n_min": 500,
+    },
+    "ffl_decompose": {
+        "example": "sp.ffl_decompose(data=df, y='log_wage', group='female', x=['education'], statistic='variance')",
+        "reference": "firpo2009unconditional",
+        "pre_conditions": [
+            "Outcome is continuous (e.g. log earnings) with adequate distributional support.",
+            "Covariates explain a non-trivial share of outcome variation across groups.",
+        ],
+        "assumptions": [
+            "Firpo-Fortin-Lemieux RIF regression: small perturbations to the covariate distribution induce small changes in the distributional statistic.",
+            "Linear approximation of the recentered influence function is locally valid.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "RIF instability at extreme quantiles",
+                "exception": "NumericalInstability",
+                "remedy": "Avoid quantiles below ~0.05 or above ~0.95; widen the kernel bandwidth.",
+                "alternative": "sp.dfl_decompose",
+            },
+        ],
+        "alternatives": ["dfl_decompose", "oaxaca", "rif_regression"],
+        "typical_n_min": 500,
+    },
+    "oaxaca": {
+        "example": "sp.oaxaca(data=df, y='log_wage', group='female', x=['education', 'experience'])",
+        "reference": "oaxaca1973male",
+        "pre_conditions": [
+            "Binary group indicator with both groups represented.",
+            "Linear specification of outcome on covariates within each group.",
+        ],
+        "assumptions": [
+            "Linearity of conditional mean within each group.",
+            "Constant returns to covariates within group (no interactions ignored).",
+            "Reference-group choice does not change interpretive sign of explained vs. unexplained gaps.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Detailed decomposition signs flip when reference group changes",
+                "exception": "AssumptionWarning",
+                "remedy": "Report aggregated decomposition only, or use pooled reference (Neumark / Cotton).",
+                "alternative": "sp.ffl_decompose",
+            },
+        ],
+        "alternatives": ["ffl_decompose", "dfl_decompose", "rif_regression"],
+        "typical_n_min": 200,
+    },
+    # ------------------------------------------------------------------ #
+    #  Spatial econometrics family
+    # ------------------------------------------------------------------ #
+    "sar": {
+        "example": "sp.sar(W=W_matrix, formula='y ~ x1 + x2', data=df)",
+        "reference": "anselin1988spatial",
+        "pre_conditions": [
+            "Spatial weights matrix W is N x N and matches data row order.",
+            "W is typically row-normalized (so rho lies in (-1, 1) for stationarity).",
+            "No isolated units (no zero rows in W).",
+            "Cross-section size N >= 50 for ML asymptotics to bite.",
+        ],
+        "assumptions": [
+            "Correct specification of the spatial process (SAR vs. SEM vs. SDM): mis-specification biases all coefficients.",
+            "Spatial weights matrix W is exogenous and known.",
+            "Errors are i.i.d. (use SARAR / SAC if spatial error correlation is suspected).",
+            "Stationarity: (I - rho * W) is invertible.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Log-likelihood fails to maximize / eigenvalue extreme",
+                "exception": "NumericalInstability",
+                "remedy": "Check W normalization and isolated units; bound rho away from boundary.",
+                "alternative": "sp.sar_gmm",
+            },
+            {
+                "symptom": "Moran's I on residuals still rejects spatial randomness",
+                "exception": "AssumptionWarning",
+                "remedy": "Switch to SAC / SDM, or test SEM specification (sp.sem).",
+                "alternative": "sp.sdm",
+            },
+        ],
+        "alternatives": ["sem", "sdm", "sac", "sar_gmm"],
+        "typical_n_min": 50,
+    },
+    "sem": {
+        "example": "sp.sem(W=W_matrix, formula='y ~ x1 + x2', data=df)",
+        "reference": "anselin1988spatial",
+        "pre_conditions": [
+            "Spatial weights matrix W is N x N and matches data rows.",
+            "Residual spatial autocorrelation is the suspected concern (otherwise consider SAR / SDM).",
+        ],
+        "assumptions": [
+            "Spatial dependence in the error term only (no spatial lag of y in the structural equation).",
+            "Lambda parameter in (-1, 1) for stationarity.",
+            "Correct specification: misclassifying as SEM when SAR / SDM hold induces bias.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Common-factor test rejects",
+                "exception": "AssumptionWarning",
+                "remedy": "Switch to SDM (Spatial Durbin Model) which nests SEM under a parameter restriction.",
+                "alternative": "sp.sdm",
+            },
+        ],
+        "alternatives": ["sar", "sdm", "sac", "sem_gmm"],
+        "typical_n_min": 50,
+    },
+    "sdm": {
+        "example": "sp.sdm(W=W_matrix, formula='y ~ x1 + x2', data=df)",
+        "reference": "lesage2009introduction",
+        "pre_conditions": [
+            "Spatial weights matrix W is N x N and matches data row order.",
+            "Hypothesised spillover channel justifies including WX as well as Wy.",
+        ],
+        "assumptions": [
+            "Both endogenous and exogenous spatial spillovers may be present (Wy and WX terms).",
+            "W is exogenous and known; stationarity requires rho in (-1, 1).",
+            "Direct, indirect, and total impacts are correctly decomposed via the spatial multiplier.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Indirect / total impacts have wide bias-corrected CIs",
+                "exception": "NumericalInstability",
+                "remedy": "Increase MCMC / bootstrap draws for impact CIs, or simplify W.",
+                "alternative": "sp.impacts",
+            },
+        ],
+        "alternatives": ["sar", "sem", "sac"],
+        "typical_n_min": 50,
+    },
+    # ------------------------------------------------------------------ #
+    #  Mendelian randomization core (variants inherit via _INHERITANCE_SEEDS)
+    # ------------------------------------------------------------------ #
+    "mr_ivw": {
+        "example": "sp.mr_ivw(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        "reference": "burgess2013mendelian",
+        "pre_conditions": [
+            "Two-sample MR summary data: beta_exposure, beta_outcome, SE_exposure, SE_outcome per instrument.",
+            "Instruments are independent (LD-clumped) and genome-wide significant for the exposure.",
+            "At least ~10 valid instruments for inverse-variance weighting to behave well.",
+        ],
+        "assumptions": [
+            "Relevance: instruments are strongly associated with the exposure (F-stat >> 10).",
+            "Independence: instruments are independent of confounders of the exposure-outcome relationship.",
+            "Exclusion restriction: instruments affect outcome only through the exposure (no horizontal pleiotropy).",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Cochran's Q rejects homogeneity (pleiotropy)",
+                "exception": "AssumptionWarning",
+                "remedy": "Use MR-Egger to allow directional pleiotropy, or weighted median / MR-PRESSO.",
+                "alternative": "sp.mr_egger",
+            },
+            {
+                "symptom": "Weak-instrument bias (F-stat < 10)",
+                "exception": "AssumptionWarning",
+                "remedy": "Drop weak SNPs, use MR-RAPS for measurement error, or report bounds.",
+                "alternative": "sp.mr_raps",
+            },
+        ],
+        "alternatives": ["mr_egger", "mr_median", "mr_presso", "mr_raps"],
+        "typical_n_min": 10,
+    },
+    "mr_egger": {
+        "example": "sp.mr_egger(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        "reference": "bowden2015mendelian",
+        "pre_conditions": [
+            "Two-sample summary data with > ~15 instruments for the intercept test to have power.",
+            "Effect-allele alignment is consistent between exposure and outcome GWAS.",
+        ],
+        "assumptions": [
+            "InSIDE assumption: pleiotropic effects are independent of instrument strength.",
+            "Otherwise as in IVW (relevance, independence, no measurement error in exposure betas).",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Egger intercept non-zero (directional pleiotropy)",
+                "exception": "AssumptionWarning",
+                "remedy": "Trust Egger slope estimate; sensitivity-check with weighted median or MR-PRESSO outlier removal.",
+                "alternative": "sp.mr_presso",
+            },
+        ],
+        "alternatives": ["mr_ivw", "mr_median", "mr_presso"],
+        "typical_n_min": 15,
+    },
+    "mr_presso": {
+        "example": "sp.mr_presso(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        "reference": "verbanck2018detection",
+        "pre_conditions": [
+            "Two-sample summary statistics with at least ~10 SNP instruments.",
+            "Sufficient computational budget for the global / outlier permutation procedure.",
+        ],
+        "assumptions": [
+            "Same as IVW for non-outlier instruments.",
+            "Outlier removal heuristic correctly identifies pleiotropic SNPs.",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "All SNPs flagged as outliers",
+                "exception": "AssumptionWarning",
+                "remedy": "Relax outlier threshold or use mode-based estimator (mr_mode) instead.",
+                "alternative": "sp.mr_mode",
+            },
+        ],
+        "alternatives": ["mr_ivw", "mr_egger", "mr_mode", "mr_raps"],
+        "typical_n_min": 10,
+    },
+    "mr_raps": {
+        "example": "sp.mr_raps(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        # NOTE: Zhao et al. (2020) RAPS reference is not in paper.bib yet.
+        # Adding `reference` here would fail the §10 zero-hallucination
+        # check.  Leave empty until the bib entry is added.
+        "pre_conditions": [
+            "Many candidate instruments (>= 30 typical) with both strong and weaker SNPs available.",
+            "Two-sample summary data; SE columns must be present.",
+        ],
+        "assumptions": [
+            "Random-effects pleiotropy: SNP-specific pleiotropic deviations are mean-zero with constant variance.",
+            "Measurement error in exposure betas follows a known shrinkage profile (RAPS bias correction).",
+        ],
+        "failure_modes": [
+            {
+                "symptom": "Robust-loss tuning parameter does not stabilize",
+                "exception": "NumericalInstability",
+                "remedy": "Use Huber loss with fixed scale, or fall back to IVW with delta-method SEs.",
+                "alternative": "sp.mr_ivw",
+            },
+        ],
+        "alternatives": ["mr_ivw", "mr_egger", "mr_cml"],
+        "typical_n_min": 30,
+    },
+}
+
 _SP_CALL_RE = re.compile(r"\bsp\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
 
 
@@ -8810,12 +10028,16 @@ def _apply_validation_evidence() -> None:
     certified: Dict[str, List[str]] = {
         name: ["Track A parity seed"] for name in _CERTIFIED_SEED_FUNCTIONS
     }
-    validated: Dict[str, List[str]] = {}
+    validated: Dict[str, List[str]] = {
+        name: [f"Regression/unit validation: {note}" for note in notes]
+        for name, notes in _VALIDATED_TEST_SEED_FUNCTIONS.items()
+    }
     root = _repo_root()
     if root is not None:
         for name, notes in _scan_parity_readme(root).items():
             certified.setdefault(name, []).extend(notes)
-        validated.update(_scan_reference_tests(root))
+        for name, notes in _scan_reference_tests(root).items():
+            validated.setdefault(name, []).extend(notes)
 
     for name, notes in certified.items():
         spec = _REGISTRY.get(name)
@@ -8842,6 +10064,83 @@ def _apply_validation_evidence() -> None:
     _VALIDATION_EVIDENCE_APPLIED = True
 
 
+def _apply_agent_card_seeds() -> None:
+    """Attach conservative planning metadata to tested high-use APIs."""
+    global _AGENT_CARD_SEEDS_APPLIED
+    if _AGENT_CARD_SEEDS_APPLIED:
+        return
+
+    def extend_missing(current: List[str], values: List[str]) -> None:
+        for value in values:
+            if value and value not in current:
+                current.append(value)
+
+    for name, meta in _AGENT_CARD_SEED_METADATA.items():
+        spec = _REGISTRY.get(name)
+        if spec is None:
+            continue
+        extend_missing(spec.pre_conditions, list(meta.get("pre_conditions", [])))
+        extend_missing(spec.assumptions, list(meta.get("assumptions", [])))
+        extend_missing(spec.alternatives, list(meta.get("alternatives", [])))
+        if spec.typical_n_min is None and meta.get("typical_n_min") is not None:
+            spec.typical_n_min = int(meta["typical_n_min"])
+        for item in meta.get("failure_modes", []):
+            mode = FailureMode(**item)
+            if all(existing.to_dict() != mode.to_dict() for existing in spec.failure_modes):
+                spec.failure_modes.append(mode)
+        # Optional Tier-B fillers: only set if the spec currently
+        # has an empty value.  Hand-curated specs in _build_registry
+        # always win.  ``reference`` here is constrained to bib keys
+        # (validated against paper.bib at coverage-script time, not
+        # here, since registry.py shouldn't read paper.bib at import).
+        seed_example = meta.get("example")
+        if seed_example and not spec.example:
+            spec.example = str(seed_example)
+        seed_reference = meta.get("reference")
+        if seed_reference and not spec.reference:
+            spec.reference = str(seed_reference)
+
+    # Wire variant → parent inheritance.  Only set when the variant
+    # does not already declare its own ``inherits_from`` (so a curated
+    # spec keeps the last word) and the parent is registered (so we
+    # don't introduce dangling links that the renderer has to silently
+    # ignore later).
+    for variant, parent in _INHERITANCE_SEEDS.items():
+        spec = _REGISTRY.get(variant)
+        if spec is None or spec.inherits_from:
+            continue
+        if parent not in _REGISTRY:
+            continue
+        spec.inherits_from = parent
+
+    _AGENT_CARD_SEEDS_APPLIED = True
+
+
+def _apply_baseline_cards() -> None:
+    """Fill empty Tier-B fields from the auto-generated baseline cards.
+
+    The module at :mod:`statspai._baseline_cards` is regenerated by
+    ``scripts/gen_baseline_cards.py`` and only writes into fields that
+    are currently empty — so hand-written :class:`FunctionSpec`
+    entries always win.  See ``docs/agent_cards_spec.md`` for the
+    contract.
+
+    Idempotent and tolerant: if the module is missing (e.g. before
+    the first generation run), this becomes a no-op.
+    """
+    global _BASELINE_CARDS_APPLIED
+    if _BASELINE_CARDS_APPLIED:
+        return
+    try:
+        from . import _baseline_cards as _bc
+    except ImportError:
+        # Module hasn't been generated yet — that's fine, just skip.
+        _BASELINE_CARDS_APPLIED = True
+        return
+    _bc.apply(_REGISTRY)
+    _BASELINE_CARDS_APPLIED = True
+
+
 def _ensure_full_registry() -> None:
     """Populate the registry with hand-written specs + auto-registered tail.
 
@@ -8852,6 +10151,8 @@ def _ensure_full_registry() -> None:
     _build_registry()
     if _FULL_REGISTRY_BUILT:
         _apply_validation_evidence()
+        _apply_agent_card_seeds()
+        _apply_baseline_cards()
         return
 
     import statspai as _sp  # safe: called post-import from user code
@@ -8877,6 +10178,8 @@ def _ensure_full_registry() -> None:
 
     _FULL_REGISTRY_BUILT = True
     _apply_validation_evidence()
+    _apply_agent_card_seeds()
+    _apply_baseline_cards()
 
 
 # ====================================================================== #

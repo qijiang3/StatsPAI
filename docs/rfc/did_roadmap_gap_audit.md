@@ -94,10 +94,15 @@ Identification requires "**strong parallel trends**" (E[Y_t(d) − Y_{t-1}(d) | 
 | Pre-trends | None | Pre-trend test on ATT(d\|g,t) with t < g |
 | Diagnostics | None | Overlap of dose across cohorts; support of dose distribution |
 
-**Conclusion**: the current function name is aspirational. The `att_gt` mode is closer to a "dose-bin DID" heuristic than to CGS 2024. To land the real thing without breaking users, the proposed move is:
+**Current status update (2026-05-21)**: `method='cgs'` now exists as an
+MVP, but it is deliberately labelled as non-parity: OR-only,
+bootstrap-SE inference, and `[待核验]` paper-formula details remain in
+`docs/rfc/continuous_did_cgs.md`. The default `att_gt` mode is still a
+"dose-bin DID" heuristic rather than the CGS 2024 estimand. To promote
+the MVP without breaking users, the remaining move is:
 
 1. Keep `sp.continuous_did(method='att_gt'|'twfe'|'dose_response')` as "heuristic" modes and rename internally with deprecation path (e.g., `method='att_gt'` → `method='dose_bin'` with a `DeprecationWarning`).
-2. Add `method='cgs'` (default once tested) implementing ATT(d|g,t) + ACRT(d|g,t) per CGS (2024), with its own analytical inference.
+2. Replace the MVP `method='cgs'` bootstrap path with the verified ATT(d|g,t) + ACRT(d|g,t) estimator and analytical / multiplier-bootstrap inference.
 3. Gate the rename behind a **reference-parity test suite** against the R `contdid` package (if it exists at release time).
 
 ## 3. `sp.did_multiplegt` — what it is vs. `did_multiplegt_dyn` (dCDH 2024)

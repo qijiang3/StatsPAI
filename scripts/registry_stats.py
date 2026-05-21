@@ -163,8 +163,8 @@ def render_table(stats: dict) -> str:
 # Loose floors we expect README.md to quote. The check passes as long as
 # the live count is at or above the floor and within ``DRIFT_TOLERANCE``
 # of it; otherwise the docs need refreshing.
-README_FLOOR = 950          # README.md says "950+ functions"
-SUBMODULE_FLOOR = 80        # README.md says "80+ submodules"
+README_FLOOR = 1000         # README.md says "1,000+ functions"
+SUBMODULE_FLOOR = 80        # README.md says "80 submodules"
 DRIFT_TOLERANCE = 100       # bump the floor once we're > floor + tolerance
 
 
@@ -193,7 +193,7 @@ def check_drift(stats: dict) -> int:
         return 1
     print(
         f"OK: {fns} functions across {mods} submodules "
-        f"(README floor: {README_FLOOR}+ / {SUBMODULE_FLOOR}+).",
+        f"(README floor: {README_FLOOR}+ / {SUBMODULE_FLOOR}).",
     )
     return 0
 

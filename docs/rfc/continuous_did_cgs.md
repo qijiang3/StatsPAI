@@ -1,6 +1,10 @@
 # RFC — `sp.continuous_did(method='cgs')`: Callaway-Goodman-Bacon-Sant'Anna (2024) continuous DiD
 
-> **Status**: draft 2026-04-23. No code written yet. All paper-specific formulas below carry `[待核验]` until two-source verification (Crossref DOI + paper PDF / NBER working-paper text) per CLAUDE.md §10.
+> **Status**: draft 2026-04-23; MVP code now exists behind
+> `sp.continuous_did(method='cgs')`. The MVP is **not** reference-parity
+> with R `contdid`: it is OR-only, uses bootstrap SE, and keeps all
+> paper-specific formulas below marked `[待核验]` until two-source
+> verification (Crossref DOI + paper PDF / NBER working-paper text).
 
 ## 1. 动机
 

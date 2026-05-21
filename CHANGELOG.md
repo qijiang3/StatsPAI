@@ -4,6 +4,37 @@ All notable changes to StatsPAI will be documented in this file.
 
 ## [Unreleased]
 
+## [1.15.5] — 2026-05-21
+
+### Added — Agent-card coverage ratchet and baseline enrichment
+
+- Added `scripts/agent_card_coverage.py`, `docs/agent_cards_spec.md`, and
+  `tests/test_agent_card_coverage.py` to make raw curated agent-card metadata
+  measurable and CI-ratcheted. The committed floor tracks 15 counters across
+  Tier-B, Tier-A, Tier-S, per-field coverage, and certified / validated
+  evidence counts.
+- Added generated `src/statspai/_baseline_cards.py` plus
+  `scripts/gen_baseline_cards.py` to fill empty Tier-B fields from docstrings
+  without overwriting curated registry entries. The baseline pass lifts tags to
+  100% of the 1,018-function registry and keeps examples / references limited
+  to mechanically extracted, auditable content.
+- Added `FunctionSpec.inherits_from` and inherited agent-card rendering for
+  canonical estimator variants. Child specs keep their own descriptions,
+  examples, parameters, references, validation status, and limitations, while
+  sharing parent assumptions, preconditions, failure modes, alternatives, and
+  `typical_n_min` where appropriate.
+
+### Changed — Registry and documentation refresh
+
+- Expanded validation evidence seeds for tested long-tail estimators so the
+  agent registry distinguishes stable APIs from functions with explicit unit,
+  regression, parity, or reference-test coverage.
+- Refreshed registry count, module statistics, and agent-platform positioning:
+  1,018 registered public functions across 80 submodules.
+- Updated DiD and agent-facing docs to mark `continuous_did(method='cgs')` and
+  `did_multiplegt_dyn` as experimental MVP paths rather than fully
+  paper-parity estimators.
+
 ## [1.15.4] — 2026-05-18
 
 ### Added — Auto-CJK font fallback on import

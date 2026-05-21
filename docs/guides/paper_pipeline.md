@@ -172,10 +172,13 @@ suitable for round-tripping through agent tool calls.
 **Pre-conditions**
 - data must contain the outcome column (`y` or parsed)
 - If treatment given, it must be a column
+- A fitted StatsPAI result or CausalQuestion is available.
+- Citations and identifying assumptions have been attached or can be inferred.
 
 **Identifying assumptions**
 - Question parser is heuristic — explicit kwargs always win
 - Underlying sp.causal() determines design when not specified
+- Generated prose is a draft; authors remain responsible for causal claims.
 
 **Failure modes → recovery**
 
@@ -183,10 +186,15 @@ suitable for round-tripping through agent tool calls.
 | --- | --- | --- | --- |
 | ValueError 'Could not determine the outcome y' | `ValueError` | Pass `y=...` explicitly or include 'effect of X on Y' in the question text |  |
 | Pipeline notes section appears in draft | `(none — informational)` | One pipeline stage failed; inspect `draft.workflow.diagnostics` and pipeline_errors |  |
+| Missing citations, assumptions, or validation notes in generated text | `AssumptionWarning` | Call audit_result() or attach citations before rendering the paper section. | `sp.audit_result` |
 
 **Alternatives (ranked)**
 - `sp.causal`
 - `sp.recommend`
 - `sp.replication_pack`
+- `sp.paper_tables`
+- `sp.modelsummary`
+
+**Typical minimum N**: 1
 
 <!-- AGENT-BLOCK-END -->

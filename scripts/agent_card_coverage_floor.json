@@ -1,0 +1,17 @@
+{
+  "field_alternatives": 146,
+  "field_any_param_description": 566,
+  "field_assumptions": 130,
+  "field_description_30": 963,
+  "field_example": 373,
+  "field_failure_modes": 129,
+  "field_pre_conditions": 130,
+  "field_reference": 227,
+  "field_tags": 1018,
+  "field_typical_n_min": 143,
+  "tier_a": 84,
+  "tier_b": 127,
+  "tier_s": 78,
+  "validation_certified": 36,
+  "validation_validated": 201
+}

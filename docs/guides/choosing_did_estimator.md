@@ -133,20 +133,21 @@ the roadmap. Using them today means knowing what you're getting:
 | What you want | Current state | Tracked in |
 | --- | --- | --- |
 | Continuous-dose DiD — heuristic | `sp.continuous_did(method='att_gt')` dose-quantile 2×2 rollup; **not** CGS (2024) ATT(d\|g,t) | `docs/rfc/continuous_did_cgs.md` |
-| Continuous-dose DiD — CGS (2024) ATT(d\|g,t) / ACRT | **Not yet implemented**; `method='cgs'` reserved in RFC | `docs/rfc/continuous_did_cgs.md` |
+| Continuous-dose DiD — CGS (2024) ATT(d\|g,t) / ACRT | `sp.continuous_did(method='cgs')` MVP exists; **not yet reference-parity** with R `contdid`, OR-only, bootstrap SE | `docs/rfc/continuous_did_cgs.md` |
 | On/off switching — dCDH (2020) DID_M | `sp.did_multiplegt` — pair rollup + joint placebo + avg cumulative (2024 overlay) | shipped |
-| On/off switching — dCDH (2024) `_dyn` event-study | **Not yet implemented**; `sp.did_multiplegt(dynamic=H)` is *not* equivalent | `docs/rfc/multiplegt_dyn.md` |
+| On/off switching — dCDH (2024) `_dyn` event-study | `sp.did_multiplegt_dyn(...)` experimental MVP exists; **not yet paper-parity**, cluster-bootstrap SE, switch-on only | `docs/rfc/multiplegt_dyn.md` |
 | LP-DiD (Dube, Girardi, Jordà, Taylor 2023) | **Not yet implemented** | `docs/rfc/did_roadmap_gap_audit.md` §4 |
 | Triple-difference, heterogeneity-robust | `sp.ddd` textbook only; Olden-Møen / Strezhnev variants pending | `docs/rfc/did_roadmap_gap_audit.md` §4 |
 | Time-varying covariates DiD (Caetano et al. 2022) | **Not yet implemented** | `docs/rfc/did_roadmap_gap_audit.md` §4 |
 
-> **Why dCDH (2020) and dCDH (2024) are not the same estimator**: the 2024 ``_dyn`` version does a direct long-difference event-study with "not-yet-treated at horizon `l`" as the per-horizon control group, with its own influence-function variance. `sp.did_multiplegt(dynamic=H)` is the 2020 pair rollup extended to H horizons — numerically close in simple DGPs, but different in identification, control construction, and inference. Until `sp.did_multiplegt_dyn` lands, if you want the 2024 estimator, do not use the 2020 function as a substitute.
+> **Why dCDH (2020) and dCDH (2024) are not the same estimator**: the 2024 ``_dyn`` version does a direct long-difference event-study with "not-yet-treated at horizon `l`" as the per-horizon control group, with its own influence-function variance. `sp.did_multiplegt(dynamic=H)` is the 2020 pair rollup extended to H horizons — numerically close in simple DGPs, but different in identification, control construction, and inference. Use `sp.did_multiplegt_dyn` only when you explicitly accept its current experimental/MVP limitations.
 
-Until frontier items land with reference-parity tests, do not cite them
-as CGS (2024) / dCDH (2024) in your paper. The current heuristics are
-honest dose-bin / pair-rollup estimators — useful but not paper-faithful
-to those 2024 estimands. See the RFCs for API proposals and
-[待核验]-marked identification formulas.
+Until frontier items land with reference-parity tests, do not cite their
+MVP outputs as fully paper-faithful CGS (2024) / dCDH (2024) estimates.
+The current stable heuristics remain dose-bin / pair-rollup estimators;
+the MVPs are useful for API and workflow development, but their
+identification details and variance formulas are still tracked in the
+RFCs with `[待核验]` markers.
 
 ## 5. Reading the output
 
@@ -211,12 +212,20 @@ r.cite()      # BibTeX for the underlying paper
 - g column is integer: first-treated period or 0 for never-treated
 - at least one never-treated or late-treated control group
 - ≥ 2 pre-treatment periods per cohort
+- data is panel or repeated cross-section with a time column
+- treat column is binary (0/1) for 2x2, or first-treatment-period (int) for staggered
+- at least one pre-treatment period (≥ 2 periods for 2x2; ≥ 3 recommended for event study)
+- for staggered designs: id column identifying units across time
 
 **Identifying assumptions**
 - Parallel trends conditional on X (if covariates supplied)
 - No anticipation (or adjust via anticipation= parameter)
 - Overlap: positive propensity for each cohort
 - SUTVA
+- Parallel trends: treated and control groups would have followed the same trajectory absent treatment
+- No anticipation: outcomes in pre-treatment periods are unaffected by future treatment
+- SUTVA: no spillovers between units
+- For staggered / heterogeneous effects: use CS or SA — TWFE can produce negative weights (Goodman-Bacon)
 
 **Failure modes → recovery**
 
@@ -225,12 +234,18 @@ r.cite()      # BibTeX for the underlying paper
 | Pre-trend test on aggregated ATT(g,t) rejects | `AssumptionViolation` | Use sp.sensitivity_rr for honest CI, or add covariates for conditional parallel trends. | `sp.sensitivity_rr` |
 | Cohort with only one unit — insufficient variation | `DataInsufficient` | Aggregate small cohorts or drop; check sp.diagnose_result. |  |
 | All units treated at the same time (no staggering) | `MethodIncompatibility` | Fall back to 2x2 DID via sp.did(method='2x2'). | `sp.did` |
+| Pre-trend joint test p < 0.05 (or underpowered at 0.10) | `AssumptionViolation` | Use sp.sensitivity_rr (Rambachan & Roth honest CI) or switch to sp.callaway_santanna. | `sp.sensitivity_rr` |
+| Staggered treatment timing with TWFE method | `AssumptionWarning` | TWFE can give negative weights; use Callaway-Sant'Anna, Sun-Abraham, or BJS imputation. | `sp.callaway_santanna` |
+| Pre-trend test underpowered (Roth 2022) | `AssumptionWarning` | Check sp.pretrends_power — if low, report honest CI via sp.sensitivity_rr. | `sp.sensitivity_rr` |
+| Few clusters at unit level | `AssumptionWarning` | Use wild cluster bootstrap (sp.wild_cluster_bootstrap). | `sp.wild_cluster_bootstrap` |
 
 **Alternatives (ranked)**
 - `sp.sun_abraham`
 - `sp.did_imputation`
 - `sp.sdid`
 - `sp.did`
+- `sp.callaway_santanna`
+- `sp.synth`
 
 **Typical minimum N**: 50
 

@@ -1,8 +1,8 @@
 # StatsPAI
 
 **The agent-native Python toolkit for causal inference and applied
-econometrics.** One `import statspai as sp` exposes **950+ registered
-functions** across 80+ submodules (live count: `python
+econometrics.** One `import statspai as sp` exposes **1,000+ registered
+functions** across 80 submodules (live count: `python
 scripts/registry_stats.py`) spanning classical regression, staggered
 DiD, regression discontinuity,
 synthetic control, decomposition, stochastic frontier, multilevel /
@@ -11,17 +11,10 @@ mixed-effects, modern ML causal inference, the full three-school
 modules (bridging theorems, fairness, surrogates, PCMCI, TMLE survival,
 etc.), and publication-ready output in Word / Excel / LaTeX / HTML.
 
-> **Current release: v1.5.0 (2026-04-21)** — Interference / Conformal /
-> Mendelian family consolidation. Three family guides
-> (`interference_family`, `conformal_family`, `mendelian_family`)
-> covering all 36 functions across the three families; three unified
-> dispatchers (`sp.mr(method=...)` / `sp.conformal(kind=...)` /
-> `sp.interference(design=...)`) mirroring the
-> `sp.synth` / `sp.decompose` / `sp.dml` pattern; two silent-wrong-numbers
-> fixes (`mr_egger` slope t(n−2) parity with `mr_pleiotropy_egger`;
-> `mr_presso` MC p-value floor at `1/(B+1)`). Breaking: `sp.mr` is now a
-> function, not a module alias — module access moved to `sp.mendelian`.
-> See the [changelog](changelog.md) for detail.
+> **Current release: v1.15.5 (2026-05-21)** — Agent-card coverage
+> ratchet, generated baseline cards, inherited estimator-family metadata,
+> and refreshed 1,018-function registry statistics. See the
+> [changelog](changelog.md) for detail.
 
 ```python
 import statspai as sp
@@ -171,7 +164,7 @@ method that returns the correct BibTeX entry) and this package:
   title   = {StatsPAI: A Unified, Agent-Native Python Toolkit for
              Causal Inference and Applied Econometrics},
   year    = {2026},
-  version = {1.15.3},
+  version = {1.15.5},
   url     = {https://github.com/brycewang-stanford/StatsPAI}
 }
 ```

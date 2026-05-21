@@ -39,7 +39,7 @@ compatible interface returning a `CausalResult`.
 | `fixest::sunab(cohort, period)` inside `feols`          | `sp.sun_abraham(data, y=, time=, first_treat=, group=)`  |
 | `didimputation::did_imputation(...)`                    | `sp.did_imputation(data, y=, time=, first_treat=, group=)` |
 | `DIDmultiplegt::did_multiplegt(...)`                    | `sp.did_multiplegt(data, y=, group=, time=, treatment=)` |
-| `DIDmultiplegt::did_multiplegt_dyn(...)`                | `sp.did_multiplegt(..., dynamic=True)`                   |
+| `DIDmultiplegt::did_multiplegt_dyn(...)`                | `sp.did_multiplegt_dyn(...)` (experimental MVP; not yet R-parity) |
 | `bacondecomp::bacon(...)`                               | `sp.bacon_decomposition(data, y=, time=, treat=, id=)`   |
 | —                                                       | `sp.etwfe(...)` — Wooldridge (2021) explicit API         |
 | `HonestDiD::createSensitivityResults(...)`              | `sp.honest_did(cs_result, Mbar=...)` / `sp.breakdown_m(...)` |

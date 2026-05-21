@@ -23,7 +23,8 @@ CURATED_KEYS = (
     "pre_conditions",
     "failure_modes",
     "limitations",
-    "minimum_n",
+    "minimum_n",      # legacy spelling used in older manuscript notes
+    "typical_n_min",
 )
 
 
