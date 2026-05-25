@@ -32,7 +32,12 @@ References
   Econometrics Journal*, 21(1), C1-C68. [@chernozhukov2018double]
 - Bach, P., Chernozhukov, V., Kurz, M.S., Spindler, M. (2022).
   DoubleML — An Object-Oriented Implementation of Double Machine
-  Learning in R. *JSS*, 108(3), 1-56.
+  Learning in Python. *Journal of Machine Learning Research*,
+  23(53), 1-6. [@bach2022doubleml]
+- Bach, P., Kurz, M.S., Chernozhukov, V., Spindler, M., Klaassen, S.
+  (2024). DoubleML — An Object-Oriented Implementation of Double
+  Machine Learning in R. *Journal of Statistical Software*, 108(3),
+  1-56. [@bach2024doubleml]
 """
 from __future__ import annotations
 
