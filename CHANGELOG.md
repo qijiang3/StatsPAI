@@ -4,6 +4,15 @@ All notable changes to StatsPAI will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Cleaned up JOSS review follow-ups: removed two uncited duplicate BibTeX
+  entries that caused editorialbot DOI suggestions, aligned the AKM
+  shift-share citation key / DOI metadata, and refreshed v1.15.6 wording in
+  reviewer-facing docs and README release callouts.
+- `tools/audit_citations.py` now treats transient HTTP/socket/SSL timeouts as
+  unresolved citation lookups instead of leaking Python tracebacks.
+
 ## [1.15.6] — 2026-05-24
 
 ### Changed — Co-authorship, JOSS submission readiness

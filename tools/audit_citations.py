@@ -34,9 +34,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import html
 import json
 import re
+import socket
 import ssl
 import sys
 import time
@@ -67,6 +69,14 @@ CACHE_DIR = Path(__file__).resolve().parent / ".citation_cache"
 DEFAULT_ROOTS = ("src", "docs")
 DEFAULT_OUT = REPO_ROOT / "audit_report.md"
 USER_AGENT = "statspai-citation-audit/1.0 (mailto:brycew6m@stanford.edu)"
+_TRANSIENT_NETWORK_ERRORS = (
+    urllib.error.URLError,
+    TimeoutError,
+    socket.timeout,
+    ConnectionError,
+    http.client.HTTPException,
+    ssl.SSLError,
+)
 
 ARXIV_RE = re.compile(
     r"""
@@ -437,8 +447,8 @@ def verify_arxiv(ids: list[str], refresh: bool = False) -> dict[str, PaperMeta]:
         )
         try:
             xml_bytes = _http_get(url, refresh=refresh, sleep=3.0)
-        except urllib.error.URLError as e:
-            print(f"[arxiv] HTTP error {e!r} for chunk starting {chunk[0]}",
+        except _TRANSIENT_NETWORK_ERRORS as e:
+            print(f"[arxiv] HTTP/network error {e!r} for chunk starting {chunk[0]}",
                   file=sys.stderr)
             continue
         root = ET.fromstring(xml_bytes)
@@ -491,8 +501,8 @@ def verify_nber(ids: list[str], refresh: bool = False) -> dict[str, PaperMeta]:
             html_text = _http_get(url, refresh=refresh, sleep=1.0).decode(
                 "utf-8", errors="replace"
             )
-        except urllib.error.URLError as e:
-            print(f"[nber] HTTP error {e!r} for w{wp}", file=sys.stderr)
+        except _TRANSIENT_NETWORK_ERRORS as e:
+            print(f"[nber] HTTP/network error {e!r} for w{wp}", file=sys.stderr)
             continue
         authors: list[str] = []
         title = ""
@@ -530,8 +540,8 @@ def _verify_datacite_one(doi: str, refresh: bool = False) -> Optional[PaperMeta]
     url = f"https://api.datacite.org/dois/{urllib.parse.quote(doi, safe='')}"
     try:
         raw = _http_get(url, refresh=refresh, sleep=0.5)
-    except urllib.error.URLError as e:
-        print(f"[datacite] HTTP error {e!r} for {doi}", file=sys.stderr)
+    except _TRANSIENT_NETWORK_ERRORS as e:
+        print(f"[datacite] HTTP/network error {e!r} for {doi}", file=sys.stderr)
         return None
     try:
         obj = json.loads(raw)
@@ -570,8 +580,8 @@ def verify_crossref(dois: list[str], refresh: bool = False) -> dict[str, PaperMe
                 crossref_404 = True
             else:
                 continue
-        except urllib.error.URLError as e:
-            print(f"[crossref] HTTP error {e!r} for {doi}", file=sys.stderr)
+        except _TRANSIENT_NETWORK_ERRORS as e:
+            print(f"[crossref] HTTP/network error {e!r} for {doi}", file=sys.stderr)
             continue
         if crossref_404:
             # Fall through to DataCite — Zenodo / Figshare / Dryad

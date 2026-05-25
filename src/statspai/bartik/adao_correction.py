@@ -436,7 +436,7 @@ def shift_share_se(
 
 # Register citation
 CausalResult._CITATIONS["adao_correction"] = (
-    "@article{adao2019shift,\n"
+    "@article{ado2019shift,\n"
     "  title={Shift-Share Designs: Theory and Inference},\n"
     "  author={Ad{\\~a}o, Rodrigo and Koles{\\'a}r, Michal and "
     "Morales, Eduardo},\n"
@@ -444,6 +444,7 @@ CausalResult._CITATIONS["adao_correction"] = (
     "  volume={134},\n"
     "  number={4},\n"
     "  pages={1949--2010},\n"
-    "  year={2019}\n"
+    "  year={2019},\n"
+    "  doi={10.1093/qje/qjz025}\n"
     "}"
 )

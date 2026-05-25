@@ -11,9 +11,9 @@ mixed-effects, modern ML causal inference, the full three-school
 modules (bridging theorems, fairness, surrogates, PCMCI, TMLE survival,
 etc.), and publication-ready output in Word / Excel / LaTeX / HTML.
 
-> **Current release: v1.15.5 (2026-05-21)** — Agent-card coverage
-> ratchet, generated baseline cards, inherited estimator-family metadata,
-> and refreshed 1,018-function registry statistics. See the
+> **Current release: v1.15.6 (2026-05-24)** — JOSS readiness update:
+> co-author and citation metadata, reviewer guide, validation dossier,
+> and paper/reference fixes for the 1,018-function registry. See the
 > [changelog](changelog.md) for detail.
 
 ```python

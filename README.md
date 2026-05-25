@@ -126,13 +126,12 @@ StatsPAI's focus is **causal inference** — and on this axis we aim to be the m
 
 **StatsPAI at a glance**: 1,018 registered functions in the live agent registry · 80 submodules · ~249k LOC (core) + ~86k LOC (tests). All four numbers are reproducible from the canonical generator (`python scripts/registry_stats.py`); the per-module table in [`docs/stats.md`](docs/stats.md) is regenerated from the same script. For the full coverage matrix (23 method families) and cross-ecosystem line-count comparison, see [`docs/stats.md`](docs/stats.md).
 
-**📦 v1.15.5 (2026-05-21) — Agent-card coverage ratchet**
+**📦 v1.15.6 (2026-05-24) — JOSS readiness and citation metadata**
 
-StatsPAI now ships a CI-ratcheted agent-card coverage audit, generated
-baseline cards for the 1,018-function registry, and inherited agent-card
-metadata for canonical estimator variants. This release is registry /
-metadata infrastructure: estimator numerical paths are unchanged. Full
-notes in [`CHANGELOG.md`](CHANGELOG.md) under `[1.15.5]`.
+StatsPAI now ships updated co-author and citation metadata, a JOSS reviewer
+guide, a validation dossier, and paper/reference fixes for the 1,018-function
+registry. Estimator numerical paths are unchanged. Full notes in
+[`CHANGELOG.md`](CHANGELOG.md) under `[1.15.6]`.
 
 ---
 

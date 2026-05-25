@@ -131,6 +131,31 @@ def test_doi_regex_stops_at_sentence_period():
 
 
 # ---------------------------------------------------------------------------
+# Network failures — must degrade to unresolved, not traceback
+# ---------------------------------------------------------------------------
+
+
+def test_verify_crossref_timeout_is_soft_failure(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise TimeoutError("read operation timed out")
+
+    monkeypatch.setattr(ac, "_http_get", boom)
+
+    assert ac.verify_crossref(["10.1234/example"]) == {}
+    assert "TimeoutError" in capsys.readouterr().err
+
+
+def test_verify_arxiv_timeout_is_soft_failure(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise TimeoutError("read operation timed out")
+
+    monkeypatch.setattr(ac, "_http_get", boom)
+
+    assert ac.verify_arxiv(["2408.12345"]) == {}
+    assert "TimeoutError" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
 # Name helpers
 # ---------------------------------------------------------------------------
 
@@ -373,8 +398,7 @@ def test_cli_runs_without_crash_on_empty_tree(tmp_path):
       not a crash).
     * ``2`` — soft failure (rate limit, network) — acceptable.
 
-    Any other exit (including a traceback in ``stderr``) is a real
-    failure.
+    Any other exit, and any traceback in ``stderr``, is a real failure.
     """
     (tmp_path / "src").mkdir()
     (tmp_path / "docs").mkdir()
@@ -387,25 +411,9 @@ def test_cli_runs_without_crash_on_empty_tree(tmp_path):
         capture_output=True, text=True, check=False,
         cwd=tmp_path,
     )
-    # Traceback is acceptable IFF it terminates in a known transient
-    # network failure (the auditor calls arXiv / Crossref / DataCite
-    # live and a cold CI runner can hit HTTP 429 or socket-level
-    # timeouts even on a no-citation tree, because REPO_ROOT scanning
-    # still picks up the real repo's src/ and docs/ before the empty
-    # tmp_path overrides reach it). A traceback whose tail names
-    # something other than these classes is a real auditor crash.
-    _known_transient_errors = (
-        "TimeoutError",        "socket.timeout",
-        "URLError",            "RemoteDisconnected",
-        "ConnectionResetError", "ConnectionAbortedError",
-        "HTTPError: 429",      "HTTPError: 503",
-        "HTTPError: 504",      "ssl.SSLError",
+    assert "Traceback" not in result.stderr, (
+        f"auditor crashed with traceback:\n{result.stderr}"
     )
-    if "Traceback" in result.stderr:
-        assert any(err in result.stderr for err in _known_transient_errors), (
-            f"auditor crashed with traceback (not a known transient "
-            f"network error):\n{result.stderr}"
-        )
     assert result.returncode in (0, 1, 2), (
         f"unexpected exit {result.returncode}: {result.stderr}"
     )
