@@ -58,26 +58,20 @@ class TestAftProvenance:
 class TestCoxFrailtyProvenance:
     def test_attached(self, surv_df):
         from statspai.survival.frailty import cox_frailty
-        try:
-            r = cox_frailty("t + e ~ x1", data=surv_df,
-                              cluster="cluster")
-            assert sp.get_provenance(r).function == "sp.survival.cox_frailty"
-        except Exception as e:
-            pytest.skip(f"cox_frailty runtime path differs: {e}")
+        r = cox_frailty("t + e ~ x1", data=surv_df,
+                          cluster="cluster")
+        assert sp.get_provenance(r).function == "sp.survival.cox_frailty"
 
 
 class TestCausalSurvivalForestProvenance:
     def test_attached(self, surv_df):
         from statspai.survival.causal_forest import causal_survival_forest
         df = surv_df.assign(d=surv_df["g"])  # treat = g
-        try:
-            r = causal_survival_forest(
-                df, time="t", event="e", treat="d",
-                covariates=["x1"], n_trees=20,
-            )
-            assert sp.get_provenance(r).function == "sp.survival.causal_survival_forest"
-        except Exception as e:
-            pytest.skip(f"causal_survival_forest runtime path differs: {e}")
+        r = causal_survival_forest(
+            df, time="t", event="e", treat="d",
+            covariates=["x1"], n_trees=20,
+        )
+        assert sp.get_provenance(r).function == "sp.survival.causal_survival_forest"
 
 
 # --- IV variants ------------------------------------------------------
@@ -119,11 +113,8 @@ class TestManyWeakArProvenance:
 class TestContinuousIvLateProvenance:
     def test_attached(self, iv_df):
         from statspai.iv.continuous_late import continuous_iv_late
-        try:
-            r = continuous_iv_late(
-                data=iv_df, y="y", treat="x", instrument="z",
-                n_quantiles=4, n_boot=20,
-            )
-            assert sp.get_provenance(r).function == "sp.iv.continuous_iv_late"
-        except Exception as e:
-            pytest.skip(f"continuous_iv_late runtime: {e}")
+        r = continuous_iv_late(
+            data=iv_df, y="y", treat="x", instrument="z",
+            n_quantiles=4, n_boot=20,
+        )
+        assert sp.get_provenance(r).function == "sp.iv.continuous_iv_late"

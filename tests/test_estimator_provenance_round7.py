@@ -82,14 +82,11 @@ class TestSpatialIvProvenance:
         # period only as a 20-region cross-section.
         cs = panel_df[panel_df["year"] == 0].reset_index(drop=True)
         from statspai.spatial.iv import spatial_iv
-        try:
-            r = spatial_iv(cs, y="y", endog=["d"], exog=["x1"],
-                            W=W_matrix, instruments=None)
-            prov = sp.get_provenance(r)
-            assert prov is not None
-            assert prov.function == "sp.spatial.spatial_iv"
-        except Exception as e:
-            pytest.skip(f"spatial_iv runtime path differs: {e}")
+        r = spatial_iv(cs, y="y", endog=["d"], exog=["x1"],
+                        W=W_matrix, instruments=None)
+        prov = sp.get_provenance(r)
+        assert prov is not None
+        assert prov.function == "sp.spatial.spatial_iv"
 
 
 # ---------------------------------------------------------------------------
@@ -130,14 +127,11 @@ class TestBeyondAverageLateProvenance:
 class TestQteHdPanelProvenance:
     def test_attached(self, panel_df):
         from statspai.qte.hd_panel import qte_hd_panel
-        try:
-            r = qte_hd_panel(data=panel_df, y="y", treat="d",
-                              unit="i", time="year", covariates=["x1"])
-            prov = sp.get_provenance(r)
-            assert prov is not None
-            assert prov.function == "sp.qte.qte_hd_panel"
-        except Exception as e:
-            pytest.skip(f"qte_hd_panel runtime path differs: {e}")
+        r = qte_hd_panel(data=panel_df, y="y", treat="d",
+                          unit="i", time="year", covariates=["x1"])
+        prov = sp.get_provenance(r)
+        assert prov is not None
+        assert prov.function == "sp.qte.qte_hd_panel"
 
 
 # ---------------------------------------------------------------------------

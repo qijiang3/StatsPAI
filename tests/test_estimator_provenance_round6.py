@@ -151,14 +151,11 @@ class TestBartikProvenance:
             "y": rng.normal(size=n_regions),
             "x": rng.normal(size=n_regions),
         })
-        try:
-            r = sp.bartik(data=data, y="y", endog="x",
-                            shares=shares, shocks=shocks)
-            prov = sp.get_provenance(r)
-            assert prov is not None
-            assert prov.function == "sp.bartik"
-        except Exception as e:
-            pytest.skip(f"bartik runtime path differs: {e}")
+        r = sp.bartik(data=data, y="y", endog="x",
+                        shares=shares, shocks=shocks)
+        prov = sp.get_provenance(r)
+        assert prov is not None
+        assert prov.function == "sp.bartik"
 
 
 # ---------------------------------------------------------------------------
