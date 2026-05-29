@@ -1488,19 +1488,104 @@ class RegtableResult:
     # LaTeX
     # ═══════════════════════════════════════════════════════════════════════
 
-    def to_latex(self) -> str:
+    def to_latex(
+        self,
+        *,
+        siunitx: bool = False,
+        threeparttable: bool = False,
+        siunitx_preamble: bool = False,
+    ) -> str:
+        """Render the table as a LaTeX ``table`` float.
+
+        Parameters
+        ----------
+        siunitx : bool, default False
+            Decimal-align the numeric columns with ``siunitx`` ``S`` columns
+            (journal style): coefficients align on the decimal point and
+            significance stars ride along as ``\\textsuperscript``. Requires
+            ``\\usepackage{siunitx}`` (v3). Not supported together with
+            ``multi_se`` / ``eform`` / ``apply_coef`` / cell templates /
+            ``column_spanners`` (raises ``NotImplementedError``).
+        threeparttable : bool, default False
+            Wrap the table in ``threeparttable`` and move the footnotes into a
+            ``tablenotes`` block (requires ``\\usepackage{threeparttable}``).
+        siunitx_preamble : bool, default False
+            Prepend a comment line listing the required ``\\usepackage`` lines.
+        """
         all_models = self._all_models_flat()
         n_cols = len(all_models) + 1
-        col_spec = "l" + "c" * len(all_models)
+
+        if siunitx:
+            reason = None
+            if self.multi_se:
+                reason = "multi_se (stacked SE rows)"
+            elif any(self.eform_flags):
+                reason = "eform (exp-transformed coefficients)"
+            elif self.apply_coef is not None:
+                reason = "apply_coef (custom coefficient transform)"
+            elif (self.estimate_template is not None
+                  or self.statistic_template is not None):
+                reason = "estimate/statistic cell templates"
+            elif self.column_spanners:
+                reason = "column_spanners"
+            if reason is not None:
+                raise NotImplementedError(
+                    f"to_latex(siunitx=True) does not support {reason}. "
+                    "Render with the default LaTeX path (siunitx=False), or "
+                    "drop the unsupported option."
+                )
+            import re as _re
+            _m = _re.search(r"\.(\d+)f", self.fmt or "")
+            _dec = int(_m.group(1)) if _m else 3
+            _max_int = 1
+            for _p in self.panels:
+                for _mod in _p.models:
+                    for _v in _mod.params.index:
+                        try:
+                            _b = abs(float(_mod.params[_v]))
+                        except (TypeError, ValueError):
+                            continue
+                        if np.isfinite(_b) and _b >= 1:
+                            _max_int = max(_max_int, len(str(int(_b))))
+            _scol = (
+                "S[table-format=-%d.%d,"
+                "table-space-text-post={\\textsuperscript{***}}]"
+                % (_max_int, _dec)
+            )
+            col_spec = "l" + (" " + _scol) * len(all_models)
+        else:
+            col_spec = "l" + "c" * len(all_models)
+
+        def _si_coef(m: _ModelData, var: str) -> str:
+            """siunitx coefficient cell: ``2.067\\textsuperscript{***}``."""
+            if var not in m.params.index:
+                return "{}"
+            b = float(m.params[var])
+            if not np.isfinite(b):
+                return "{}"
+            num = _fmt_val(b, self.fmt)
+            stars = ""
+            if self.show_stars and var in m.pvalues.index:
+                stars = self._format_marker(m.pvalues[var])
+            return f"{num}\\textsuperscript{{{stars}}}" if stars else num
+
         lines: List[str] = []
+        if siunitx and siunitx_preamble:
+            pkgs = "\\usepackage{siunitx} \\usepackage{booktabs}"
+            if threeparttable:
+                pkgs += " \\usepackage{threeparttable}"
+            lines.append(f"% Preamble: {pkgs}")
         lines.append("\\begin{table}[htbp]")
         lines.append("\\centering")
         if self.title:
             lines.append(f"\\caption{{{self._esc_latex(self.title)}}}")
+        if threeparttable:
+            lines.append("\\begin{threeparttable}")
         lines.append(f"\\begin{{tabular}}{{{col_spec}}}")
         lines.append("\\hline\\hline")
 
-        # Column spanners (above the model-label row) when set
+        # Column spanners (above the model-label row) when set. siunitx is
+        # rejected above when spanners are present, so this is default-path.
         if self.column_spanners:
             cells_sp: List[str] = [""]
             cmidrules: List[str] = []
@@ -1516,18 +1601,31 @@ class RegtableResult:
             lines.append(" & ".join(cells_sp) + " \\\\")
             lines.append("".join(cmidrules))
 
-        # Header
-        hdr = " & ".join(
-            [""] + [self._esc_latex(n) for n in self.model_labels]
-        ) + " \\\\"
-        lines.append(hdr)
+        # Header — siunitx S columns need text headers wrapped in
+        # \multicolumn{1}{c}{...} so they are not parsed as numbers.
+        if siunitx:
+            hdr_cells = [
+                f"\\multicolumn{{1}}{{c}}{{{self._esc_latex(n)}}}"
+                for n in self.model_labels
+            ]
+        else:
+            hdr_cells = [self._esc_latex(n) for n in self.model_labels]
+        lines.append(" & ".join([""] + hdr_cells) + " \\\\")
 
         # Dep-var
         if self.dep_var_labels:
-            dvr = " & ".join(
-                [""] + [f"\\textit{{{self._esc_latex(dv)}}}" for dv in self.dep_var_labels]
-            ) + " \\\\"
-            lines.append(dvr)
+            if siunitx:
+                dv_cells = [
+                    f"\\multicolumn{{1}}{{c}}"
+                    f"{{\\textit{{{self._esc_latex(dv)}}}}}"
+                    for dv in self.dep_var_labels
+                ]
+            else:
+                dv_cells = [
+                    f"\\textit{{{self._esc_latex(dv)}}}"
+                    for dv in self.dep_var_labels
+                ]
+            lines.append(" & ".join([""] + dv_cells) + " \\\\")
 
         lines.append("\\hline")
 
@@ -1550,23 +1648,32 @@ class RegtableResult:
                 for gi, p2 in enumerate(self.panels):
                     for m in p2.models:
                         if gi == pi:
-                            cells.append(_latex_escape(self._coef_cell(m, var, flat_idx)))
+                            if siunitx:
+                                cells.append(_si_coef(m, var))
+                            else:
+                                cells.append(
+                                    _latex_escape(
+                                        self._coef_cell(m, var, flat_idx)))
                         else:
-                            cells.append("")
+                            cells.append("{}" if siunitx else "")
                         flat_idx += 1
                 lines.append(f"{label} & " + " & ".join(cells) + " \\\\")
-                # SE row
+                # SE row — siunitx wraps the parenthesised SE in braces so the
+                # S column treats it as centred text, not an uncertainty.
                 cells2: List[str] = []
                 flat_idx = 0
                 for gi, p2 in enumerate(self.panels):
                     for m in p2.models:
                         if gi == pi:
-                            cells2.append(_latex_escape(self._se_cell(m, var, flat_idx)))
+                            se_txt = _latex_escape(
+                                self._se_cell(m, var, flat_idx))
+                            cells2.append(
+                                "{%s}" % se_txt if siunitx else se_txt)
                         else:
-                            cells2.append("")
+                            cells2.append("{}" if siunitx else "")
                         flat_idx += 1
                 lines.append(" & " + " & ".join(cells2) + " \\\\")
-                # Extra SE rows (multi_se)
+                # Extra SE rows (multi_se) — rejected under siunitx above.
                 base_idx = sum(len(p.models) for p in self.panels[:pi])
                 for ext_idx, (_, per_model_list) in enumerate(self.multi_se):
                     cells_ext: List[str] = []
@@ -1593,7 +1700,9 @@ class RegtableResult:
             cells_ar: List[str] = []
             for i in range(len(all_models)):
                 val = row_vals[i] if i < len(row_vals) else ""
-                cells_ar.append(self._esc_latex(val))
+                esc = self._esc_latex(val)
+                cells_ar.append(
+                    "\\multicolumn{1}{c}{%s}" % esc if siunitx else esc)
             lines.append(
                 f"{self._esc_latex(row_label)} & " + " & ".join(cells_ar) + " \\\\"
             )
@@ -1611,6 +1720,8 @@ class RegtableResult:
             else:
                 disp = _latex_escape(disp)
             cells_s = [self._stat_cell(m, key) for m in all_models]
+            if siunitx:
+                cells_s = ["\\multicolumn{1}{c}{%s}" % c for c in cells_s]
             lines.append(f"{disp} & " + " & ".join(cells_s) + " \\\\")
 
         # Hypothesis-test rows
@@ -1618,43 +1729,43 @@ class RegtableResult:
             cells_t: List[str] = []
             for i in range(len(all_models)):
                 val = row_vals[i] if i < len(row_vals) else ""
-                cells_t.append(self._esc_latex(val))
+                esc = self._esc_latex(val)
+                cells_t.append(
+                    "\\multicolumn{1}{c}{%s}" % esc if siunitx else esc)
             lines.append(
                 f"{self._esc_latex(row_label)} & " + " & ".join(cells_t) + " \\\\"
             )
 
         lines.append("\\hline\\hline")
 
-        # Notes
-        note_line = f"{self._se_label()} in parentheses"
-        lines.append(
-            f"\\multicolumn{{{n_cols}}}{{l}}"
-            f"{{\\footnotesize {_latex_escape(note_line)}}} \\\\"
-        )
+        # Notes — collected once, then emitted either as full-width
+        # \multicolumn rows inside the tabular (default) or as a
+        # threeparttable \begin{tablenotes} block after \end{tabular}.
+        note_texts: List[str] = [f"{self._se_label()} in parentheses"]
         for ext_idx, (label, _) in enumerate(self.multi_se):
             lo, hi = _MULTI_SE_BRACKETS[ext_idx % len(_MULTI_SE_BRACKETS)]
-            multi_note = f"{label} in {lo}…{hi}"
-            lines.append(
-                f"\\multicolumn{{{n_cols}}}{{l}}"
-                f"{{\\footnotesize {_latex_escape(multi_note)}}} \\\\"
-            )
+            note_texts.append(f"{label} in {lo}…{hi}")
         if self._has_any_eform():
-            lines.append(
-                f"\\multicolumn{{{n_cols}}}{{l}}"
-                f"{{\\footnotesize {_latex_escape(self._eform_note())}}} \\\\"
-            )
+            note_texts.append(self._eform_note())
         if self.show_stars:
-            lines.append(
-                f"\\multicolumn{{{n_cols}}}{{l}}"
-                f"{{\\footnotesize {_latex_escape(self._star_note())}}} \\\\"
-            )
-        for note in self.notes:
-            lines.append(
-                f"\\multicolumn{{{n_cols}}}{{l}}"
-                f"{{\\footnotesize {_latex_escape(note)}}} \\\\"
-            )
+            note_texts.append(self._star_note())
+        note_texts.extend(self.notes)
 
-        lines.append("\\end{tabular}")
+        if threeparttable:
+            lines.append("\\end{tabular}")
+            lines.append("\\begin{tablenotes}[flushleft]")
+            lines.append("\\footnotesize")
+            for note in note_texts:
+                lines.append(f"\\item {_latex_escape(note)}")
+            lines.append("\\end{tablenotes}")
+            lines.append("\\end{threeparttable}")
+        else:
+            for note in note_texts:
+                lines.append(
+                    f"\\multicolumn{{{n_cols}}}{{l}}"
+                    f"{{\\footnotesize {_latex_escape(note)}}} \\\\"
+                )
+            lines.append("\\end{tabular}")
         lines.append("\\end{table}")
         return "\n".join(lines)
 

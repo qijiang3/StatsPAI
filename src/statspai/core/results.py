@@ -594,6 +594,9 @@ class EconometricResults:
         *,
         caption: Optional[str] = None,
         label: Optional[str] = None,
+        siunitx: bool = False,
+        threeparttable: bool = False,
+        siunitx_preamble: bool = False,
         **kwargs: Any,
     ) -> str:
         """Render the regression result as a publication-quality LaTeX table.
@@ -611,6 +614,14 @@ class EconometricResults:
             ``\\caption{...}`` text (maps to ``regtable(title=...)``).
         label : str, optional
             ``\\label{...}`` cross-reference id, injected after the caption.
+        siunitx : bool, default False
+            Decimal-align numeric columns with ``siunitx`` ``S`` columns
+            (journal style; requires ``\\usepackage{siunitx}`` v3).
+        threeparttable : bool, default False
+            Wrap the table in ``threeparttable`` with a ``tablenotes`` block
+            (requires ``\\usepackage{threeparttable}``).
+        siunitx_preamble : bool, default False
+            Prepend a comment listing the required ``\\usepackage`` lines.
         **kwargs
             Forwarded to :func:`~statspai.output.regtable` — e.g.
             ``coef_labels``, ``keep``, ``drop``, ``order``, ``stats``,
@@ -628,8 +639,13 @@ class EconometricResults:
         >>> r = sp.regress("y ~ x + z", data=df)
         >>> tex = r.to_latex(caption="Main results", label="tab:main",
         ...                  coef_labels={"x": "Treatment"}, template="aer")
+        >>> tex = r.to_latex(siunitx=True, threeparttable=True)  # journal style
         """
-        latex = self._as_regtable(title=caption, **kwargs).to_latex()
+        latex = self._as_regtable(title=caption, **kwargs).to_latex(
+            siunitx=siunitx,
+            threeparttable=threeparttable,
+            siunitx_preamble=siunitx_preamble,
+        )
         if label:
             latex = self._inject_latex_label(latex, label)
         if path is not None:
