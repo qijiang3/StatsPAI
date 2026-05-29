@@ -23,6 +23,7 @@ Public entry points
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional
 
 
@@ -34,10 +35,33 @@ RESULT_URI_PREFIX = "statspai://result/"
 # Catalog / index / detail helpers
 # ----------------------------------------------------------------------
 
+def _resource_manifest() -> List[Dict[str, Any]]:
+    """Return the cached MCP manifest when available.
+
+    ``mcp_server`` imports this module, so the import stays inside the
+    helper to avoid a module-load cycle. Once the server is loaded this
+    reuses its static tools/list cache instead of rebuilding the agent
+    manifest for resources/read.
+    """
+    try:
+        from .mcp_server import _build_mcp_tools
+    except (ImportError, AttributeError):
+        from .tools import tool_manifest
+        return [
+            {
+                "name": t["name"],
+                "description": t.get("description", ""),
+                "inputSchema": t.get("input_schema") or {},
+            }
+            for t in tool_manifest()
+        ]
+    return _build_mcp_tools()
+
+
+@lru_cache(maxsize=8)
 def catalog_text(server_version: str) -> str:
     """Return a Markdown catalog of every StatsPAI tool."""
-    from .tools import tool_manifest
-    manifest = tool_manifest()
+    manifest = _resource_manifest()
     lines = [
         "# StatsPAI tool catalog",
         "",
@@ -62,16 +86,17 @@ def catalog_text(server_version: str) -> str:
     return "\n".join(lines)
 
 
+@lru_cache(maxsize=1)
 def functions_index() -> List[Dict[str, str]]:
     """Return a JSON-ready ``[{name, description}, …]`` list."""
-    from .tools import tool_manifest
     return [
         {"name": t["name"],
          "description": (t.get("description") or "").strip()}
-        for t in tool_manifest()
+        for t in _resource_manifest()
     ]
 
 
+@lru_cache(maxsize=256)
 def function_detail(name: str) -> Optional[Dict[str, Any]]:
     """Return the rich agent card for one tool, or ``None`` if unknown.
 
@@ -92,8 +117,7 @@ def function_detail(name: str) -> Optional[Dict[str, Any]]:
     # Fallback: synthesise from the merged manifest so any registered
     # tool — even auto-generated ones without a curated spec — still
     # resolves to *something* readable.
-    from .tools import tool_manifest
-    for t in tool_manifest():
+    for t in _resource_manifest():
         if t["name"] == name:
             return {
                 "name": t["name"],
@@ -101,7 +125,9 @@ def function_detail(name: str) -> Optional[Dict[str, Any]]:
                 "signature": {
                     "name": t["name"],
                     "description": (t.get("description") or "").strip(),
-                    "parameters": t.get("input_schema") or {},
+                    "parameters": (
+                        t.get("input_schema") or t.get("inputSchema") or {}
+                    ),
                 },
                 "pre_conditions": [],
                 "assumptions": [],

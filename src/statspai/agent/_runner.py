@@ -159,8 +159,52 @@ def run_with_progress(
         ``ok=False``: ``result_or_exc`` is a ``TimeoutError`` (when
         the timeout fired) or the exception raised by ``work``.
     """
+    if progress_token is None:
+        try:
+            if not timeout:
+                return True, work()
+            result: Dict[str, Any] = {}
+
+            def _runner_no_progress():
+                try:
+                    result["value"] = work()
+                    result["ok"] = True
+                except BaseException as exc:  # noqa: BLE001
+                    result["ok"] = False
+                    result["exc"] = exc
+
+            t = threading.Thread(
+                target=_runner_no_progress,
+                name="statspai-mcp-tool",
+                daemon=True,
+            )
+            t.start()
+            t.join(timeout)
+            if t.is_alive():
+                return False, TimeoutError(
+                    f"tool exceeded {timeout:.0f}s timeout "
+                    f"(env: {TOOL_TIMEOUT_ENV})"
+                )
+            if "ok" not in result:
+                return False, RuntimeError("worker terminated without result")
+            if result["ok"]:
+                return True, result["value"]
+            return False, result["exc"]
+        except BaseException as exc:  # noqa: BLE001
+            return False, exc
+
     q: queue.Queue = queue.Queue(maxsize=256)
     result: Dict[str, Any] = {}
+
+    def _put_done() -> None:
+        try:
+            q.put_nowait(("done", None))
+        except queue.Full:
+            try:
+                q.get_nowait()
+            except queue.Empty:
+                pass
+            q.put_nowait(("done", None))
 
     def _runner():
         try:
@@ -173,7 +217,7 @@ def run_with_progress(
             result["exc"] = exc
         finally:
             _clear_progress_channel()
-            q.put_nowait(("done", None))
+            _put_done()
 
     t = threading.Thread(target=_runner, name="statspai-mcp-tool",
                           daemon=True)

@@ -49,9 +49,9 @@ import json
 import sys
 import os
 import traceback
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
-
-from .tools import tool_manifest, execute_tool
 
 
 MCP_PROTOCOL_VERSION = "2024-11-05"
@@ -100,6 +100,23 @@ def _resolve_server_version() -> str:
 SERVER_VERSION = _resolve_server_version()
 
 
+def tool_manifest(*args, **kwargs):
+    """Lazy proxy for the agent tool manifest.
+
+    Keeping this import lazy matters for MCP cold start: the live
+    registry path imports pandas / scipy / sklearn-heavy modules, while
+    most MCP clients first need only the static schema snapshot.
+    """
+    from .tools import tool_manifest as _tool_manifest
+    return _tool_manifest(*args, **kwargs)
+
+
+def execute_tool(*args, **kwargs):
+    """Lazy proxy for runtime tool dispatch."""
+    from .tools import execute_tool as _execute_tool
+    return _execute_tool(*args, **kwargs)
+
+
 # ═══════════════════════════════════════════════════════════════════════
 #  JSON-RPC helpers
 # ═══════════════════════════════════════════════════════════════════════
@@ -109,7 +126,7 @@ def _jsonrpc_result(request_id: Any, result: Any) -> str:
         "jsonrpc": "2.0",
         "id": request_id,
         "result": result,
-    }), default=_json_default, allow_nan=False)
+    }), default=_json_default, allow_nan=False, separators=(",", ":"))
 
 
 def _jsonrpc_error(request_id: Any, code: int, message: str,
@@ -121,7 +138,18 @@ def _jsonrpc_error(request_id: Any, code: int, message: str,
         "jsonrpc": "2.0",
         "id": request_id,
         "error": err,
-    }), default=_json_default, allow_nan=False)
+    }), default=_json_default, allow_nan=False, separators=(",", ":"))
+
+
+def _jsonrpc_result_preencoded(request_id: Any, result_json: str) -> str:
+    """Build a JSON-RPC result from an already JSON-encoded result body."""
+    encoded_id = json.dumps(
+        _clean_floats(request_id),
+        default=_json_default,
+        allow_nan=False,
+        separators=(",", ":"),
+    )
+    return f'{{"jsonrpc":"2.0","id":{encoded_id},"result":{result_json}}}'
 
 
 def _clean_floats(o: Any) -> Any:
@@ -317,6 +345,90 @@ _DATALESS_OVERRIDES = frozenset({"honest_did", "sensitivity",
 _DATALESS_TOOLS = _DATALESS_OVERRIDES
 
 
+def _schema_snapshot_enabled() -> bool:
+    raw = os.environ.get("STATSPAI_MCP_SCHEMA_SNAPSHOT")
+    if raw is None:
+        return True
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _schema_snapshot_dirs() -> List[Path]:
+    """Candidate directories containing offline schema exports."""
+    here = Path(__file__).resolve()
+    dirs: List[Path] = []
+    for parent in here.parents:
+        candidate = parent / "schemas"
+        if (candidate / "tools.json").exists():
+            dirs.append(candidate)
+    return dirs
+
+
+@lru_cache(maxsize=1)
+def _load_schema_snapshot() -> Optional[Dict[str, Any]]:
+    """Load the committed import-free schema bundle when it is available.
+
+    The source tree ships ``schemas/tools.json`` + ``schemas/functions.json``
+    and CI keeps it in sync with the live registry. Reading that bundle is
+    much cheaper than importing the full registry tail just to answer the
+    MCP client's first ``tools/list`` request. Operators can force the live
+    path with ``STATSPAI_MCP_SCHEMA_SNAPSHOT=0`` while developing dynamic
+    registries.
+    """
+    if not _schema_snapshot_enabled():
+        return None
+    for directory in _schema_snapshot_dirs():
+        try:
+            index_path = directory / "index.json"
+            tools_path = directory / "tools.json"
+            functions_path = directory / "functions.json"
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+            if index.get("schema_version") != "1":
+                continue
+            if index.get("statspai_version") != SERVER_VERSION:
+                continue
+            tools = json.loads(tools_path.read_text(encoding="utf-8"))
+            functions = json.loads(functions_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, TypeError):
+            continue
+        if isinstance(tools, list) and isinstance(functions, list):
+            return {"tools": tools, "functions": functions}
+    return None
+
+
+def _agent_tool_manifest() -> List[Dict[str, Any]]:
+    snapshot = _load_schema_snapshot()
+    if snapshot is not None:
+        return snapshot["tools"]
+    return tool_manifest()
+
+
+def _snapshot_dataless_tool_names() -> Optional["frozenset[str]"]:
+    snapshot = _load_schema_snapshot()
+    if snapshot is None:
+        return None
+    data_bound: "set[str]" = set()
+    for item in snapshot["functions"]:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("name")
+        if not isinstance(name, str):
+            continue
+        params = item.get("parameters") or {}
+        required = set(params.get("required") or [])
+        props = params.get("properties") or {}
+        if "data" in required and "data" in props:
+            data_bound.add(name)
+    tool_names = {
+        t.get("name") for t in snapshot["tools"]
+        if isinstance(t, dict) and isinstance(t.get("name"), str)
+    }
+    return frozenset(
+        name for name in tool_names
+        if name in _DATALESS_OVERRIDES or name not in data_bound
+    )
+
+
+@lru_cache(maxsize=1)
 def _dataless_tool_names() -> "frozenset[str]":
     """Names of tools that take no DataFrame.
 
@@ -324,6 +436,10 @@ def _dataless_tool_names() -> "frozenset[str]":
     required ``data`` parameter is dataless. Falls back to
     :data:`_DATALESS_OVERRIDES` alone if registry introspection fails.
     """
+    snapshot = _snapshot_dataless_tool_names()
+    if snapshot is not None:
+        return snapshot
+
     derived: "set[str]" = set(_DATALESS_OVERRIDES)
     try:
         from ..registry import _REGISTRY, _ensure_full_registry
@@ -343,6 +459,7 @@ def _dataless_tool_names() -> "frozenset[str]":
     return frozenset(derived)
 
 
+@lru_cache(maxsize=1)
 def _build_mcp_tools() -> List[Dict[str, Any]]:
     """Convert the StatsPAI agent-tool manifest into MCP tool specs.
 
@@ -367,7 +484,7 @@ def _build_mcp_tools() -> List[Dict[str, Any]]:
     * ``detail`` (optional, default ``"agent"``) — payload depth,
       forwarded to ``result.to_dict(detail=...)``.
     """
-    manifest = tool_manifest()
+    manifest = _agent_tool_manifest()
     dataless = _dataless_tool_names()
     out: List[Dict[str, Any]] = []
     for t in manifest:
@@ -460,6 +577,30 @@ def _build_mcp_tools() -> List[Dict[str, Any]]:
             "inputSchema": schema,
         })
     return out
+
+
+@lru_cache(maxsize=1)
+def _tools_list_result_json() -> str:
+    """Cached JSON payload for the static ``tools/list`` result."""
+    return json.dumps(
+        _clean_floats({"tools": _build_mcp_tools()}),
+        default=_json_default,
+        allow_nan=False,
+        separators=(",", ":"),
+    )
+
+
+def _clear_mcp_caches() -> None:
+    """Clear cached MCP schema material for tests / dynamic registries."""
+    _load_schema_snapshot.cache_clear()
+    _dataless_tool_names.cache_clear()
+    _build_mcp_tools.cache_clear()
+    _tools_list_result_json.cache_clear()
+    for name in ("_catalog_text_impl", "_functions_index", "_function_detail"):
+        fn = globals().get(name)
+        clear = getattr(fn, "cache_clear", None)
+        if clear is not None:
+            clear()
 
 
 
@@ -599,7 +740,7 @@ def _make_progress_drain():
             "jsonrpc": "2.0",
             "method": "notifications/progress",
             "params": payload,
-        }), default=_json_default, allow_nan=False)
+        }), default=_json_default, allow_nan=False, separators=(",", ":"))
         try:
             sink.write(msg + "\n")
             sink.flush()
@@ -682,19 +823,24 @@ def _handle_tools_call(params: Dict[str, Any]) -> Dict[str, Any]:
         # turns it into a clean ``-32000`` JSON-RPC error.
         raise payload
 
-    result = payload
-    text = json.dumps(_clean_floats(result), indent=2,
-                      default=_json_default, allow_nan=False)
-
-    content: List[Dict[str, Any]] = [{"type": "text", "text": text}]
-
     # Image content: estimators can attach a PNG plot under ``_plot_png``
     # for the MCP layer to surface as an image content block. Claude
     # vision (and any MCP client supporting image content) will render
     # it inline; the bytes are stripped from the JSON payload above.
+    result = payload
     plot_bytes = None
+    result_for_text = result
     if isinstance(result, dict):
         plot_bytes = result.get("_plot_png")
+        if isinstance(plot_bytes, (bytes, bytearray)):
+            result_for_text = {
+                k: v for k, v in result.items() if k != "_plot_png"
+            }
+
+    text = json.dumps(_clean_floats(result_for_text), indent=2,
+                      default=_json_default, allow_nan=False)
+    content: List[Dict[str, Any]] = [{"type": "text", "text": text}]
+
     if isinstance(plot_bytes, (bytes, bytearray)):
         import base64
         content.append({
@@ -702,12 +848,6 @@ def _handle_tools_call(params: Dict[str, Any]) -> Dict[str, Any]:
             "data": base64.b64encode(plot_bytes).decode("ascii"),
             "mimeType": "image/png",
         })
-        # Re-serialise the JSON payload without the binary blob so the
-        # text content stays readable.
-        clean = {k: v for k, v in result.items() if k != "_plot_png"}
-        content[0]["text"] = json.dumps(_clean_floats(clean), indent=2,
-                                          default=_json_default,
-                                          allow_nan=False)
 
     return {
         "content": content,
@@ -804,6 +944,11 @@ def handle_request(line: str) -> Optional[str]:
             request_id, -32601, f"Method not found: {method!r}")
 
     try:
+        if method == "tools/list":
+            return _jsonrpc_result_preencoded(
+                request_id,
+                _tools_list_result_json(),
+            )
         result = handler(params)
     except _RpcError as exc:
         # Typed error → preserve the canonical JSON-RPC / MCP code

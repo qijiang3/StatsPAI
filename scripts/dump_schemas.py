@@ -26,12 +26,24 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
+PACKAGE_SCHEMA_DIR = REPO_ROOT / "src" / "statspai" / "schemas"
+RUNTIME_SCHEMA_FILES = {"index.json", "tools.json", "functions.json"}
 
 from statspai._schema_export import (  # noqa: E402
     build_schemas,
     render_files,
-    export_schemas,
 )
+
+
+def _runtime_snapshot(files: dict[str, str]) -> dict[str, str]:
+    """Subset bundled inside the wheel for the MCP cold-start fast path."""
+    return {k: v for k, v in files.items() if k in RUNTIME_SCHEMA_FILES}
+
+
+def _write_runtime_snapshot(files: dict[str, str]) -> None:
+    PACKAGE_SCHEMA_DIR.mkdir(parents=True, exist_ok=True)
+    for fname, text in _runtime_snapshot(files).items():
+        (PACKAGE_SCHEMA_DIR / fname).write_text(text, encoding="utf-8")
 
 
 def check(out_dir: Path) -> int:
@@ -46,6 +58,14 @@ def check(out_dir: Path) -> int:
             continue
         if path.read_text(encoding="utf-8") != text:
             stale.append(fname)
+    for fname, text in _runtime_snapshot(expected).items():
+        path = PACKAGE_SCHEMA_DIR / fname
+        label = f"src/statspai/schemas/{fname}"
+        if not path.exists():
+            missing.append(label)
+            continue
+        if path.read_text(encoding="utf-8") != text:
+            stale.append(label)
     if missing or stale:
         if missing:
             print(f"[dump_schemas] missing files: {missing}", file=sys.stderr)
@@ -79,10 +99,23 @@ def main(argv=None) -> int:
     if args.check:
         return check(out_dir)
 
-    written = export_schemas(out_dir)
+    files = render_files(build_schemas())
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    for fname, text in files.items():
+        path = out_dir / fname
+        path.write_text(text, encoding="utf-8")
+        written.append(path)
+    if out_dir.resolve() == (REPO_ROOT / "schemas").resolve():
+        _write_runtime_snapshot(files)
     print(f"[dump_schemas] wrote {len(written)} files to {out_dir}/:")
     for p in written:
         print(f"   {p.name}")
+    if out_dir.resolve() == (REPO_ROOT / "schemas").resolve():
+        print(
+            f"[dump_schemas] mirrored {len(RUNTIME_SCHEMA_FILES)} runtime "
+            f"files to {PACKAGE_SCHEMA_DIR}/"
+        )
     return 0
 
 

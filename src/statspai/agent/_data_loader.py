@@ -70,6 +70,19 @@ def load_dataframe(path: str,
     so repeated tool calls on the same file are O(1) after the first
     load.
     """
+    sample_size = None
+    if sample_n is not None:
+        try:
+            sample_size = int(sample_n)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"data_sample_n must be a positive integer, got {sample_n!r}"
+            )
+        if sample_size < 1:
+            raise ValueError(
+                f"data_sample_n must be a positive integer, got {sample_n!r}"
+            )
+
     if is_remote_url(path):
         # Remote — defer all guard rails to the underlying loader; we
         # can't ``os.path.exists`` an s3 URL, and pandas/storage_options
@@ -79,9 +92,15 @@ def load_dataframe(path: str,
         if not os.path.isabs(path):
             raise ValueError(
                 f"data_path must be absolute or a URL, got {path!r}")
-        if not os.path.exists(path):
+        try:
+            stat = os.stat(path)
+        except FileNotFoundError:
             raise FileNotFoundError(f"No such file: {path}")
-        size = os.path.getsize(path)
+        except OSError as e:
+            raise ValueError(
+                f"Could not read data file metadata: {path!r}: {e}"
+            ) from e
+        size = stat.st_size
         cap = max_data_bytes()
         if cap and size > cap:
             raise ValueError(
@@ -90,15 +109,15 @@ def load_dataframe(path: str,
                 f"Pass data_sample_n=<N> for a random subsample, or "
                 f"raise the limit with the env var."
             )
-        mtime = os.path.getmtime(path)
+        mtime = stat.st_mtime
         df = _load_local_cached(path, mtime, tuple(columns or ()))
 
     if columns:
         keep = [c for c in columns if c in df.columns]
         if keep:
             df = df[keep]
-    if sample_n is not None and len(df) > sample_n:
-        df = df.sample(n=int(sample_n), random_state=0).reset_index(drop=True)
+    if sample_size is not None and len(df) > sample_size:
+        df = df.sample(n=sample_size, random_state=0).reset_index(drop=True)
     return df
 
 
