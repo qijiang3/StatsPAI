@@ -139,3 +139,27 @@ def test_cb_ipw_records_failure_diagnostics():
     # Healthy run: CB path succeeds, bookkeeping present.
     assert res.detail["cb_failed"] is False
     assert "n_boot_cb_failed" in res.detail
+
+
+# ---------------------------------------------------------------------------
+# WS-A4: panel_unitroot silently dropping units from the test.
+# ---------------------------------------------------------------------------
+
+def test_panel_unitroot_warns_when_units_dropped():
+    """A unit with too few periods is excluded; the test must warn rather
+    than silently shrink the unit set."""
+    rng = np.random.default_rng(0)
+    rows = []
+    # 6 healthy units with 30 periods each.
+    for u in range(6):
+        y = np.cumsum(rng.normal(size=30)) * 0.1 + rng.normal(size=30)
+        for t in range(30):
+            rows.append({"id": u, "time": t, "gdp": y[t]})
+    # 1 too-short unit (3 periods) -> dropped.
+    for t in range(3):
+        rows.append({"id": 99, "time": t, "gdp": rng.normal()})
+    df = pd.DataFrame(rows)
+    with pytest.warns(RuntimeWarning, match="computed over 6/7 units"):
+        res = sp.panel_unitroot(df, variable="gdp", id="id", time="time",
+                                test="ips")
+    assert res.n_units == 6

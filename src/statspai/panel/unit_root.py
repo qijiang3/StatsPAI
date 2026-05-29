@@ -17,6 +17,7 @@ Im, K.S., Pesaran, M.H. & Shin, Y. (2003).
 *Journal of Econometrics*, 115(1), 53-74.
 """
 
+import warnings
 from typing import Optional, List, Dict, Any
 import numpy as np
 import pandas as pd
@@ -141,9 +142,11 @@ def panel_unitroot(
     T_avg = data.groupby(id)[variable].count().mean()
 
     individual_results = []
+    n_short = 0
     for unit in units:
         y = data.loc[data[id] == unit].sort_values(time)[variable].dropna().values
         if len(y) < 5:
+            n_short += 1
             continue
         t_stat, p_val, used_lags = _adf_single(y.astype(float), lags=lags, trend=trend)
         individual_results.append({
@@ -151,8 +154,27 @@ def panel_unitroot(
         })
 
     ind_df = pd.DataFrame(individual_results)
-    valid = ind_df.dropna(subset=['t_stat'])
+    valid = ind_df.dropna(subset=['t_stat']) if len(ind_df) else ind_df
     n_valid = len(valid)
+    n_adf_failed = len(ind_df) - n_valid
+
+    # The panel statistic is built only from units with a finite ADF t-stat.
+    # Silently shrinking the unit set hides that some series were dropped
+    # (singular ADF design or too few periods) — surface it (CLAUDE.md §7).
+    if n_valid == 0:
+        raise ValueError(
+            f"panel_unitroot('{test}'): no unit yielded a valid ADF statistic "
+            f"({n_short}/{N} units had <5 periods, {n_adf_failed} had a "
+            f"singular ADF design). Cannot compute a panel unit-root test."
+        )
+    if n_short > 0 or n_adf_failed > 0:
+        warnings.warn(
+            f"panel_unitroot('{test}'): computed over {n_valid}/{N} units. "
+            f"Excluded {n_short} unit(s) with <5 periods and {n_adf_failed} "
+            f"unit(s) whose ADF regression was singular. The reported "
+            f"statistic and n_units reflect only the {n_valid} valid units.",
+            RuntimeWarning, stacklevel=2,
+        )
 
     if test == 'ips':
         # Im-Pesaran-Shin: average of individual ADF t-statistics
