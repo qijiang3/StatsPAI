@@ -125,6 +125,74 @@ TOLERANCES: dict[str, dict[str, float]] = {
 }
 
 
+# Strictness tiers. A single PASS/GAP verdict column flattens a
+# machine-precision closed-form match and a deliberately loose
+# methodological-difference tolerance into the same word, which a JSS
+# reviewer is right to find dilutive. We therefore classify each module by
+# the *registered* point-estimate tolerance (the forced strict tolerance
+# when one exists, e.g. RD at a common bandwidth) so the parity tables can
+# report the strictness breakdown explicitly. This is data-driven: it stays
+# correct if a module's verdict later flips (e.g. when the RD bandwidth
+# regularisation is ported and 06_rd tightens).
+TIER_ORDER = ["machine", "iterative", "moderate", "methodological"]
+TIER_LABEL = {
+    "machine": "machine-precision ($\\le 10^{-6}$, closed form)",
+    "iterative": "iterative/cross-fit ($\\le 10^{-3}$)",
+    "moderate": "moderate ($\\le 5\\times10^{-2}$)",
+    "methodological": "methodological difference (loose by design)",
+    "unclassified": "unclassified",
+}
+TIER_LABEL_MD = {
+    "machine": "machine-precision (≤1e-6, closed form)",
+    "iterative": "iterative/cross-fit (≤1e-3)",
+    "moderate": "moderate (≤5e-2)",
+    "methodological": "methodological difference (loose by design)",
+    "unclassified": "unclassified",
+}
+
+
+def tolerance_tier(module: str) -> str:
+    """Classify a module's headline strictness from its registered tolerance.
+
+    Uses the forced strict tolerance (``_forced_rel_est``) when present, else
+    the point-estimate ``rel_est``/``abs_est``. Returns one of
+    ``machine`` / ``iterative`` / ``moderate`` / ``methodological`` /
+    ``unclassified``.
+    """
+    tol = TOLERANCES.get(module, {})
+    key = tol.get("_forced_rel_est")
+    if key is None:
+        key = tol.get("rel_est", tol.get("abs_est"))
+    if key is None:
+        return "unclassified"
+    if key <= 1e-6:
+        return "machine"
+    if key <= 1e-3:
+        return "iterative"
+    if key <= 5e-2:
+        return "moderate"
+    return "methodological"
+
+
+def tier_breakdown(modules: list[str]) -> dict[str, int]:
+    """Count how many of ``modules`` fall in each strictness tier."""
+    counts: dict[str, int] = {}
+    for m in modules:
+        counts[tolerance_tier(m)] = counts.get(tolerance_tier(m), 0) + 1
+    return counts
+
+
+def _tier_breakdown_sentence(modules: list[str], *, md: bool = False) -> str:
+    counts = tier_breakdown(modules)
+    labels = TIER_LABEL_MD if md else TIER_LABEL
+    parts = [
+        f"{counts[t]} {labels[t]}"
+        for t in TIER_ORDER + ["unclassified"]
+        if counts.get(t)
+    ]
+    return "; ".join(parts)
+
+
 @dataclass
 class RowDiff:
     module: str
@@ -688,6 +756,7 @@ def render_tex(modules: list[str]) -> str:
 def render_tex_3way(modules: list[str]) -> str:
     """Five-column 3-way table: ID / Method / vs R / vs Stata / Verdict."""
     rows: list[str] = []
+    tier_sentence = _tier_breakdown_sentence([m for m in modules if collect(m)])
     for m in modules:
         diffs = collect(m)
         if not diffs:
@@ -753,7 +822,9 @@ def render_tex_3way(modules: list[str]) -> str:
         "and GAP; common-specification passes, small-sample SE conventions, and "
         "convention gaps are explained in the parenthetical notes and per-module "
         "\\code{extra} block in "
-        "\\code{tests/r\\_parity/results/} and \\code{tests/stata\\_parity/results/}.}\n"
+        "\\code{tests/r\\_parity/results/} and \\code{tests/stata\\_parity/results/}. "
+        "Strictness-tier breakdown by registered point-estimate tolerance: "
+        f"{tier_sentence}.}}\n"
         "\\label{tab:track-a-parity}\\\\\n"
         "\\toprule\n"
         "ID & Method & Worst diff vs \\proglang{R} & Worst diff vs \\proglang{Stata} & Verdict \\\\\n"
@@ -785,6 +856,12 @@ def render_md_3way(modules: list[str]) -> str:
         "common-specification passes, and small-sample SE conventions are flagged "
         "in the per-module `extra` block of each JSON.",
         "",
+        "**Strictness-tier breakdown** (by registered point-estimate "
+        "tolerance, so machine-precision matches are not flattened together "
+        "with deliberately loose methodological-difference tolerances): "
+        + _tier_breakdown_sentence(
+            [m for m in modules if collect(m)], md=True) + ".",
+        "",
     ]
     for m in modules:
         diffs = collect(m)
@@ -798,6 +875,8 @@ def render_md_3way(modules: list[str]) -> str:
             if st_meta_path.exists() else {}
         )
         lines.append(f"## Module {m}")
+        lines.append(f"- **strictness_tier**: `{tolerance_tier(m)}` "
+                     f"({TIER_LABEL_MD[tolerance_tier(m)]})")
         if meta:
             for k, v in meta.items():
                 if isinstance(v, str) and len(v) > 80:
@@ -844,6 +923,7 @@ def main() -> None:
     (RESULTS_DIR / "parity_table.md").write_text(md, encoding="utf-8")
     (RESULTS_DIR / "parity_table.tex").write_text(tex, encoding="utf-8")
     print("OK -- wrote parity_table.md and parity_table.tex")
+    print("     strictness tiers: " + _tier_breakdown_sentence(rendered_modules, md=True))
 
     # 3-way Stata extension. Always emitted; Stata-empty modules show
     # the explicit "no canonical ref" reason rather than a blank.
