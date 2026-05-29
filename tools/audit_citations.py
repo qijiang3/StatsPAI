@@ -338,8 +338,21 @@ def _cache_put(key: str, data: bytes) -> None:
     (CACHE_DIR / f"{h}.bin").write_bytes(data)
 
 
+# HTTP status codes worth retrying: upstream throttling (429) and
+# transient server-side unavailability (5xx). arXiv's export API in
+# particular rate-limits GitHub's shared runner IP pool with 429s that
+# clear after a short back-off — without a retry a single 429 drops an
+# entire batch of ids and (under --strict) fails the §10 gate even
+# though no citation is actually wrong (0 mismatch / N unresolved).
+_HTTP_MAX_RETRIES = 3
+
+
 def _parse_retry_after(value: Optional[str]) -> Optional[float]:
-    """Parse a Retry-After header when it is expressed in seconds."""
+    """Parse a ``Retry-After`` header's delta-seconds form (e.g. ``"5"``).
+
+    The HTTP-date form is intentionally ignored (returns ``None``) so the
+    caller falls back to exponential back-off rather than parsing dates.
+    """
     if value is None:
         return None
     try:
@@ -354,9 +367,17 @@ def _http_get(
     *,
     refresh: bool = False,
     sleep: float = 0.0,
-    max_retries: int = 3,
+    max_retries: int = _HTTP_MAX_RETRIES,
 ) -> bytes:
-    """GET with disk cache, user-agent, and bounded retry for throttles."""
+    """GET with disk cache + user-agent. Returns bytes.
+
+    Retries retryable HTTP status codes (429 / selected 4xx / 5xx) and
+    transient network failures with ``Retry-After``-aware exponential
+    back-off, so a transient arXiv / Crossref rate-limit is not
+    mis-reported as an unverifiable citation. Non-retryable codes (e.g.
+    404, "DOI not found") propagate immediately so callers can distinguish
+    a genuine miss from a throttle.
+    """
     if not refresh:
         cached = _cache_get(url)
         if cached is not None:
@@ -480,10 +501,11 @@ def verify_arxiv(
 ) -> dict[str, PaperMeta]:
     """Batch query arXiv API (max 100 per request).
 
-    If provided, ``transient`` receives ids from chunks whose upstream
-    request failed after retry. That lets strict mode distinguish a source
-    outage/rate-limit from an id that is genuinely absent in a successful
-    upstream response.
+    ``transient``: if provided, ids belonging to a chunk whose HTTP call
+    failed with a transient/network error (e.g. arXiv 429 throttling)
+    are added here. The caller uses this to distinguish "couldn't reach
+    arXiv" (soft failure) from "arXiv returned a successful response that
+    simply doesn't contain this id" (a genuine, §10-gated miss).
     """
     result: dict[str, PaperMeta] = {}
     ns = {"atom": "http://www.w3.org/2005/Atom"}
@@ -550,7 +572,12 @@ def verify_nber(
     refresh: bool = False,
     transient: Optional[set[str]] = None,
 ) -> dict[str, PaperMeta]:
-    """Scrape NBER paper pages (they expose Google-Scholar citation meta)."""
+    """Scrape NBER paper pages (they expose Google-Scholar citation meta).
+
+    ``transient``: see :func:`verify_arxiv` — ids whose page fetch failed
+    with a transient/network error are recorded here so the caller can
+    treat them as a soft failure rather than a genuine missing citation.
+    """
     result: dict[str, PaperMeta] = {}
     for wp in ids:
         url = f"https://www.nber.org/papers/w{wp}"
@@ -631,11 +658,13 @@ def verify_crossref(
     refresh: bool = False,
     transient: Optional[set[str]] = None,
 ) -> dict[str, PaperMeta]:
-    """Verify DOIs against Crossref with DataCite fallback for 404s.
+    """Verify DOIs against Crossref (with a DataCite fallback on 404).
 
-    Crossref 404 is not transient: it means the DOI is absent from Crossref
-    and should fall through to DataCite. Other HTTP/network errors are
-    transient after ``_http_get`` has exhausted bounded retry.
+    ``transient``: see :func:`verify_arxiv`. A Crossref **404** is a
+    definitive "not in Crossref" and is NOT transient — it falls through
+    to DataCite and, if still unresolved, is a genuine §10-gated miss.
+    Any other HTTP error (e.g. a 429/5xx that survived ``_http_get``'s
+    retries) or network error is recorded as transient.
     """
     result: dict[str, PaperMeta] = {}
     for doi in dois:
@@ -1081,6 +1110,8 @@ def main(argv: Optional[list[str]] = None) -> int:
               file=sys.stderr)
 
     truth: dict[tuple[str, str], PaperMeta] = {}
+    # Ids whose primary source couldn't be reached (rate limit / network)
+    # rather than genuinely missing. Keyed (kind, id) for the exit logic.
     transient_keys: set[tuple[str, str]] = set()
     if "arxiv" in args.kinds and by_kind["arxiv"]:
         ids = sorted({c.id for c in by_kind["arxiv"]})
@@ -1142,6 +1173,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     n_mismatch = sum(1 for v in verdicts if v.status == "mismatch")
     n_unresolved = sum(1 for v in verdicts if v.status == "unresolved")
     n_ok = sum(1 for v in verdicts if v.status == "ok")
+    # Split unresolved into genuine misses (source reachable, id absent —
+    # a real §10 problem) vs transient (source unreachable / throttled —
+    # an infrastructure hiccup, not a fabricated citation).
     n_unresolved_transient = sum(
         1 for v in verdicts
         if v.status == "unresolved"
@@ -1159,6 +1193,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.strict and n_unresolved_genuine:
         return 1
     if args.strict and n_unresolved_transient:
+        # Every unresolved id was a transient upstream failure (rate
+        # limit / network), not a citation defect. Signal a soft failure
+        # (exit 2) so CI can warn-and-pass instead of blocking a merge on
+        # an arXiv / Crossref outage — see the exit-code contract in
+        # tests/test_audit_citations.py.
         print(
             f"strict: {n_unresolved_transient} citation(s) unresolved due to "
             "transient upstream errors (rate limit / network) — soft failure "
