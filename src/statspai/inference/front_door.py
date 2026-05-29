@@ -180,19 +180,37 @@ def front_door(
             Y_, D_, M_, X_, mediator_type, n_mc, rng, integrate_by
         )
 
-    point = _point(Y, D, M, X)
+    point, point_logit_fallback = _point(Y, D, M, X)
+
+    # If the covariate-adjusted mediator logit failed on the *main* sample we
+    # silently reverted to the unadjusted marginal P(M=1) — i.e. the reported
+    # ATE is not the covariate-adjusted estimator the user asked for. Surface
+    # it loudly (CLAUDE.md §7) rather than swallow it.
+    if point_logit_fallback > 0:
+        warnings.warn(
+            f"Front-door: the covariate-adjusted mediator model failed to fit "
+            f"on {point_logit_fallback} of the 2 treatment arms (singular / "
+            f"separated design or non-convergence). The reported ATE uses the "
+            f"*unadjusted* marginal P(M=1) for the affected arm(s); it is no "
+            f"longer covariate-adjusted. Inspect mediator/covariate overlap.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     # Bootstrap — failures leave NaN, we track and warn rather than
     # silently replace with the point estimate (which would shrink SE).
     boot = np.full(n_boot, np.nan)
     n_failed = 0
+    n_boot_logit_fallback = 0
     first_err: Optional[str] = None
     for b in range(n_boot):
         idx = rng.integers(0, n, size=n)
         try:
-            boot[b] = _point(
+            boot[b], _fb = _point(
                 Y[idx], D[idx], M[idx], X[idx] if X is not None else None
             )
+            if _fb > 0:
+                n_boot_logit_fallback += 1
         except Exception as e:
             n_failed += 1
             if first_err is None:
@@ -243,6 +261,9 @@ def front_door(
         'n_treated': int((D == 1).sum()),
         'n_control': int((D == 0).sum()),
         'covariates': covariates,
+        'mediator_model_degraded': bool(point_logit_fallback > 0),
+        'mediator_model_fallback_arms': int(point_logit_fallback),
+        'n_boot_mediator_fallback': int(n_boot_logit_fallback),
     }
     if n_failed > 0:
         model_info['first_bootstrap_error'] = first_err
@@ -355,6 +376,11 @@ def _front_door_ate(Y, D, M, X, mediator_type, n_mc, rng, integrate_by='marginal
     # or Gaussian (continuous M).
     # ------------------------------------------------------------------
 
+    # Count mediator-model fallbacks (covariate-adjusted logit -> marginal
+    # mean) so the caller can surface the silent degradation rather than
+    # report a covariate-adjusted ATE that is actually unadjusted.
+    n_logit_fallback = 0
+
     if mediator_type == 'binary':
         # For each observation i, compute ATE contribution in closed form:
         #   ATE = E_x[ [P(M=1|D=1,x) - P(M=1|D=0,x)] * (μ(1) - μ(0)) ]
@@ -368,6 +394,11 @@ def _front_door_ate(Y, D, M, X, mediator_type, n_mc, rng, integrate_by='marginal
         else:
             fit1 = _logit_fit(M[mask1], X[mask1])
             fit0 = _logit_fit(M[mask0], X[mask0])
+            # When a logit fit fails (singular/separated design,
+            # non-convergence) _logit_predict substitutes the *unadjusted*
+            # marginal P(M=1). That silently changes which estimator ran, so
+            # track it instead of swallowing it.
+            n_logit_fallback = int(fit1 is None) + int(fit0 is None)
             p_m_d1 = _logit_predict(fit1, X, float(np.mean(M[mask1])))
             p_m_d0 = _logit_predict(fit0, X, float(np.mean(M[mask0])))
 
@@ -383,7 +414,7 @@ def _front_door_ate(Y, D, M, X, mediator_type, n_mc, rng, integrate_by='marginal
         mu_m0 = p_d0 * mu_Y_given_d0_m0 + p_d1 * mu_Y_given_d1_m0
 
         ate = float(np.mean((p_m_d1 - p_m_d0) * (mu_m1 - mu_m0)))
-        return ate
+        return ate, n_logit_fallback
 
     # ------------------------------------------------------------------
     # Continuous mediator: Gaussian conditional model
@@ -435,7 +466,7 @@ def _front_door_ate(Y, D, M, X, mediator_type, n_mc, rng, integrate_by='marginal
 
         inner_d1 = inner_d1.reshape(n, n_mc).mean(axis=1)
         inner_d0 = inner_d0.reshape(n, n_mc).mean(axis=1)
-        return float(np.mean(inner_d1 - inner_d0))
+        return float(np.mean(inner_d1 - inner_d0)), n_logit_fallback
 
     # 'marginal' — Pearl aggregate formulation. One global pool of
     # (x, m)-pairs drawn from the population-marginal distributions.
@@ -455,7 +486,7 @@ def _front_door_ate(Y, D, M, X, mediator_type, n_mc, rng, integrate_by='marginal
 
     e_y_d1 = float(np.mean(p_d0 * mu0_d1_pool + p_d1 * mu1_d1_pool))
     e_y_d0 = float(np.mean(p_d0 * mu0_d0_pool + p_d1 * mu1_d0_pool))
-    return e_y_d1 - e_y_d0
+    return e_y_d1 - e_y_d0, n_logit_fallback
 
 
 # Citation

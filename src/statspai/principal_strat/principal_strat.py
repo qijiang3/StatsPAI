@@ -616,6 +616,10 @@ def _fit_principal_score(Y, D, S, X, covariates, n, alpha, n_boot, seed):
         mask0 = D_ == 0
         p11_fit = _logit_safe(S_[mask1], X_[mask1])
         p10_fit = _logit_safe(S_[mask0], X_[mask0])
+        # A failed principal-score logit silently reverts to the *unadjusted*
+        # marginal P(S=1); track it so the caller can warn rather than report
+        # a covariate-adjusted estimate that is not actually adjusted.
+        n_logit_fallback = int(p11_fit is None) + int(p10_fit is None)
         p11 = _logit_predict(p11_fit, X_, fallback=float(np.mean(S_[mask1])) if mask1.any() else 0.5)
         p10 = _logit_predict(p10_fit, X_, fallback=float(np.mean(S_[mask0])) if mask0.any() else 0.5)
         # Raw complier share BEFORE clipping — diagnostics for
@@ -634,10 +638,10 @@ def _fit_principal_score(Y, D, S, X, covariates, n, alpha, n_boot, seed):
         e_always /= tot
         e_complier /= tot
         e_never /= tot
-        return e_always, e_complier, e_never, violation_frac, min_raw
+        return e_always, e_complier, e_never, violation_frac, min_raw, n_logit_fallback
 
     def _point(Y_, D_, S_, X_, check_monotonicity=False):
-        e_a, e_c, e_n, viol_frac, min_raw = _fit_cell_probs(
+        e_a, e_c, e_n, viol_frac, min_raw, n_logit_fallback = _fit_cell_probs(
             Y_, D_, S_, X_, check_monotonicity=check_monotonicity,
         )
 
@@ -687,6 +691,7 @@ def _fit_principal_score(Y, D, S, X, covariates, n, alpha, n_boot, seed):
             'pi_never': float(np.mean(e_n)),
             'mono_violation_frac': viol_frac,
             'mono_min_raw_complier': min_raw,
+            'n_logit_fallback': n_logit_fallback,
         }
 
     point = _point(Y, D, S, X, check_monotonicity=True)
@@ -705,8 +710,22 @@ def _fit_principal_score(Y, D, S, X, covariates, n, alpha, n_boot, seed):
             RuntimeWarning, stacklevel=3,
         )
 
+    # Surface a silent reversion to the *unadjusted* principal score on the
+    # main sample (CLAUDE.md §7): the reported PCEs would no longer use the
+    # covariate-adjusted principal score the user requested.
+    if point.get('n_logit_fallback', 0) > 0:
+        warnings.warn(
+            f"Principal stratification: the covariate-adjusted principal-score "
+            f"logit failed to fit on {point['n_logit_fallback']} of the 2 "
+            f"treatment arms (singular / separated design or non-convergence). "
+            f"The reported PCEs use the *unadjusted* marginal P(S=1) for the "
+            f"affected arm(s) and are no longer covariate-adjusted.",
+            RuntimeWarning, stacklevel=3,
+        )
+
     rng = np.random.default_rng(seed)
     boot = {k: np.full(n_boot, np.nan) for k in ('tau_c', 'tau_a', 'tau_n')}
+    n_boot_logit_fallback = 0
     for b in range(n_boot):
         idx = rng.integers(0, n, size=n)
         try:
@@ -715,6 +734,8 @@ def _fit_principal_score(Y, D, S, X, covariates, n, alpha, n_boot, seed):
             # is noise.
             bp = _point(Y[idx], D[idx], S[idx], X[idx],
                         check_monotonicity=False)
+            if bp.get('n_logit_fallback', 0) > 0:
+                n_boot_logit_fallback += 1
             for k in boot:
                 if k in bp:
                     boot[k][b] = bp[k]
@@ -770,6 +791,9 @@ def _fit_principal_score(Y, D, S, X, covariates, n, alpha, n_boot, seed):
             'assumption': 'principal ignorability + monotonicity',
             'mono_violation_frac': point['mono_violation_frac'],
             'mono_min_raw_complier': point['mono_min_raw_complier'],
+            'principal_score_degraded': bool(point.get('n_logit_fallback', 0) > 0),
+            'principal_score_fallback_arms': int(point.get('n_logit_fallback', 0)),
+            'n_boot_principal_score_fallback': int(n_boot_logit_fallback),
         },
     )
 
