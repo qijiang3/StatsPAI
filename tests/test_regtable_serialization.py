@@ -8,7 +8,6 @@ and ``to_json()`` must round-trip through ``json.dumps``.
 """
 
 import json
-import math
 
 import numpy as np
 import pandas as pd
