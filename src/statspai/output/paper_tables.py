@@ -118,6 +118,28 @@ class PaperTables:
             parts.append("")
         return "\n".join(parts)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-safe dict representation of the multi-panel bundle.
+
+        Agent-native counterpart to the renderers: each populated panel
+        (``main`` / ``heterogeneity`` / ``robustness`` / ``placebo``) carries
+        the full :meth:`RegtableResult.to_dict` payload (metadata + rendered
+        grid + numeric truth), so an LLM tool loop can cache and reason over
+        the whole bundle without re-rendering.
+        """
+        return {
+            "kind": "paper_tables",
+            "template": self.template,
+            "panel_names": list(self.panels().keys()),
+            "panels": {name: tbl.to_dict()
+                       for name, tbl in self.panels().items()},
+        }
+
+    def to_json(self, *, indent: Optional[int] = None) -> str:
+        """Serialise :meth:`to_dict` via ``json.dumps``."""
+        import json
+        return json.dumps(self.to_dict(), indent=indent, default=str)
+
     # ------------------------------------------------------------------
     # DOCX / XLSX export
     # ------------------------------------------------------------------

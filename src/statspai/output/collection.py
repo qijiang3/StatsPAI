@@ -182,6 +182,68 @@ class Collection:
             Path(path).write_text(content, encoding="utf-8")
         return content
 
+    @staticmethod
+    def _serialize_payload(it: "CollectionItem") -> Dict[str, Any]:
+        """JSON-safe serialisation of one item's payload.
+
+        Regression tables reuse :meth:`RegtableResult.to_dict`; DataFrames
+        (balance / summary / tab) round-trip through ``DataFrame.to_json``
+        (NaN → null); text / heading carry their string.
+        """
+        import json
+        p = it.payload
+        if isinstance(p, RegtableResult):
+            return p.to_dict()
+        if isinstance(p, str):
+            return {"text": p}
+        if isinstance(p, pd.DataFrame):
+            return {
+                "columns": [str(c) for c in p.columns],
+                "rows": json.loads(p.to_json(orient="records")),
+            }
+        # MeanComparisonResult / other result objects exposing a frame.
+        if hasattr(p, "to_dataframe"):
+            try:
+                df = p.to_dataframe()
+                return {
+                    "columns": [str(c) for c in df.columns],
+                    "rows": json.loads(df.to_json(orient="records")),
+                }
+            except Exception:
+                pass
+        return {"repr": str(p)}
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-safe dict representation of the whole document.
+
+        Agent-native counterpart to :meth:`save` — every item (regression
+        table, balance / summary table, free text) is serialised in order so
+        an LLM tool loop can cache and reason over a multi-table document
+        without re-rendering. Regression-table items carry the full
+        :meth:`RegtableResult.to_dict` payload (metadata + rendered grid +
+        numeric truth).
+        """
+        return {
+            "kind": "collection",
+            "title": self.title,
+            "template": self.template,
+            "n_items": len(self.items),
+            "items": [
+                {
+                    "name": it.name,
+                    "item_kind": it.kind,
+                    "title": it.title,
+                    "content": self._serialize_payload(it),
+                }
+                for it in self.items
+            ],
+        }
+
+    def to_json(self, *, indent: Optional[int] = None) -> str:
+        """Serialise :meth:`to_dict` via ``json.dumps``."""
+        import json
+        return json.dumps(self.to_dict(), indent=indent, default=str)
+
     def get(self, name: str) -> CollectionItem:
         for it in self.items:
             if it.name == name:
