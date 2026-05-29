@@ -1939,6 +1939,179 @@ class RegtableResult:
         return df
 
     # ═══════════════════════════════════════════════════════════════════════
+    # Agent-native serialisation
+    # ═══════════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def _jsonable(value: Any) -> Any:
+        """Coerce a scalar to a JSON-safe primitive (NaN/Inf → ``None``)."""
+        if value is None:
+            return None
+        if isinstance(value, (bool, str)):
+            return value
+        if isinstance(value, (int, np.integer)):
+            return int(value)
+        if isinstance(value, (float, np.floating)):
+            v = float(value)
+            return v if np.isfinite(v) else None
+        if isinstance(value, np.ndarray):
+            return [RegtableResult._jsonable(x) for x in value.tolist()]
+        try:
+            if pd.isna(value):
+                return None
+        except (TypeError, ValueError):
+            pass
+        return str(value)
+
+    def to_dict(
+        self,
+        *,
+        renders: Union[bool, Sequence[str], None] = None,
+    ) -> Dict[str, Any]:
+        """Return a JSON-safe dict representation of the table.
+
+        The package is agent-native (CLAUDE.md §1): a rendered regression
+        table is a first-class artifact an LLM tool loop should be able to
+        serialise, cache, and reason over without re-rendering.  The payload
+        carries three layers:
+
+        - **metadata** — ``model_labels``, ``dep_var_labels``,
+          ``panel_labels``, ``title``, ``notes``, ``template``, ``se_type``,
+          ``stars`` / ``star_levels``, ``requested_stats``, ``coef_labels``.
+        - **table** — the *rendered* cell grid (the same strings
+          :meth:`to_dataframe` produces: ``"2.067***"``, ``"(0.074)"`` …),
+          as a list of ``{"term": ..., <model label>: <cell>}`` records.
+        - **models** — the *numeric* truth per model: coefficient estimates,
+          standard errors, t / p values, confidence bounds, summary stats and
+          the dependent variable.  Use this layer for machine reasoning; use
+          ``table`` for faithful re-display.
+
+        Parameters
+        ----------
+        renders : bool | sequence of str, optional
+            When truthy, also embed fully rendered strings under
+            ``"renders"``.  ``True`` embeds ``latex`` / ``html`` / ``markdown``
+            / ``text``; a sequence selects specific formats
+            (e.g. ``renders=["latex"]``).  Default ``None`` keeps the payload
+            compact.
+
+        Returns
+        -------
+        dict
+            JSON-safe; round-trips through ``json.dumps``.
+
+        Examples
+        --------
+        >>> import statspai as sp
+        >>> tbl = sp.regtable(m1, m2, template="aer")
+        >>> payload = tbl.to_dict()
+        >>> payload["models"][0]["coefficients"]["x"]["estimate"]  # doctest: +SKIP
+        2.067
+        """
+        df = self.to_dataframe()
+        table_rows: List[Dict[str, Any]] = []
+        for idx, row in df.iterrows():
+            rec: Dict[str, Any] = {
+                "term": "" if idx is None else str(idx)
+            }
+            for col in df.columns:
+                val = row[col]
+                rec[str(col)] = "" if pd.isna(val) else str(val)
+            table_rows.append(rec)
+
+        models: List[Dict[str, Any]] = []
+        flat = self._all_models_flat()
+        for i, m in enumerate(flat):
+            label = (self.model_labels[i]
+                     if i < len(self.model_labels) else f"({i + 1})")
+            coefs: Dict[str, Dict[str, Any]] = {}
+            for term in list(m.params.index):
+                t = str(term)
+                coefs[t] = {
+                    "estimate": self._jsonable(m.params.get(term)),
+                    "std_error": self._jsonable(m.std_errors.get(term)),
+                    "t_statistic": self._jsonable(
+                        m.tvalues.get(term) if m.tvalues is not None else None),
+                    "p_value": self._jsonable(
+                        m.pvalues.get(term) if m.pvalues is not None else None),
+                    "conf_low": self._jsonable(
+                        m.conf_int_lower.get(term)
+                        if m.conf_int_lower is not None else None),
+                    "conf_high": self._jsonable(
+                        m.conf_int_upper.get(term)
+                        if m.conf_int_upper is not None else None),
+                }
+            models.append({
+                "label": str(label),
+                "depvar": self._jsonable(getattr(m, "depvar", None)),
+                "coefficients": coefs,
+                "stats": {str(k): self._jsonable(v)
+                          for k, v in (getattr(m, "stats", {}) or {}).items()},
+                "df_resid": self._jsonable(getattr(m, "df_resid", None)),
+            })
+
+        payload: Dict[str, Any] = {
+            "kind": "regression_table",
+            "n_models": self.n_models,
+            "n_panels": len(self.panels),
+            "model_labels": [str(x) for x in self.model_labels],
+            "dep_var_labels": (
+                [str(x) for x in self.dep_var_labels]
+                if self.dep_var_labels else None),
+            "panel_labels": (
+                [str(x) for x in self.panel_labels]
+                if self.panel_labels else None),
+            "title": self.title,
+            "notes": [str(x) for x in self.notes],
+            "template": self.template,
+            "se_type": self.se_type,
+            "stars": bool(self.show_stars),
+            "star_levels": [self._jsonable(x) for x in self.star_levels],
+            "requested_stats": [str(x) for x in self.requested_stats],
+            "coef_labels": {str(k): str(v)
+                            for k, v in self.coef_labels.items()},
+            "columns": ["term"] + [str(c) for c in df.columns],
+            "table": table_rows,
+            "models": models,
+        }
+
+        if renders:
+            if renders is True:
+                wanted = ["latex", "html", "markdown", "text"]
+            else:
+                wanted = [str(f) for f in renders]
+            renderers = {
+                "latex": self.to_latex,
+                "html": self.to_html,
+                "markdown": self.to_markdown,
+                "text": self.to_text,
+            }
+            rendered: Dict[str, str] = {}
+            for fmt in wanted:
+                fn = renderers.get(fmt)
+                if fn is None:
+                    raise ValueError(
+                        f"renders={fmt!r} is not one of "
+                        f"{sorted(renderers)}"
+                    )
+                rendered[fmt] = fn()
+            payload["renders"] = rendered
+
+        return payload
+
+    def to_json(
+        self,
+        *,
+        indent: Optional[int] = None,
+        renders: Union[bool, Sequence[str], None] = None,
+    ) -> str:
+        """Serialise :meth:`to_dict` via ``json.dumps``."""
+        import json
+        return json.dumps(
+            self.to_dict(renders=renders), indent=indent, default=str
+        )
+
+    # ═══════════════════════════════════════════════════════════════════════
     # Excel
     # ═══════════════════════════════════════════════════════════════════════
 
@@ -2177,6 +2350,8 @@ class RegtableResult:
             path.write_text(self.to_quarto(), encoding="utf-8")
         elif ext == ".csv":
             self.to_dataframe().to_csv(filename)
+        elif ext == ".json":
+            path.write_text(self.to_json(indent=2), encoding="utf-8")
         else:
             path.write_text(self.to_text(), encoding="utf-8")
 
@@ -2311,9 +2486,10 @@ def regtable(
         always renders HTML regardless of this setting.
     filename : str, optional
         Save the table to this file path. The format is chosen from the
-        **file extension** (``.tex``/``.html``/``.md``/``.qmd``/``.docx``/``.xlsx``),
-        independently of ``output=``. Pass a matching extension and
-        ``output=`` to avoid surprises.
+        **file extension** (``.tex``/``.html``/``.md``/``.qmd``/``.docx``/
+        ``.xlsx``/``.csv``/``.json``), independently of ``output=``. The
+        ``.json`` form writes the agent-native :meth:`RegtableResult.to_dict`
+        payload. Pass a matching extension and ``output=`` to avoid surprises.
     quarto_label : str, optional
         Quarto cross-reference id. Pass ``"main"`` to make the table
         referenceable as ``@tbl-main`` from the manuscript prose. The
@@ -2504,7 +2680,8 @@ def regtable(
     RegtableResult
         Object with ``.to_text()``, ``.to_latex()``, ``.to_html()``,
         ``.to_markdown()``, ``.to_excel(filename)``, ``.to_word(filename)``,
-        ``.to_dataframe()``, ``.save(filename)`` methods.
+        ``.to_dataframe()``, ``.to_dict()`` / ``.to_json()`` (agent-native),
+        ``.save(filename)`` methods.
         Renders as rich HTML in Jupyter notebooks via ``_repr_html_()``.
 
     Examples

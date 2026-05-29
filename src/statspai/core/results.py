@@ -539,6 +539,168 @@ class EconometricResults:
         _result_to_docx(self, filename, title)
 
     # ------------------------------------------------------------------
+    # Publication-quality table export (delegates to regtable)
+    # ------------------------------------------------------------------
+    #
+    # Historically ``EconometricResults`` only exposed ``.to_docx()`` while
+    # the richer LaTeX / HTML / Markdown / Excel / Word surface lived only
+    # on :class:`CausalResult`.  That asymmetry meant ``sp.did(...).to_latex()``
+    # worked but ``sp.regress(...).to_latex()`` raised ``AttributeError`` —
+    # a confusing inconsistency for the same import.  We close the gap by
+    # delegating to the canonical :func:`~statspai.output.regtable` renderer,
+    # which already accepts a single ``EconometricResults`` and produces every
+    # format with significance stars, SE-in-parentheses cells, fixed-effect
+    # indicators and journal templates.  Every ``regtable()`` keyword argument
+    # (``coef_labels``, ``keep``, ``drop``, ``order``, ``stats``, ``se_type``,
+    # ``stars``, ``fmt``, ``template``, ``notes`` …) passes straight through,
+    # so a single-model export gets the full power of the multi-model builder.
+
+    def _as_regtable(self, *, title: Optional[str] = None, **kwargs: Any):
+        """Build a one-column ``RegtableResult`` wrapping this result.
+
+        The import is local because :mod:`statspai.output` imports the
+        result classes from :mod:`statspai.core` at module load — a
+        module-level import here would create a circular import.
+        """
+        from ..output import regtable
+        if title is None:
+            title = kwargs.pop("title", None)
+        else:
+            kwargs.pop("title", None)
+        return regtable(self, title=title, **kwargs)
+
+    @staticmethod
+    def _inject_latex_label(latex: str, label: str) -> str:
+        """Insert ``\\label{...}`` after ``\\caption`` (or ``\\centering``)."""
+        lines = latex.split("\n")
+        anchor = None
+        for i, ln in enumerate(lines):
+            if ln.lstrip().startswith("\\caption"):
+                anchor = i
+                break
+        if anchor is None:
+            for i, ln in enumerate(lines):
+                if ln.lstrip().startswith("\\centering"):
+                    anchor = i
+                    break
+        if anchor is None:
+            return latex
+        lines.insert(anchor + 1, f"\\label{{{label}}}")
+        return "\n".join(lines)
+
+    def to_latex(
+        self,
+        path: Optional[str] = None,
+        *,
+        caption: Optional[str] = None,
+        label: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
+        """Render the regression result as a publication-quality LaTeX table.
+
+        A thin wrapper over :func:`~statspai.output.regtable` (single
+        column).  Produces a ``booktabs``-style ``\\begin{table}`` float with
+        significance stars and standard errors in parentheses.
+
+        Parameters
+        ----------
+        path : str, optional
+            If given, the LaTeX source is also written to this file
+            (UTF-8).  The string is always returned.
+        caption : str, optional
+            ``\\caption{...}`` text (maps to ``regtable(title=...)``).
+        label : str, optional
+            ``\\label{...}`` cross-reference id, injected after the caption.
+        **kwargs
+            Forwarded to :func:`~statspai.output.regtable` — e.g.
+            ``coef_labels``, ``keep``, ``drop``, ``order``, ``stats``,
+            ``se_type``, ``stars``, ``star_levels``, ``fmt``, ``template``,
+            ``notes``.
+
+        Returns
+        -------
+        str
+            LaTeX source.
+
+        Examples
+        --------
+        >>> import statspai as sp
+        >>> r = sp.regress("y ~ x + z", data=df)
+        >>> tex = r.to_latex(caption="Main results", label="tab:main",
+        ...                  coef_labels={"x": "Treatment"}, template="aer")
+        """
+        latex = self._as_regtable(title=caption, **kwargs).to_latex()
+        if label:
+            latex = self._inject_latex_label(latex, label)
+        if path is not None:
+            from pathlib import Path
+            Path(path).write_text(latex, encoding="utf-8")
+        return latex
+
+    def to_html(self, path: Optional[str] = None, **kwargs: Any) -> str:
+        """Render the regression result as an HTML table.
+
+        A thin wrapper over :func:`~statspai.output.regtable`.  Returns the
+        HTML string; also writes it to ``path`` when given.  See
+        :meth:`to_latex` for the forwarded ``**kwargs``.
+        """
+        html = self._as_regtable(**kwargs).to_html()
+        if path is not None:
+            from pathlib import Path
+            Path(path).write_text(html, encoding="utf-8")
+        return html
+
+    def to_markdown(
+        self,
+        path: Optional[str] = None,
+        *,
+        quarto: bool = False,
+        **kwargs: Any,
+    ) -> str:
+        """Render the regression result as a Markdown table.
+
+        A thin wrapper over :func:`~statspai.output.regtable`.  Set
+        ``quarto=True`` for Quarto-flavoured output.  Returns the Markdown
+        string; also writes it to ``path`` when given.  See :meth:`to_latex`
+        for the forwarded ``**kwargs``.
+        """
+        md = self._as_regtable(**kwargs).to_markdown(quarto=quarto)
+        if path is not None:
+            from pathlib import Path
+            Path(path).write_text(md, encoding="utf-8")
+        return md
+
+    def to_excel(self, path: str, **kwargs: Any) -> str:
+        """Write the regression result to a styled ``.xlsx`` workbook.
+
+        A thin wrapper over :func:`~statspai.output.regtable` with
+        ``booktabs``-style cell borders (requires ``openpyxl``).  Returns
+        ``path``.  See :meth:`to_latex` for the forwarded ``**kwargs``.
+        """
+        self._as_regtable(**kwargs).to_excel(path)
+        return path
+
+    def to_word(
+        self,
+        path: str,
+        *,
+        caption: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
+        """Write the regression result to a publication-quality ``.docx``.
+
+        A thin wrapper over :func:`~statspai.output.regtable` with AER/QJE
+        ``booktabs`` rules and Times New Roman typography (requires
+        ``python-docx``).  Returns ``path``.  Unlike :meth:`to_docx` (which
+        renders the broom-style coefficient grid), this routes through the
+        same publication table builder used for multi-model exports, so the
+        single-model output matches a one-column ``regtable``.  See
+        :meth:`to_latex` for the forwarded ``**kwargs``.
+        """
+        self._as_regtable(title=caption, **kwargs).to_word(path)
+        return path
+
+    # ------------------------------------------------------------------
     # Agent-native serialisation
     # ------------------------------------------------------------------
 

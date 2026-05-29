@@ -1481,7 +1481,11 @@ def _build_registry():
             "AEJA/etc.), multi-SE side-by-side display, eform odds-ratio / IRR / HR "
             "transformation with delta-method SE, column spanners (\\multicolumn / "
             "colspan / cmidrule), unified coef_map (rename + order + drop), "
-            "depvar_mean / depvar_sd auto rows, and N-mismatch consistency warnings."
+            "depvar_mean / depvar_sd auto rows, and N-mismatch consistency warnings. "
+            "Returns a RegtableResult exporting to text/LaTeX/HTML/Markdown/Quarto/"
+            "Word/Excel plus an agent-native to_dict()/to_json() payload (metadata "
+            "+ rendered cell grid + numeric truth per model); save(filename) and "
+            "filename= infer the format from the extension, including .json."
         ),
         params=[
             ParamSpec("results", "list", True, None, "Model result objects (positional)"),
@@ -5232,7 +5236,7 @@ def _build_registry():
                     "`pip install sentence-transformers` or use "
                     "embedder='hash'"
                 ),
-                alternative="embedder='hash'",
+                alternative="",
             ),
         ],
         alternatives=[
@@ -9119,7 +9123,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
                 "symptom": "Candidate policy selects actions absent from logs",
                 "exception": "AssumptionWarning",
                 "remedy": "Restrict action space or use conservative off-policy evaluation.",
-                "alternative": "sp.ope_ipw",
+                "alternative": "sp.ipw",
             },
         ],
         "alternatives": ["sharp_ope_unobserved", "structural_mdp"],
@@ -9260,7 +9264,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
                 "alternative": "sp.feols",
             },
         ],
-        "alternatives": ["feols", "fixest_in_r", "regress"],
+        "alternatives": ["feols", "hdfe_ols", "regress"],
         "typical_n_min": 100,
     },
     "feols": {
@@ -9290,7 +9294,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
                 "alternative": "sp.fast.feols",
             },
         ],
-        "alternatives": ["panel", "regress", "fixest_in_r"],
+        "alternatives": ["panel", "regress", "hdfe_ols"],
         "typical_n_min": 100,
     },
     "fepois": {
@@ -9351,7 +9355,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
                 "alternative": "sp.ffl_decompose",
             },
         ],
-        "alternatives": ["dfl_decompose", "ffl_decompose", "oaxaca", "rif_regression"],
+        "alternatives": ["dfl_decompose", "ffl_decompose", "oaxaca", "rif_decomposition"],
         "typical_n_min": 200,
     },
     "dfl_decompose": {
@@ -9396,7 +9400,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
                 "alternative": "sp.dfl_decompose",
             },
         ],
-        "alternatives": ["dfl_decompose", "oaxaca", "rif_regression"],
+        "alternatives": ["dfl_decompose", "oaxaca", "rif_decomposition"],
         "typical_n_min": 500,
     },
     "oaxaca": {
@@ -9419,7 +9423,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
                 "alternative": "sp.ffl_decompose",
             },
         ],
-        "alternatives": ["ffl_decompose", "dfl_decompose", "rif_regression"],
+        "alternatives": ["ffl_decompose", "dfl_decompose", "rif_decomposition"],
         "typical_n_min": 200,
     },
     # ------------------------------------------------------------------ #
