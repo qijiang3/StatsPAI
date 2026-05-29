@@ -248,9 +248,10 @@ def _ols_hc1(
         )
     beta = XtX_inv @ (X.T @ y)
     resid = y - X @ beta
-    df_resid = max(n - p, 1)
-    Omega = (X.T * (resid ** 2)) @ X
-    cov = (n / df_resid) * (XtX_inv @ Omega @ XtX_inv)
+    # HC1 sandwich via the canonical core primitive (CLAUDE.md §4);
+    # n/max(n-p,1) factor. Byte-identical to the prior inline computation.
+    from ..core._vcov import sandwich_vcov
+    cov = sandwich_vcov(XtX_inv, X * resid[:, None], correction="hc1")
     return beta, cov
 
 

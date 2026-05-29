@@ -35,23 +35,22 @@ def _parse_formula(formula: str):
 # ---------------------------------------------------------------------------
 
 def _sandwich_variance(X, hessian_inv, score_i):
-    """HC0 sandwich variance: H^{-1} (sum s_i s_i') H^{-1}."""
-    meat = score_i.T @ score_i
-    return hessian_inv @ meat @ hessian_inv
+    """HC0 sandwich variance: H^{-1} (sum s_i s_i') H^{-1}.
+
+    Delegates to the canonical ``core._vcov.sandwich_vcov`` (CLAUDE.md §4).
+    """
+    from ..core._vcov import sandwich_vcov
+    return sandwich_vcov(hessian_inv, score_i, correction="none")
 
 
 def _cluster_variance(X, hessian_inv, score_i, clusters):
-    """Clustered sandwich variance."""
-    unique = np.unique(clusters)
-    G = len(unique)
-    meat = np.zeros((score_i.shape[1], score_i.shape[1]))
-    for g in unique:
-        idx = clusters == g
-        sg = score_i[idx].sum(axis=0, keepdims=True)
-        meat += sg.T @ sg
-    # Finite-sample correction: G/(G-1)
-    correction = G / (G - 1)
-    return correction * hessian_inv @ meat @ hessian_inv
+    """Clustered sandwich variance (correction G/(G-1) = 'cgm').
+
+    Byte-identical to the prior hand-rolled sandwich for G >= 2.
+    """
+    from ..core._vcov import sandwich_vcov
+    return sandwich_vcov(hessian_inv, score_i, clusters=clusters,
+                         correction="cgm")
 
 
 # ===================================================================

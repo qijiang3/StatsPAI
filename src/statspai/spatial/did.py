@@ -561,16 +561,13 @@ def _linear_fit(
 
 
 def _cluster_vcov(X: np.ndarray, resid: np.ndarray, cluster: np.ndarray) -> np.ndarray:
-    n, k = X.shape
+    # Canonical core sandwich (CLAUDE.md §4); CR1 correction
+    # (G/max(G-1,1))*((n-1)/max(n-k,1)). pinv bread preserved.
+    # Byte-identical to the prior hand-rolled sandwich for G >= 2.
+    from ..core._vcov import sandwich_vcov
     XtX_inv = np.linalg.pinv(X.T @ X)
-    meat = np.zeros((k, k))
-    for g in pd.unique(cluster):
-        mask = cluster == g
-        s = X[mask].T @ resid[mask]
-        meat += np.outer(s, s)
-    G = len(pd.unique(cluster))
-    scale = (G / max(G - 1, 1)) * ((n - 1) / max(n - k, 1))
-    return scale * XtX_inv @ meat @ XtX_inv
+    return sandwich_vcov(XtX_inv, X * resid[:, None], clusters=cluster,
+                         correction="cr1")
 
 
 def _hc1_vcov(X: np.ndarray, resid: np.ndarray) -> np.ndarray:
