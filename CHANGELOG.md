@@ -80,6 +80,31 @@ All notable changes to StatsPAI will be documented in this file.
   executed to verify it runs. `migration-from-r.md` corrected:
   `sp.regress` returns `EconometricResults` (not `CausalResult`) and the
   `etable` mapping points at `sp.regtable`.
+- **`RegtableResult.from_dict()`** — the inverse of `to_dict()`. The payload
+  now carries a `render_spec` block (`fmt` / `alpha` / `panel_sizes` /
+  `add_rows` / `keep` / `drop` / `order` / `se_label`) so a serialised table
+  reconstructs and re-renders byte-identically across text/LaTeX/HTML/Markdown
+  for the common feature set (exotic `multi_se` / `eform` / `column_spanners` /
+  `tests` are documented as not surviving the round-trip). Makes the JSON a
+  faithful cache, not just a snapshot.
+- **Journal-grade LaTeX** — `to_latex(siunitx=True)` decimal-aligns numeric
+  columns with `siunitx` v3 `S` columns (coefficients align on the decimal
+  point; stars ride along as `\textsuperscript` via `table-space-text-post`;
+  SE / text cells wrapped so they are not mis-parsed). `threeparttable=True`
+  moves the footnotes into a `tablenotes` block; `siunitx_preamble=True` emits
+  the required `\usepackage` hint. Unsupported regimes raise
+  `NotImplementedError` rather than emit non-compiling LaTeX. The default
+  LaTeX path is byte-identical. Threaded through `EconometricResults.to_latex`.
+- **`sp.coefplot_tikz()`** — `pgfplots` / TikZ coefficient forest plot (the
+  LaTeX-native counterpart to `sp.coefplot`, whose `(fig, ax)` already gives
+  PNG/PDF via `fig.savefig`): one `\addplot` series per model with horizontal
+  CI error bars, reversed y-axis, dashed zero line; `coef_labels` / `level` /
+  `standalone` options. Auto-registered.
+- **Export-surface universality contract (`tests/test_export_surface_contract.py`)**
+  — 55 parametrized checks asserting `sp.regtable(r)` consumes every estimator
+  result (`EconometricResults` / `CausalResult` / `PanelResults` /
+  `FrontierResult`) and round-trips, so a future non-exportable result fails
+  loudly. Guide §7–§8 document coefplots and the table/non-table boundary.
 
 ### Fixed
 
