@@ -256,6 +256,56 @@ formats.
 
 ---
 
+## 7. Coefficient plots
+
+`sp.coefplot(*models)` returns a Matplotlib `(fig, ax)` forest plot — PNG / PDF
+come free via `fig.savefig`:
+
+```python
+fig, ax = sp.coefplot(m1, m2, model_names=["OLS", "IV"])
+fig.savefig("coefplot.pdf")     # or .png, .svg — any Matplotlib backend
+```
+
+For a LaTeX-native, vector, editable plot, `sp.coefplot_tikz(*models)` emits
+`pgfplots` source (the same forest layout — one series per model, horizontal CI
+error bars, zero reference line):
+
+```python
+tikz = sp.coefplot_tikz(m1, m2, coef_labels={"x": "Treatment"},
+                        level=0.95, standalone=True)
+open("coefplot.tex", "w").write(tikz)   # standalone=True → compiles as-is
+```
+
+---
+
+## 8. What exports — and what doesn't
+
+`sp.regtable(result)` is the **universal exporter**: it duck-types any result
+exposing `params` / `std_errors` (multi-coefficient) or `estimate` / `se`
+(single effect), so the same call works regardless of estimator. Verified
+across the result families:
+
+| Result class           | Returned by (e.g.)                       | `sp.regtable(r)` |
+| ---------------------- | ---------------------------------------- | ---------------- |
+| `EconometricResults`   | `regress` / `ols` / `iv` / `feols` / `logit` / `glm` | ✅ |
+| `CausalResult`         | `did` / `rd` / `dml` / `tmle` / `qreg`   | ✅ |
+| `PanelResults`         | `panel`                                  | ✅ |
+| `FrontierResult`       | `frontier`                               | ✅ |
+
+So you never learn a per-estimator export API — fit anything, then
+`sp.regtable(r).to_latex()` / `.to_dict()` / `.save(...)`.
+
+**Out of scope (by design).** Some results are not coefficient tables and
+carry their own visualisations or summaries instead: causal-forest
+*heterogeneous* effects (`.plot()` of the CATE distribution), partial-
+identification *bounds* (intervals, not point ± SE), and density / dose-
+response *curves*. Forcing these into a coefficient column would misrepresent
+them, so they are intentionally excluded from the table exporters. The
+`tests/test_export_surface_contract.py` suite pins the universality claim for
+the table-shaped results above.
+
+---
+
 ## See also
 
 - `sp.describe_function("regtable")` — every parameter, inline.
