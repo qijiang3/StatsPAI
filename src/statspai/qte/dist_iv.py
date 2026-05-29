@@ -117,8 +117,20 @@ def dist_iv(
                 boot[b, j] = _quantile_iv(Y[idx], D[idx], Z[idx], X[idx], q)
             except Exception:
                 pass
+    n_finite = np.isfinite(boot).sum(axis=0)
     se_q = np.nanstd(boot, axis=0, ddof=1)
-    se_q = np.where(np.isfinite(se_q) & (se_q > 0), se_q, 1e-6)
+    # Quantiles whose bootstrap collapsed get NaN, not a fabricated 1e-6
+    # (which would yield a spuriously narrow CI), and we surface it.
+    se_q = np.where(np.isfinite(se_q) & (n_finite >= 2), se_q, np.nan)
+    if (n_finite < n_boot).any():
+        import warnings
+        n_nan = int((n_finite < 2).sum())
+        warnings.warn(
+            f"dist_iv: distributional-IV bootstrap failed for some "
+            f"quantiles; {n_nan}/{len(quantiles)} quantile SE(s) are NaN "
+            f"and remaining SEs use fewer replicates.",
+            RuntimeWarning, stacklevel=2,
+        )
 
     z_crit = float(stats.norm.ppf(1 - alpha / 2))
     ci_low = late_q - z_crit * se_q
