@@ -43,9 +43,10 @@ def _cluster_robust_variance(X: np.ndarray, residuals: np.ndarray,
     V = (G/(G-1)) * ((n-1)/(n-k)) * (X'X)^{-1} B (X'X)^{-1},
     B = sum_g (u_g u_g'), u_g = sum_{i in g} X_i * e_i.
 
-    Thin wrapper over the canonical ``core._vcov.cluster_robust_vcov``
-    (CLAUDE.md §4); the Liang-Zeger correction is its ``'liang_zeger'`` factor.
-    Verified byte-identical to the prior hand-rolled implementation.
+    Thin wrapper over the canonical ``core._vcov.cluster_robust_vcov``; the
+    Liang-Zeger correction is its ``'liang_zeger'`` factor. Verified
+    byte-identical to the prior hand-rolled implementation for non-missing
+    cluster labels.
     """
     from ..core._vcov import cluster_robust_vcov
     return cluster_robust_vcov(X, residuals, clusters, correction="liang_zeger")

@@ -81,6 +81,19 @@ def test_single_cluster_does_not_explode(ols_data):
     assert np.all(np.isfinite(V))
 
 
+def test_cluster_rejects_missing_labels(ols_data):
+    X, y, resid, clusters = ols_data
+    labels = clusters.astype(float)
+    labels[0] = np.nan
+    with pytest.raises(ValueError, match="missing values"):
+        cluster_robust_vcov(X, resid, labels, correction="stata")
+
+    labels_obj = np.array([f"g{x}" for x in clusters], dtype=object)
+    labels_obj[0] = None
+    with pytest.raises(ValueError, match="missing values"):
+        cluster_robust_vcov(X, resid, labels_obj, correction="stata")
+
+
 def test_unknown_correction_raises():
     with pytest.raises(ValueError, match="Unknown cluster correction"):
         cluster_correction_factor(10, 100, 3, "bogus")

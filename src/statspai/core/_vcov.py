@@ -36,6 +36,37 @@ from ._numba_kernels import cluster_meat, sandwich_hc
 __all__ = ["cluster_robust_vcov", "hc_vcov", "cluster_correction_factor"]
 
 
+def _cluster_labels_array(clusters: np.ndarray, n_obs: int) -> np.ndarray:
+    """Return validated one-dimensional cluster labels."""
+    def _object_label_is_missing(value: object) -> bool:
+        if value is None:
+            return True
+        try:
+            missing = value != value
+        except (TypeError, ValueError):
+            return False
+        try:
+            return bool(missing)
+        except TypeError:
+            return True
+
+    labels = np.asarray(clusters)
+    if labels.ndim != 1:
+        raise ValueError("clusters must be a one-dimensional array")
+    if labels.shape[0] != n_obs:
+        raise ValueError("clusters length must match the number of observations")
+
+    if labels.dtype.kind in "fc":
+        has_missing = bool(np.isnan(labels).any())
+    elif labels.dtype.kind in "mM":
+        has_missing = bool(np.isnat(labels).any())
+    else:
+        has_missing = any(_object_label_is_missing(x) for x in labels)
+    if has_missing:
+        raise ValueError("clusters must not contain missing values")
+    return labels
+
+
 def cluster_correction_factor(n_clusters: int, n_obs: int, n_params: int,
                               correction: str = "stata") -> float:
     """Finite-sample correction factor ``c`` for a cluster-robust sandwich."""
@@ -80,7 +111,7 @@ def cluster_robust_vcov(
     ----------
     X : (n, k) design matrix (intercept column included by the caller).
     residuals : (n,) regression residuals.
-    clusters : (n,) cluster labels (any hashable / integer dtype).
+    clusters : (n,) cluster labels (any sortable / integer dtype; no missing).
     correction : named finite-sample factor (see module docstring).
     dof_adjust : explicit float factor; overrides ``correction`` when given
         (use to reproduce a site's exact non-standard factor during migration).
@@ -93,9 +124,10 @@ def cluster_robust_vcov(
     X = np.asarray(X, dtype=np.float64)
     residuals = np.asarray(residuals, dtype=np.float64)
     n, k = X.shape
+    clusters = _cluster_labels_array(clusters, n)
     if XtX_inv is None:
         XtX_inv = np.linalg.inv(X.T @ X)
-    meat = cluster_meat(X, residuals, np.asarray(clusters))
+    meat = cluster_meat(X, residuals, clusters)
     n_clusters = int(np.unique(clusters).shape[0])
     if dof_adjust is not None:
         c = float(dof_adjust)
