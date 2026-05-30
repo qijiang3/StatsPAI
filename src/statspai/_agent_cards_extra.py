@@ -1867,10 +1867,16 @@ EXTRA_AGENT_CARDS: Dict[str, Dict[str, Any]] = {
             "Controls are passed at their time-t values verbatim "
             "— lag them yourself; the estimator does not re-lag "
             "them",
+            "For identification='lpirfs_cholesky', the endogenous "
+            "variable order defines the recursive structural shock, "
+            "matching lpirfs::lp_lin with shock_type=1",
         ],
         "pre_conditions": [
             "Single time-ordered series in a DataFrame with "
             "the outcome and shock columns",
+            "For identification='lpirfs_cholesky', endog_order "
+            "contains the outcome and shock columns in the intended "
+            "Cholesky ordering",
             "Length comfortably exceeds horizons + max lag so "
             "the deepest horizon regression retains enough "
             "usable rows",
@@ -1886,6 +1892,15 @@ EXTRA_AGENT_CARDS: Dict[str, Dict[str, Any]] = {
                 "specification, or drop your manual "
                 "lags so collinear duplicate-lag "
                 "columns are not formed",
+                "alternative": "var",
+            },
+            {
+                "symptom": "The horizon-0 response is zero when the "
+                "shock is ordered after the response variable",
+                "exception": "(none — Cholesky ordering convention)",
+                "remedy": "Use the intended endog_order, or switch "
+                "back to identification='direct' if the shock column "
+                "is already externally identified",
                 "alternative": "var",
             },
             {

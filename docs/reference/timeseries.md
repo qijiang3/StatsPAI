@@ -48,10 +48,18 @@ sp.cointegration(..., method='phillips_ouliaris')
 
 ```python
 sp.local_projections(
-    df, y='gdp', shock='mp_shock',
-    horizons=range(0, 21),
-    controls=['infl_lag','r_lag'],
-    se='driscoll_kraay',                            # HAC-panel SE
+    df, outcome='gdp', shock='mp_shock',
+    horizons=20,
+    controls=['infl_lag', 'r_lag'],
+    auto_lag=False,                                 # controls are used verbatim
+)
+
+# Match lpirfs::lp_lin with a unit Cholesky shock.
+sp.local_projections(
+    df, outcome='gdp', shock='mp_shock',
+    horizons=20,
+    identification='lpirfs_cholesky',
+    endog_order=['gdp', 'mp_shock'],
 )
 ```
 
