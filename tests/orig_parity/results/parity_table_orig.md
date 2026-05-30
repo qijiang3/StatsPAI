@@ -24,7 +24,7 @@ Data source: `Synth::basque` (731 obs)
 
 | stat | sp | R | published | rel(sp vs R) | rel(sp vs published) | citation |
 |---|---:|---:|---:|---:|---:|---|
-| `avg_post_gap` | -0.8296 | -0.8944 | -0.855 | 0.073 | 0.03 | Abadie-Gardeazabal (2003) Figure 2 / Synth vignette |
+| `avg_post_gap` | -0.8946 | -0.8944 | -0.855 | 0.00018 | 0.046 | Abadie-Gardeazabal (2003) Figure 2 / Synth vignette |
 
 ## Module `04_lalonde_original`
 Data source: `MatchIt::lalonde` (614 obs)
