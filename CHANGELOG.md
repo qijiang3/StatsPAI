@@ -65,6 +65,20 @@ All notable changes to StatsPAI will be documented in this file.
   in the Markdown ledger and the LaTeX appendix caption so a machine-precision
   match is not flattened together with a deliberately loose
   methodological-difference tolerance.
+- **Stata leg brought to the same rigor as R (`tests/stata_parity/`)** —
+  `_common.do` now writes an inline `provenance` block (engine version,
+  edition, OS) onto every `*_Stata.json`; `verify_reproduce_stata.py` re-runs
+  each `.do` on the committed CSV bytes and confirms all 44 Stata modules
+  reproduce **bit-for-bit** (worst rel 0) under Stata 18 MP, including the
+  iterative-optimiser commands (`set seed 42` + deterministic solvers);
+  `_capture_stata_env.do` + `_gen_stata_env.py` pin the engine and the
+  verbatim `*!` banner of 17 community ado packages in `STATA_ENVIRONMENT.md`
+  (the Stata analogue of `renv.lock`). Reproduction ledger:
+  `results/REPRODUCIBILITY_REPORT_STATA.md`.
+- **Provenance drift guard
+  (`tests/test_parity_harness_contract.py`)** — the normal-CI contract suite
+  now fails the build if any committed `*_R.json` (r_version + packages) or
+  `*_Stata.json` (stata_version + edition) loses its provenance block.
 
 ### Changed — Track A R golden values regenerated under the locked environment
 
@@ -75,6 +89,9 @@ All notable changes to StatsPAI will be documented in this file.
   far inside that module's 0.20 SCM non-uniqueness parity tolerance. All
   cross-language verdicts are unchanged (42 PASS / 10 GAP). This is a
   reference-fixture refresh, not a `statspai` estimator-output change.
+- The 44 committed `results/*_Stata.json` were likewise refreshed to embed
+  the engine `provenance` block; their numbers are **unchanged** (every
+  module reproduces at exactly 0 under the locked Stata 18 MP environment).
 
 ### Fixed — MCP cold-start bundle drift
 
