@@ -109,7 +109,19 @@ def solve_simplex_weights(
         constraints={"type": "eq", "fun": lambda w: np.sum(w) - 1.0},
         options={"maxiter": 1000, "ftol": 1e-12},
     )
-    return result.x
+    # SLSQP enforces the bounds/equality only up to its own tolerance, so
+    # ``result.x`` can carry sub-tolerance violations (tiny negative weights
+    # or a mass slightly off 1.0).  The synthetic-control contract — and
+    # every reference implementation (R ``Synth``, ``gsynth``) — is a clean
+    # simplex point, so project the solver output back onto it: clip the
+    # negative noise to zero and renormalise.  This only moves weights by
+    # the solver's sub-tolerance noise and keeps the non-negativity
+    # invariant that downstream code (and reference parity) relies on.
+    w = np.clip(np.asarray(result.x, dtype=np.float64), 0.0, None)
+    total = float(w.sum())
+    if total > 0.0:
+        w = w / total
+    return w
 
 
 # ---------------------------------------------------------------------------

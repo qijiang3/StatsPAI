@@ -4,6 +4,22 @@ All notable changes to StatsPAI will be documented in this file.
 
 ## [Unreleased]
 
+### ⚠️ Correctness fix — synthetic-control weights projected back onto the simplex
+
+- **`solve_simplex_weights` (the inner W solver shared by `sp.synth` and the
+  SCM/sdid/augsynth/gsynth family) now projects the SLSQP solution back onto
+  the unit simplex** — clipping sub-tolerance negative weights to zero and
+  renormalising to sum 1 — before returning. SLSQP enforces the
+  `w_j ≥ 0, Σw = 1` constraints only up to its own tolerance, so the raw
+  `result.x` could carry small negative donor weights (observed down to
+  `≈ -7.5e-4`), violating the non-negativity invariant that the synthetic
+  control estimand and every reference implementation (R `Synth`, `gsynth`)
+  rely on. **Donor weights change** by the solver's sub-tolerance noise; the
+  projection moves the native output *toward* the reference clean-simplex
+  solution, so reference parity is preserved (verified against the synth
+  parity suite). Guarded by
+  `tests/test_synth.py::TestSyntheticControl::test_weights_non_negative`.
+
 ## [1.16.0+source.20260531] — 2026-05-31
 
 ### Correctness fix — RD density native path now ports `rddensity` defaults
