@@ -77,7 +77,7 @@ STABILITY_TIERS: frozenset = frozenset({"stable", "experimental", "deprecated"})
 VALIDATION_STATUSES: frozenset = frozenset(
     {
         "certified",  # cross-language or published-reference parity evidence
-        "validated",  # analytic / reference-test evidence in this checkout
+        "validated",  # reference, known-truth, or Monte Carlo evidence here
         "api_stable",  # stable public API, but no machine-readable evidence yet
         "experimental",  # follows FunctionSpec.stability
         "deprecated",  # follows FunctionSpec.stability
@@ -108,9 +108,12 @@ class FunctionSpec:
       ``"api_stable"`` | ``"experimental"`` | ``"deprecated"``)
       classifies the evidence backing the implementation. ``certified``
       means cross-language or published-reference parity evidence;
-      ``validated`` means analytic/reference-test evidence; ``api_stable``
-      means the public API is stable but no machine-readable parity
-      evidence has been attached yet.
+      ``validated`` means a known-truth, reference/external parity, or
+      Monte Carlo evidence artifact exists in this checkout; ordinary
+      unit/regression tests remain API-contract evidence and do not
+      promote a function into the numerical validation tier.
+      ``api_stable`` means the public API is stable but no qualifying
+      numerical evidence has been attached yet.
     * ``limitations`` enumerates **partial-implementation gaps inside
       an otherwise stable function** — typically a parameter value that
       raises :class:`NotImplementedError` (e.g.
@@ -216,9 +219,16 @@ class FunctionSpec:
 
         description = self.description
         if self.stability != "stable":
-            description = f"[{self.stability}] {description}"
-        if self.validation_status not in {"certified", "api_stable"}:
-            description = f"{description} Validation: {self.validation_status}."
+            prefix = f"[{self.stability}] "
+            if not description.startswith(prefix):
+                description = f"{prefix}{description}"
+        if self.validation_status == "validated":
+            description = (
+                f"{description} Validation: validated evidence tier "
+                "(known-truth, reference, external-parity, or Monte Carlo artifact)."
+            )
+        elif self.validation_status in {"experimental", "deprecated"}:
+            description = f"{description} Validation status: {self.validation_status}."
         elif self.validation_status == "certified":
             if self.limitations:
                 description = (
@@ -323,6 +333,8 @@ class FunctionSpec:
                 merged
             )
 
+        signature = self.to_openai_schema()
+
         return {
             "name": self.name,
             "category": self.category,
@@ -330,8 +342,8 @@ class FunctionSpec:
             "validation_status": self.validation_status,
             "validation_notes": list(self.validation_notes),
             "limitations": list(self.limitations),
-            "description": self.description,
-            "signature": self.to_openai_schema(),
+            "description": signature["description"],
+            "signature": signature,
             "pre_conditions": pre_conditions,
             "assumptions": assumptions,
             "failure_modes": failure_modes,
@@ -2375,7 +2387,7 @@ def _build_registry():
             name="paper_tables",
             category="output",
             description=(
-                "Multi-panel journal-ready table bundle (Main / Heterogeneity / "
+                "Multi-panel manuscript-ready table bundle (Main / Heterogeneity / "
                 "Robustness / Placebo) with one-shot export to LaTeX/Markdown/Word/Excel."
             ),
             params=[
@@ -2690,7 +2702,7 @@ def _build_registry():
                     "str",
                     False,
                     "native",
-                    "Computation backend: native or augsynth/R reference backend",
+                    "Computation backend: native or augsynth/R bridge backend",
                 ),
             ],
             returns="CausalResult with period-level effects and placebo inference",
@@ -4262,13 +4274,13 @@ def _build_registry():
         )
     )
 
-    # -- v0.9.17: Target-trial publication report ------------------- #
+    # -- v0.9.17: Target-trial manuscript report -------------------- #
     register(
         FunctionSpec(
             name="target_trial_report",
             category="target_trial",
             description=(
-                "Render a target-trial emulation result as a publication-"
+                "Render a target-trial emulation result as a manuscript-"
                 "ready Methods + Results block (Markdown / LaTeX / plain "
                 "text), tracking the JAMA 2022 7-component spec."
             ),
@@ -6746,7 +6758,7 @@ def _build_registry():
             alternatives=[
                 "causal",  # workflow without paper rendering
                 "recommend",  # estimator selection only
-                "replication_pack",  # bundle the draft into a journal-ready zip
+                "replication_pack",  # bundle the draft into a replication zip
             ],
         )
     )
@@ -6760,7 +6772,7 @@ def _build_registry():
             category="output",
             description=(
                 "Package an analysis (PaperDraft / fitted result / list of "
-                "results) into a journal-ready replication zip: data CSV + "
+                "results) into a replication zip: data CSV + "
                 "schema manifest, caller code, frozen environment, "
                 "rendered paper (md/qmd/tex/docx), citations, and an "
                 "aggregated lineage.json from any results carrying "
@@ -11112,22 +11124,18 @@ _CERTIFIED_VARIANT_LIMITATIONS: Dict[str, Dict[str, List[str]]] = {
     },
     "rddensity": {
         "limitations": [
-            "Certified conclusion-level density-test evidence is available, "
-            "but the native default bandwidth selector and local-density "
-            "estimates can differ from "
-            "rddensity::rddensity; use backend='r' with R/rddensity installed "
-            "when exact cross-language selector/test-statistic matching "
-            "matters. Manual side-specific bandwidths are sensitivity controls, "
-            "not a reference-parity guarantee.",
+            "Certified native reference-parity evidence covers the default "
+            "rddensity::rddensity unrestricted triangular-kernel selector and "
+            "test path on the JSS Lee/RD Senate fixture. Manual side-specific "
+            "bandwidths are explicit user controls, not a reference-parity "
+            "guarantee; backend='r' remains available when direct R package "
+            "execution is required.",
         ],
         "validation_notes": [
-            "Track A rddensity module records a default-bandwidth convention "
-            "gap while preserving the manipulation-test conclusion; the "
-            "function now also supports side-specific manual bandwidths and an "
-            "optional backend='r' bridge for canonical rddensity::rddensity "
-            "selector/test-statistic parity. Manual bandwidths are reported as "
-            "native sensitivity controls rather than as rddensity numeric "
-            "parity.",
+            "Track A rddensity module 09 is native Python reference parity: "
+            "StatsPAI ports rdbwdensity combination bandwidths, mass-point "
+            "ECDF handling, and jackknife CJM local-polynomial density "
+            "inference, matching rddensity::rddensity on the same CSV bytes.",
         ],
     },
     "synth": {
@@ -11145,9 +11153,9 @@ _CERTIFIED_VARIANT_LIMITATIONS: Dict[str, Dict[str, List[str]]] = {
         "validation_notes": [
             "SCM certification is variant-level; exact ADH parity is obtained "
             "with the canonical special_predictors recipe or backend='synth'; "
-            "SDID, augmented SCM, and generalized SCM expose explicit R "
-            "reference backends, and remaining native-default differences "
-            "stay documented.",
+            "SDID, augmented SCM, and generalized SCM have native parity rows "
+            "with optional R bridge backends; remaining native-default "
+            "differences stay documented.",
         ],
     },
     "causal_forest": {
@@ -12810,8 +12818,10 @@ def _apply_validation_evidence() -> None:
     The registry is usable from an installed wheel with no test tree; in
     that case the conservative seed still marks the flagship Track A
     functions. In a source checkout, live parity artifacts add file-level
-    notes and reference-parity tests upgrade additional functions to
-    ``validated``.
+    notes and reference/external-parity tests upgrade additional functions
+    to ``validated``. Ordinary unit/regression tests are retained as
+    API-contract evidence, but they are deliberately insufficient for the
+    JSS numerical-validation tier.
     """
     global _VALIDATION_EVIDENCE_APPLIED
     if _VALIDATION_EVIDENCE_APPLIED:
@@ -12822,14 +12832,21 @@ def _apply_validation_evidence() -> None:
             spec.validation_status = spec.stability
         elif spec.validation_status in {"experimental", "deprecated"}:
             spec.validation_status = "api_stable"
+        elif spec.validation_status == "validated":
+            # Hand-written specs used to mark several high-use APIs as
+            # validated based on unit/regression coverage. Keep the evidence
+            # notes below, but require qualifying parity/known-truth/MC
+            # evidence before the status itself says "validated".
+            spec.validation_status = "api_stable"
 
     certified: Dict[str, List[str]] = {
         name: ["Track A parity seed"] for name in _CERTIFIED_SEED_FUNCTIONS
     }
-    validated: Dict[str, List[str]] = {
-        name: [f"Regression/unit validation: {note}" for note in notes]
+    api_contract: Dict[str, List[str]] = {
+        name: [f"API/unit contract evidence: {note}" for note in notes]
         for name, notes in _VALIDATED_TEST_SEED_FUNCTIONS.items()
     }
+    validated: Dict[str, List[str]] = {}
     root = _repo_root()
     if root is not None:
         for name, notes in _scan_parity_readme(root).items():
@@ -12855,6 +12872,14 @@ def _apply_validation_evidence() -> None:
         ):
             continue
         spec.validation_status = "validated"
+        for note in notes[:5]:
+            if note not in spec.validation_notes:
+                spec.validation_notes.append(note)
+
+    for name, notes in api_contract.items():
+        spec = _REGISTRY.get(name)
+        if spec is None or spec.stability != "stable":
+            continue
         for note in notes[:5]:
             if note not in spec.validation_notes:
                 spec.validation_notes.append(note)

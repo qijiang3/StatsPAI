@@ -16,7 +16,18 @@ JSS_HEADLINE_TEST_COUNTS = {
     "external_parity": 50,
     "coverage_monte_carlo": 12,
 }
-JSS_CERTIFIED_VALIDATED_SYMBOLS = 245
+JSS_CERTIFIED_VALIDATED_SYMBOLS = 70
+VALIDATED_GRADE_MARKERS = (
+    "tests/reference_parity/",
+    "tests/external_parity/",
+    "coverage",
+    "Monte Carlo",
+    "known-truth",
+    "known truth",
+    "Track A parity seed",
+    "documented gap",
+    "certification",
+)
 
 
 def test_validation_report_summarizes_source_tree_evidence():
@@ -71,7 +82,7 @@ def test_certified_functions_surface_variant_level_gaps():
     """Certified must not read as blanket exact parity for every option."""
     expected_fragments = {
         "rdrobust": "bwselect='cct'",
-        "rddensity": "bandwidth selector",
+        "rddensity": "rdbwdensity combination",
         "synth": "special_predictors",
         "causal_forest": "overlap",
         "did_imputation": "aggregation",
@@ -93,6 +104,7 @@ def test_certified_validated_symbols_have_attached_evidence_notes():
 
     missing_notes = []
     certified_without_grade = []
+    validated_without_grade = []
     for name in names:
         spec = sp.describe_function(name)
         notes = spec.get("validation_notes", [])
@@ -104,9 +116,14 @@ def test_certified_validated_symbols_have_attached_evidence_notes():
             for note in notes
         ):
             certified_without_grade.append(name)
+        if spec.get("validation_status") == "validated" and not any(
+            marker in note for note in notes for marker in VALIDATED_GRADE_MARKERS
+        ):
+            validated_without_grade.append(name)
 
     assert not missing_notes
     assert not certified_without_grade
+    assert not validated_without_grade
 
 
 def test_reproduce_jss_tables_dry_run_core_plan():

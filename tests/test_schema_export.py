@@ -224,6 +224,71 @@ def test_scoped_certified_limitations_do_not_claim_unqualified_parity():
     assert "not a reference-parity guarantee" in desc
 
 
+def test_limited_certified_agent_cards_use_scoped_wording():
+    """Agent cards should not make limited certified evidence look absolute."""
+    import statspai as sp
+
+    for card in sp.agent_cards(validation_status="certified"):
+        if not card.get("limitations"):
+            continue
+        for key in ("description", "signature"):
+            desc = card[key]["description"] if key == "signature" else card[key]
+            assert "Validation: certified evidence with scoped limitations." in desc, (
+                card["name"],
+                key,
+            )
+            assert "Validation: certified parity evidence." not in desc, (
+                card["name"],
+                key,
+            )
+
+
+def test_validated_schema_wording_is_evidence_tier_not_blanket_claim():
+    """Validated functions should read as scoped evidence, not marketing."""
+    import statspai as sp
+
+    desc = sp.function_schema("aipw")["description"]
+
+    assert "Validation: validated evidence tier" in desc
+    assert "Validation: validated" "." not in desc
+    assert "external-parity" in desc or "Monte Carlo" in desc
+
+
+def test_tool_manifest_validation_wording_matches_registry_tiers():
+    """MCP tool descriptions must not drop or overstate validation tiers."""
+    import statspai as sp
+
+    registered = set(sp.list_functions())
+    for tool in sp.agent.tools.tool_manifest():
+        name = tool["name"]
+        if name not in registered:
+            continue
+        desc = tool["description"]
+        status = sp.describe_function(name)["validation_status"]
+        has_certified = "Validation: certified" in desc
+        has_validated = "Validation: validated evidence tier" in desc
+        if status == "certified":
+            assert has_certified, name
+            assert not has_validated, name
+        elif status == "validated":
+            assert has_validated, name
+            assert not has_certified, name
+        else:
+            assert not has_certified, name
+            assert not has_validated, name
+
+
+def test_experimental_schema_prefix_is_not_duplicated():
+    """Descriptions that already include [experimental] should not repeat it."""
+    import statspai as sp
+
+    desc = sp.function_schema("text_treatment_effect")["description"]
+
+    assert desc.startswith("[experimental] ")
+    assert "[experimental] " "[experimental]" not in desc
+    assert "Validation status: experimental." in desc
+
+
 # --------------------------------------------------------------------------- #
 #  Committed bundle stays in sync with the live surface
 # --------------------------------------------------------------------------- #

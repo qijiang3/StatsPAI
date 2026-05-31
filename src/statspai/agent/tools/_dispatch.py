@@ -18,6 +18,49 @@ from ._specs import TOOL_REGISTRY
 # Manifest assembly
 # ---------------------------------------------------------------------------
 
+def _description_with_validation_tier(
+    description: str,
+    statspai_fn: str,
+) -> str:
+    """Append the registry validation tier to curated tool descriptions."""
+    if "Validation:" in description or "Validation status:" in description:
+        return description
+    try:
+        from ...registry import describe_function
+
+        spec = describe_function(statspai_fn)
+    except Exception:
+        return description
+
+    status = spec.get("validation_status", "api_stable")
+    limitations = [
+        str(item).strip().rstrip(".;")
+        for item in spec.get("limitations", [])
+        if str(item).strip()
+    ]
+    if status == "validated":
+        description = (
+            f"{description} Validation: validated evidence tier "
+            "(known-truth, reference, external-parity, or Monte Carlo artifact)."
+        )
+    elif status == "certified":
+        if limitations:
+            description = (
+                f"{description} Validation: certified evidence with "
+                "scoped limitations."
+            )
+        else:
+            description = f"{description} Validation: certified parity evidence."
+    elif status in {"experimental", "deprecated"}:
+        description = f"{description} Validation status: {status}."
+
+    if limitations:
+        description = (
+            f"{description} Known limitations: {'; '.join(limitations)}."
+        )
+    return description
+
+
 def tool_manifest(*, curated_only: bool = False) -> List[Dict[str, Any]]:
     """Return the list of tool specifications for an LLM agent.
 
@@ -45,7 +88,10 @@ def tool_manifest(*, curated_only: bool = False) -> List[Dict[str, Any]]:
     curated: List[Dict[str, Any]] = [
         {
             'name': t['name'],
-            'description': t['description'],
+            'description': _description_with_validation_tier(
+                t['description'],
+                t.get('statspai_fn', t['name']),
+            ),
             'input_schema': t['input_schema'],
         }
         for t in TOOL_REGISTRY

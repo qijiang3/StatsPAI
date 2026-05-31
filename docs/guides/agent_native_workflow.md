@@ -72,9 +72,11 @@ sp.describe_function("did")   # full metadata dict
   how to recover. Every `alternative` is guaranteed to resolve to a real
   `sp.*` function (CI-enforced), so following a recovery hint never dead-ends.
 - **`alternatives`** — ranked fallbacks when this estimator is a poor fit.
-- **`validation_status`** — `certified` (cross-language parity) / `validated`
-  (analytic/reference tests) / `api_stable`. Prefer higher tiers when the
-  user needs publication-grade numbers.
+- **`validation_status`** — `certified` (cross-language or published-reference
+  parity) / `validated` (known-truth, reference, external, coverage, or
+  explicit convention evidence) / `api_stable`. Prefer higher tiers when the
+  user needs audited numerical evidence, but treat `api_stable` as an API
+  contract rather than numerical validation.
 
 ## Offline discovery (no Python import)
 

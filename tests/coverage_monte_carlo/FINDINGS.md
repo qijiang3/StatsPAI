@@ -1,117 +1,113 @@
-# Monte Carlo CI coverage findings
+# Monte Carlo CI Coverage Findings
 
-The coverage suite validates that 95% CIs actually cover truth 95% of
-the time.  This document logs findings — estimators whose inference is
-or is not correctly calibrated.
+This file records what the coverage suite is allowed to claim. The JSS
+submission uses committed deep-audit artifacts in
+`results_b1000/coverage_b1000.json` and
+`results_b1000/coverage_robustness_b1000.json`; the regular pytest suite
+keeps lower draw caps for wall-clock reasons.
 
-## Calibrated (coverage within Wilson band around 95%)
+## Headline B=1000 Audit
 
-As of the current JSS validation branch, the following estimators pass
-the coverage test at B=300 unless noted otherwise:
+The canonical Track B audit materializes seven known-truth DGPs at
+`B=1000`. The 99% Wilson band around nominal 0.95 is approximately
+`[0.935, 0.967]`; rows above the band are treated as conservative
+over-coverage, not as evidence of under-calibrated standard errors.
 
-| Estimator | DGP | Coverage (B=300) |
+| Estimator | DGP | Coverage |
 | --- | --- | --- |
-| `sp.regress` (HC1) | RCT with covariates | ≈ 0.95 |
-| `sp.did` (classic 2x2) | 2-period 2-group homogeneous | ≈ 0.95 |
-| `sp.callaway_santanna` (REG, simple ATT) | Homogeneous staggered timing | 0.940 (B=200 cap) |
-| `sp.rdrobust` (MSE-optimal, triangular) | Sharp RD, known jump | ≈ 0.95 |
-| `sp.ivreg` (HC1) | Strong binary-Z IV | ≈ 0.95 |
-| `sp.ebalance` | CIA with 2 covariates | 0.92-0.99 (B=200 cap; slightly conservative) |
-| `sp.causal_question(design="dml")` | Binary-treatment IRM DGP | ≈ 0.95 (B=200 cap) |
-| `sp.causal_question(design="causal_forest")` | AIPW-IF ATE DGP | ≈ 0.95 (B=200 cap) |
+| `sp.regress` (HC1) | RCT with covariates | 0.952 |
+| `sp.regress` 2x2 DiD | 2-period homogeneous DiD | 0.955 |
+| `sp.ivreg` (HC1) | Strong binary-Z IV | 0.962 |
+| `sp.callaway_santanna` (REG, simple ATT) | Homogeneous staggered timing | 0.946 |
+| `sp.ebalance` | CIA with 2 covariates | 1.000 |
+| `sp.causal_question(design="dml")` | Binary-treatment IRM ATE | 0.969 |
+| `sp.causal_question(design="causal_forest")` | AIPW-IF ATE DGP | 0.977 |
 
-## Resolved finding
+Interpretation:
+
+- Closed-form OLS, DiD, IV, and simple Callaway-Sant'Anna rows sit inside
+  the Wilson band.
+- DML sits just above the upper edge; ebalance and causal forest are more
+  visibly conservative. These are over-coverage findings, not hidden
+  under-coverage.
+- The expensive DML and causal-forest rows are no longer supported only by
+  the lower-B pytest caps; the committed JSS artifacts record their
+  explicit B=1000 rates.
+
+## Resolved Finding
 
 ### `sp.callaway_santanna` simple-ATT aggregation
 
-**Previous finding**: Empirical 95% CI coverage was about 50% on a
-homogeneous staggered DGP (`test_cs_staggered_ci_coverage`).  Point
-estimates were unbiased, but simple-ATT CIs were too tight.
+Previous finding: empirical 95% CI coverage was about 50% on a
+homogeneous staggered DGP. Point estimates were unbiased, but simple-ATT
+CIs were too tight.
 
-**Root causes fixed**:
+Root causes fixed:
 
 1. Group-time influence functions are estimated on the relevant
    treated/control subset, then embedded into the full unit universe for
-   aggregation.  They must be multiplied by `n_total / n_relevant` during
+   aggregation. They must be multiplied by `n_total / n_relevant` during
    that embedding.
 2. The outcome-regression (`estimator="reg"`) influence function must
-   include uncertainty from the control outcome regression.  The previous
+   include uncertainty from the control outcome regression. The previous
    implementation only carried the treated-side residual term.
 
-**Current result**: The CS coverage test now passes without `xfail`.
-On the B=200 cap used by the test, empirical coverage is `188/200 =
-0.940`, inside the 99% Wilson acceptance band `[0.894, 0.997]`.
-The `04_csdid` R/Stata parity row now reports simple-ATT point-estimate
-parity at machine precision and analytic-SE parity within the registered
-1% tolerance.
+Current result: the B=1000 deep audit reports `946/1000 = 0.946`, inside
+the 99% Wilson band `[0.935, 0.967]`. The `04_csdid` R/Stata parity row
+reports simple-ATT point-estimate parity at machine precision and
+analytic-SE parity within the registered 1% tolerance.
 
-## Robustness DGPs (`test_coverage_robustness.py`)
+## Robustness DGPs
 
-Sibling suite that runs the same estimators under DGPs that violate or
-stress identification assumptions.  Contract: assert empirical coverage
-falls in a *documented band*, not within Wilson around 0.95.  Bands
-come from pilot runs and are pinned in the test source; if a maintainer
-shifts coverage outside the band — up or down — the test fails and the
-shift must be reviewed.
+The sibling robustness suite runs selected estimators under DGPs that
+stress or violate identification assumptions. These rows are descriptive
+failure-mode checks, not pass/fail nominal-calibration claims. Each row
+has a documented band; a movement outside the band means the estimator
+changed and the finding must be reviewed.
 
-| Estimator | Stressor | Pilot coverage | Documented band |
+| Estimator | Stressor | Deep-audit coverage | Documented band |
 | --- | --- | --- | --- |
-| `sp.ivreg` (HC1) | Weak instrument: pi=0.10, F_med ≈ 3 (Stock–Yogo 10% size CV is 16.4) | 0.91 (B=300) | [0.85, 0.95] — under-covers as expected |
-| `sp.callaway_santanna` (REG) | Heterogeneous timing + magnitude: tau_g in {1.0, 2.0, 3.0} + linear-in-time-since-treat dynamics | 0.94 (B=200) | [0.90, 0.97] — calibrated; CS2021 handles heterogeneity by design |
-| `sp.causal_question(causal_forest)` | Severe propensity overlap loss: p in roughly [0.04, 0.96] | 0.98 (B=50) | [0.85, 0.99] — over-covers; IF tail variance blows up |
+| `sp.ivreg` (HC1) | Weak instrument: pi=0.10, median F = 2.51 | 0.882 (B=1000) | [0.85, 0.95] |
+| `sp.callaway_santanna` (REG) | Heterogeneous timing and magnitude | 0.946 (B=1000) | [0.92, 0.96] |
+| `sp.causal_question(causal_forest)` | Severe propensity-overlap loss | 0.983 (B=300) | [0.85, 0.99] |
 
 Findings interpretation:
 
-- **Weak IV under-coverage is textbook.** With first-stage F well below
-  Stock–Yogo critical values, HC1 ignores the weak-instrument bias of
-  2SLS, so CIs miss truth more often than nominal 0.95.  Recovery
-  routes for users are LIML (`method='liml'`) or Anderson–Rubin
-  inference (`sp.iv(.., inference='ar')`); both are wired into the
-  v1.13 design-detect / preflight pipeline as automatic fall-backs
-  via the new `first_stage_strength` gate.
-- **CS-DiD passes the heterogeneity stress test.** This is the
-  designed behaviour of Callaway–Sant'Anna 2021: cell-by-cell ATT(g, t)
-  estimation with the simple-ATT aggregation as an equally-weighted
-  mean.  We treat the calibrated coverage as evidence that the
-  influence-function scaling fix landed in v1.13 generalises beyond
-  the homogeneous DGP.
-- **Causal forest under overlap loss over-covers.** Extreme propensity
-  scores inflate the AIPW IF variance more than they bias the
-  point estimate, so CIs balloon and cover truth more than 95% of the
-  time.  This is conservative inference rather than a bug, but it
-  signals that overlap should be diagnosed (e.g.\ via
-  `sp.audit(..)` propensity-overlap report) before the AIPW SE is
-  trusted as efficient.
+- Weak-IV under-coverage is textbook. With a first-stage F far below
+  Stock-Yogo critical values, HC1 2SLS intervals miss truth more often
+  than nominal 0.95. User-facing recovery routes are LIML and
+  Anderson-Rubin inference, surfaced by the preflight/design-detect path.
+- CS-DiD remains calibrated under the heterogeneous timing/magnitude DGP,
+  consistent with cell-level ATT(g, t) estimation and simple-ATT
+  aggregation.
+- Causal forest under severe overlap loss over-covers. Extreme
+  propensities inflate the AIPW influence-function variance and produce
+  wide intervals; the audit treats this as a diagnostic warning, not as an
+  efficiency claim.
 
-Latest B=1000 explicit-rate sweep is in
-`results_b1000/coverage_robustness_b1000.json`, regenerated by
-`python tests/coverage_monte_carlo/run_robustness_b1000.py`.
+## How to Run
 
-## How to run
-
-Fast (always on, B=50):
+Fast smoke:
 
 ```bash
 pytest tests/coverage_monte_carlo/test_coverage.py::test_fast_ols_coverage_smoke
 ```
 
-Full canonical (opt-in, B=300; ~60-90s total):
+Canonical slow pytest suite, using the default lower draw caps:
 
 ```bash
 pytest -m slow tests/coverage_monte_carlo/test_coverage.py
 ```
 
-Robustness DGPs (opt-in, B=300; ~10-15min total — causal forest
-dominates wall-clock):
+Robustness DGPs, also lower-capped for routine pytest use:
 
 ```bash
 pytest -m slow tests/coverage_monte_carlo/test_coverage_robustness.py
 ```
 
-Deep audit (B=1000):
+Deep JSS audit artifacts:
 
 ```bash
-STATSPAI_MC_DRAWS=1000 pytest -m slow tests/coverage_monte_carlo/
 python tests/coverage_monte_carlo/run_b1000.py
 python tests/coverage_monte_carlo/run_robustness_b1000.py
 ```

@@ -11,13 +11,12 @@ Usage
     python scripts/registry_stats.py                 # human-readable summary
     python scripts/registry_stats.py --table         # docs/stats.md per-module table
     python scripts/registry_stats.py --json          # machine-readable
-    python scripts/registry_stats.py --check         # exit non-zero if README.md is stale
+    python scripts/registry_stats.py --check         # exit non-zero if docs are stale
 
 The ``--check`` mode lets CI flag drift between the live registry and
-the loose floors quoted in ``README.md`` / ``README_CN.md``. It does not
-require the floors to be exact; it only flags when the live count drops
-below the documented floor (a regression) or exceeds it by enough that
-the documented number is misleading.
+the user-facing docs. README floors remain intentionally loose, but the
+``docs/stats.md`` measured table and README at-a-glance counts must match
+the live source tree.
 """
 from __future__ import annotations
 
@@ -34,6 +33,11 @@ from typing import Dict, Tuple
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_ROOT = REPO_ROOT / "src" / "statspai"
 TESTS_ROOT = REPO_ROOT / "tests"
+DOCS_STATS = REPO_ROOT / "docs" / "stats.md"
+DOCS_INDEX = REPO_ROOT / "docs" / "index.md"
+DOCS_REFERENCE_INDEX = REPO_ROOT / "docs" / "reference" / "index.md"
+README = REPO_ROOT / "README.md"
+README_CN = REPO_ROOT / "README_CN.md"
 
 
 def _module_loc_and_files() -> Dict[str, Tuple[int, int]]:
@@ -187,6 +191,69 @@ def check_drift(stats: dict) -> int:
             f"Submodules ({mods}) dropped below README floor "
             f"({SUBMODULE_FLOOR}). Investigate or lower the floor."
         )
+    try:
+        stats_doc = DOCS_STATS.read_text(encoding="utf-8")
+    except OSError as exc:
+        issues.append(f"Could not read {DOCS_STATS.relative_to(REPO_ROOT)}: {exc}")
+    else:
+        expected_table = render_table(stats)
+        if expected_table not in stats_doc:
+            issues.append(
+                "docs/stats.md per-module table is stale; regenerate with "
+                "`python scripts/registry_stats.py --table`."
+            )
+        expected_src_row = re.compile(
+            rf"\| \*\*StatsPAI\*\* `src/statspai/`\s*\| measured\s*\|\s*"
+            rf"{stats['src_files']}\s*\|\s*\*\*{stats['src_loc']:,}\*\*\s*\|"
+        )
+        if not expected_src_row.search(stats_doc):
+            issues.append("docs/stats.md source LOC/file row is stale.")
+        expected_test_row = re.compile(
+            rf"\| StatsPAI tests \(`tests/`\)\s*\| measured\s*\|\s*"
+            rf"{stats['tests_files']}\s*\|\s*{stats['tests_loc']:,}\s*\|"
+        )
+        if not expected_test_row.search(stats_doc):
+            issues.append("docs/stats.md test LOC/file row is stale.")
+
+    fns_text = f"{fns:,}"
+    src_k = (stats["src_loc"] + 500) // 1000
+    test_k = (stats["tests_loc"] + 500) // 1000
+    readme_expectations = {
+        README: (
+            f"{fns_text} registered functions",
+            f"{mods} submodules",
+            f"{src_k}k LOC (core) + {test_k}k LOC (tests)",
+        ),
+        README_CN: (
+            f"{fns_text} 个注册函数",
+            f"{mods} 个子模块",
+            f"{src_k}k 行核心代码 + {test_k}k 行测试",
+        ),
+        DOCS_INDEX: (
+            "1,000+ registered functions",
+            f"across {mods} submodules",
+        ),
+        DOCS_REFERENCE_INDEX: (
+            f"{fns_text} registered public functions",
+        ),
+    }
+    for path, snippets in readme_expectations.items():
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            issues.append(f"Could not read {path.relative_to(REPO_ROOT)}: {exc}")
+            continue
+        text_norm = re.sub(r"\s+", " ", text)
+        missing = [
+            snippet for snippet in snippets
+            if snippet not in text
+            and re.sub(r"\s+", " ", snippet) not in text_norm
+        ]
+        if missing:
+            issues.append(
+                f"{path.relative_to(REPO_ROOT)} at-a-glance line is stale; "
+                "missing " + ", ".join(repr(item) for item in missing)
+            )
     if issues:
         for msg in issues:
             print(f"DRIFT: {msg}", file=sys.stderr)

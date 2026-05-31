@@ -258,7 +258,7 @@
     }
   },
   {
-    "description": "Panel negative-binomial regression. model='fe' uses explicit entity fixed effects through nbreg; model='re' dispatches to the random-intercept NB-2 GLMM menbreg. Validation: validated.",
+    "description": "Panel negative-binomial regression. model='fe' uses explicit entity fixed effects through nbreg; model='re' dispatches to the random-intercept NB-2 GLMM menbreg.",
     "name": "xtnbreg",
     "parameters": {
       "properties": {
@@ -320,7 +320,7 @@
     }
   },
   {
-    "description": "Difference-in-Differences. Supports 2x2, DDD, staggered (Callaway-Sant'Anna, Sun-Abraham), and Synthetic DID. Validation: validated.",
+    "description": "Difference-in-Differences. Supports 2x2, DDD, staggered (Callaway-Sant'Anna, Sun-Abraham), and Synthetic DID.",
     "name": "did",
     "parameters": {
       "properties": {
@@ -374,7 +374,7 @@
     }
   },
   {
-    "description": "Triple Differences (DDD) estimator. Adds a within-treatment-group subgroup that is unaffected by treatment as an additional control dimension, relaxing parallel trends from 'same trend across groups' to 'same differential trend across subgroups within groups'. Validation: validated.",
+    "description": "Triple Differences (DDD) estimator. Adds a within-treatment-group subgroup that is unaffected by treatment as an additional control dimension, relaxing parallel trends from 'same trend across groups' to 'same differential trend across subgroups within groups'.",
     "name": "ddd",
     "parameters": {
       "properties": {
@@ -435,7 +435,7 @@
     }
   },
   {
-    "description": "Workflow wrapper that runs a full DiD pipeline: auto-detects 2x2 vs. staggered, runs the right estimator (CS by default), optionally runs Bacon decomposition, event study, and Rambachan-Roth sensitivity, and aggregates into a DIDAnalysis report object. Validation: validated.",
+    "description": "Workflow wrapper that runs a full DiD pipeline: auto-detects 2x2 vs. staggered, runs the right estimator (CS by default), optionally runs Bacon decomposition, event study, and Rambachan-Roth sensitivity, and aggregates into a DIDAnalysis report object.",
     "name": "did_analysis",
     "parameters": {
       "properties": {
@@ -838,7 +838,7 @@
     }
   },
   {
-    "description": "Treatment-Agnostic Representation Network for neural CATE/ATE estimation. Stores CATE, potential-outcome predictions, training diagnostics, and export-ready unit effects. Validation: validated.",
+    "description": "Treatment-Agnostic Representation Network for neural CATE/ATE estimation. Stores CATE, potential-outcome predictions, training diagnostics, and export-ready unit effects.",
     "name": "tarnet",
     "parameters": {
       "properties": {
@@ -928,7 +928,7 @@
     }
   },
   {
-    "description": "Counterfactual Regression Network: TARNet plus an MMD/IPM representation-balance penalty for neural CATE/ATE estimation. Validation: validated.",
+    "description": "Counterfactual Regression Network: TARNet plus an MMD/IPM representation-balance penalty for neural CATE/ATE estimation.",
     "name": "cfrnet",
     "parameters": {
       "properties": {
@@ -1023,7 +1023,7 @@
     }
   },
   {
-    "description": "DragonNet: neural potential-outcome heads plus a propensity head and targeted regularisation; reports AIPW ATE, CATE, propensity overlap diagnostics, and export-ready unit effects. Validation: validated.",
+    "description": "DragonNet: neural potential-outcome heads plus a propensity head and targeted regularisation; reports AIPW ATE, CATE, propensity overlap diagnostics, and export-ready unit effects.",
     "name": "dragonnet",
     "parameters": {
       "properties": {
@@ -1149,7 +1149,7 @@
     }
   },
   {
-    "description": "Meta-learner framework for CATE: S-, T-, X-, R-, DR-Learner. Validation: validated.",
+    "description": "Meta-learner framework for CATE: S-, T-, X-, R-, DR-Learner. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "metalearner",
     "parameters": {
       "properties": {
@@ -1195,7 +1195,7 @@
     }
   },
   {
-    "description": "Propensity score and covariate matching for treatment effect estimation. Validation: validated.",
+    "description": "Propensity score and covariate matching for treatment effect estimation. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "match",
     "parameters": {
       "properties": {
@@ -1239,7 +1239,7 @@
     }
   },
   {
-    "description": "Targeted Maximum Likelihood Estimation for ATE/ATT with double-robustness. Validation: validated.",
+    "description": "Targeted Maximum Likelihood Estimation for ATE/ATT with double-robustness.",
     "name": "tmle",
     "parameters": {
       "properties": {
@@ -1384,7 +1384,7 @@
     }
   },
   {
-    "description": "Arellano-Bond / Blundell-Bond GMM for dynamic panels (standalone). Validation: validated.",
+    "description": "Arellano-Bond / Blundell-Bond GMM for dynamic panels (standalone).",
     "name": "xtabond",
     "parameters": {
       "properties": {
@@ -1441,7 +1441,7 @@
     }
   },
   {
-    "description": "Bayesian structural time series for causal impact analysis. Validation: validated.",
+    "description": "Bayesian structural time series for causal impact analysis.",
     "name": "causal_impact",
     "parameters": {
       "properties": {
@@ -1467,7 +1467,7 @@
     }
   },
   {
-    "description": "Declare a complex survey design for design-corrected estimation. Validation: validated.",
+    "description": "Declare a complex survey design for design-corrected estimation.",
     "name": "svydesign",
     "parameters": {
       "properties": {
@@ -1500,7 +1500,7 @@
     }
   },
   {
-    "description": "Export regression results to publication-quality tables (Excel, LaTeX, Word). Validation: validated.",
+    "description": "Export regression results to publication-quality tables (Excel, LaTeX, Word).",
     "name": "outreg2",
     "parameters": {
       "properties": {
@@ -1524,7 +1524,7 @@
     }
   },
   {
-    "description": "Summary table comparing multiple models side by side. Validation: validated.",
+    "description": "Summary table comparing multiple models side by side.",
     "name": "modelsummary",
     "parameters": {
       "properties": {
@@ -1543,7 +1543,7 @@
     }
   },
   {
-    "description": "Publication-quality multi-model regression table with auto-extracted diagnostic rows (FE/Cluster indicators, IV first-stage F, DiD pre-trend p, RD bandwidth/kernel/poly), journal presets (AER/QJE/Econometrica/JF/AEJA/etc.), multi-SE side-by-side display, eform odds-ratio / IRR / HR transformation with delta-method SE, column spanners (\\multicolumn / colspan / cmidrule), unified coef_map (rename + order + drop), depvar_mean / depvar_sd auto rows, and N-mismatch consistency warnings. Returns a RegtableResult exporting to text/LaTeX/HTML/Markdown/Quarto/Word/Excel plus an agent-native to_dict()/to_json() payload (metadata + rendered cell grid + numeric truth per model); save(filename) and filename= infer the format from the extension, including .json. Validation: validated.",
+    "description": "Publication-quality multi-model regression table with auto-extracted diagnostic rows (FE/Cluster indicators, IV first-stage F, DiD pre-trend p, RD bandwidth/kernel/poly), journal presets (AER/QJE/Econometrica/JF/AEJA/etc.), multi-SE side-by-side display, eform odds-ratio / IRR / HR transformation with delta-method SE, column spanners (\\multicolumn / colspan / cmidrule), unified coef_map (rename + order + drop), depvar_mean / depvar_sd auto rows, and N-mismatch consistency warnings. Returns a RegtableResult exporting to text/LaTeX/HTML/Markdown/Quarto/Word/Excel plus an agent-native to_dict()/to_json() payload (metadata + rendered cell grid + numeric truth per model); save(filename) and filename= infer the format from the extension, including .json.",
     "name": "regtable",
     "parameters": {
       "properties": {
@@ -1696,7 +1696,7 @@
     }
   },
   {
-    "description": "Stata-style esttab clone -- tabulate one or more model results (or models stored via sp.eststo) into text/LaTeX/HTML/Markdown/CSV. Validation: validated.",
+    "description": "Stata-style esttab clone -- tabulate one or more model results (or models stored via sp.eststo) into text/LaTeX/HTML/Markdown/CSV.",
     "name": "esttab",
     "parameters": {
       "properties": {
@@ -1728,7 +1728,7 @@
     }
   },
   {
-    "description": "Multi-panel journal-ready table bundle (Main / Heterogeneity / Robustness / Placebo) with one-shot export to LaTeX/Markdown/Word/Excel. Validation: validated.",
+    "description": "Multi-panel manuscript-ready table bundle (Main / Heterogeneity / Robustness / Placebo) with one-shot export to LaTeX/Markdown/Word/Excel.",
     "name": "paper_tables",
     "parameters": {
       "properties": {
@@ -1783,7 +1783,7 @@
     }
   },
   {
-    "description": "Inline coefficient citation -- formats one term as e.g. '0.234*** (0.041)' for embedding directly in manuscript prose, Jupyter Markdown cells, or Quarto inline expressions. Mirrors regtable's formatting conventions (stars, SE/CI brackets) for cross-table consistency. Validation: validated.",
+    "description": "Inline coefficient citation -- formats one term as e.g. '0.234*** (0.041)' for embedding directly in manuscript prose, Jupyter Markdown cells, or Quarto inline expressions. Mirrors regtable's formatting conventions (stars, SE/CI brackets) for cross-table consistency.",
     "name": "cite",
     "parameters": {
       "properties": {
@@ -1836,7 +1836,7 @@
     }
   },
   {
-    "description": "Balance / mean-comparison table -- Mean (SD) per group, difference, and t-test/ranksum/chi2 p-value. Renders to text/LaTeX/HTML/Markdown/Excel/Word. Validation: validated.",
+    "description": "Balance / mean-comparison table -- Mean (SD) per group, difference, and t-test/ranksum/chi2 p-value. Renders to text/LaTeX/HTML/Markdown/Excel/Word.",
     "name": "mean_comparison",
     "parameters": {
       "properties": {
@@ -1875,7 +1875,7 @@
     }
   },
   {
-    "description": "Session-level multi-table container (Stata 15 collect / R gt::gtsave style). Gather regressions, summary stats, balance tables, and free-form text in one Collection, then export the whole bundle to a single .docx / .xlsx / .tex / .md / .html file. Validation: validated.",
+    "description": "Session-level multi-table container (Stata 15 collect / R gt::gtsave style). Gather regressions, summary stats, balance tables, and free-form text in one Collection, then export the whole bundle to a single .docx / .xlsx / .tex / .md / .html file.",
     "name": "collect",
     "parameters": {
       "properties": {
@@ -1928,7 +1928,7 @@
     }
   },
   {
-    "description": "Specification curve analysis -- run many model specifications and visualise robustness. Validation: validated.",
+    "description": "Specification curve analysis -- run many model specifications and visualise robustness.",
     "name": "spec_curve",
     "parameters": {
       "properties": {
@@ -1962,7 +1962,7 @@
     }
   },
   {
-    "description": "Inverse Probability Weighting for ATE/ATT/ATC with propensity score trimming. Validation: validated.",
+    "description": "Inverse Probability Weighting for ATE/ATT/ATC with propensity score trimming.",
     "name": "ipw",
     "parameters": {
       "properties": {
@@ -2011,7 +2011,7 @@
     }
   },
   {
-    "description": "Declare a causal DAG and perform identification analysis: backdoor/frontdoor adjustment sets, d-separation, path enumeration, bad controls detection, variable role classification, do-operator. Validation: validated.",
+    "description": "Declare a causal DAG and perform identification analysis: backdoor/frontdoor adjustment sets, d-separation, path enumeration, bad controls detection, variable role classification, do-operator.",
     "name": "dag",
     "parameters": {
       "properties": {
@@ -2043,7 +2043,7 @@
     }
   },
   {
-    "description": "Traditional OLS event-study with entity and time FEs. Generates relative-time dummies around the treatment date, omits a reference period, and estimates via TWFE + optional clustered SE. Exposed for users who want the classical specification alongside CS / SA / BJS; not robust to staggered-effect heterogeneity -- use sp.sun_abraham for that. Validation: validated.",
+    "description": "Traditional OLS event-study with entity and time FEs. Generates relative-time dummies around the treatment date, omits a reference period, and estimates via TWFE + optional clustered SE. Exposed for users who want the classical specification alongside CS / SA / BJS; not robust to staggered-effect heterogeneity -- use sp.sun_abraham for that.",
     "name": "event_study",
     "parameters": {
       "properties": {
@@ -2117,7 +2117,7 @@
       "properties": {
         "backend": {
           "default": "native",
-          "description": "Computation backend: native or augsynth/R reference backend",
+          "description": "Computation backend: native or augsynth/R bridge backend",
           "type": "string"
         },
         "data": {
@@ -2157,7 +2157,7 @@
     }
   },
   {
-    "description": "Spatial Autoregressive (Lag) Model: Y = rhoWY + Xbeta + epsilon via ML. Validation: validated.",
+    "description": "Spatial Autoregressive (Lag) Model: Y = rhoWY + Xbeta + epsilon via ML.",
     "name": "sar",
     "parameters": {
       "properties": {
@@ -2183,7 +2183,7 @@
     }
   },
   {
-    "description": "Spatial Error Model: Y = Xbeta + u, u = lambdaWu + epsilon via ML. Validation: validated.",
+    "description": "Spatial Error Model: Y = Xbeta + u, u = lambdaWu + epsilon via ML.",
     "name": "sem",
     "parameters": {
       "properties": {
@@ -2209,7 +2209,7 @@
     }
   },
   {
-    "description": "Spatial Durbin Model: Y = rhoWY + Xbeta + WXtheta + epsilon with direct/indirect effects. Validation: validated.",
+    "description": "Spatial Durbin Model: Y = rhoWY + Xbeta + WXtheta + epsilon with direct/indirect effects.",
     "name": "sdm",
     "parameters": {
       "properties": {
@@ -2235,7 +2235,7 @@
     }
   },
   {
-    "description": "General bootstrap inference: nonparametric, cluster, block. Percentile/BCa/normal CIs. Validation: validated.",
+    "description": "General bootstrap inference: nonparametric, cluster, block. Percentile/BCa/normal CIs.",
     "name": "bootstrap",
     "parameters": {
       "properties": {
@@ -2275,7 +2275,7 @@
     }
   },
   {
-    "description": "Method-aware diagnostic battery: auto-selects tests by model type (OLS/DID/RDD/IV/SCM). Validation: validated.",
+    "description": "Method-aware diagnostic battery: auto-selects tests by model type (OLS/DID/RDD/IV/SCM).",
     "name": "diagnose_result",
     "parameters": {
       "properties": {
@@ -2291,7 +2291,7 @@
     }
   },
   {
-    "description": "Parametric g-formula (standardization) estimator. ATE/ATT for binary D, or dose-response curve for continuous D. Consistent under correctly-specified outcome model; not doubly robust. Validation: validated.",
+    "description": "Parametric g-formula (standardization) estimator. ATE/ATT for binary D, or dose-response curve for continuous D. Consistent under correctly-specified outcome model; not doubly robust.",
     "name": "g_computation",
     "parameters": {
       "properties": {
@@ -2347,7 +2347,7 @@
     }
   },
   {
-    "description": "Pearl's front-door adjustment: identifies ATE with unmeasured confounding when a mediator fully transmits the effect of D on Y. Supports binary or continuous mediator; integrate_by controls Pearl (marginal) vs Fulcher et al. (conditional) aggregation. Validation: validated.",
+    "description": "Pearl's front-door adjustment: identifies ATE with unmeasured confounding when a mediator fully transmits the effect of D on Y. Supports binary or continuous mediator; integrate_by controls Pearl (marginal) vs Fulcher et al. (conditional) aggregation.",
     "name": "front_door",
     "parameters": {
       "properties": {
@@ -2404,7 +2404,7 @@
     }
   },
   {
-    "description": "Marginal Structural Models for time-varying treatments with time-varying confounders. Uses stabilized IPTW and cluster-robust inference. Handles binary or continuous treatment; exposure summary can be current, cumulative, or ever. Validation: validated.",
+    "description": "Marginal Structural Models for time-varying treatments with time-varying confounders. Uses stabilized IPTW and cluster-robust inference. Handles binary or continuous treatment; exposure summary can be current, cumulative, or ever.",
     "name": "msm",
     "parameters": {
       "properties": {
@@ -2479,7 +2479,7 @@
     }
   },
   {
-    "description": "Interventional (in)direct effects (VanderWeele, Vansteelandt, Robins 2014). Identifies mediation effects in the presence of treatment-induced mediator-outcome confounders where natural (in)direct effects are not identified. Validation: validated.",
+    "description": "Interventional (in)direct effects (VanderWeele, Vansteelandt, Robins 2014). Identifies mediation effects in the presence of treatment-induced mediator-outcome confounders where natural (in)direct effects are not identified.",
     "name": "mediate_interventional",
     "parameters": {
       "properties": {
@@ -2524,7 +2524,7 @@
     }
   },
   {
-    "description": "Proximal Causal Inference via linear 2SLS on the outcome bridge. Identifies ATE with unmeasured confounding using two proxy variables: a treatment-side Z (instrument for W) and an outcome-side W (endogenous bridge regressor). Validation: validated.",
+    "description": "Proximal Causal Inference via linear 2SLS on the outcome bridge. Identifies ATE with unmeasured confounding using two proxy variables: a treatment-side Z (instrument for W) and an outcome-side W (endogenous bridge regressor).",
     "name": "proximal",
     "parameters": {
       "properties": {
@@ -2586,7 +2586,7 @@
     }
   },
   {
-    "description": "Principal Stratification (Frangakis & Rubin 2002). 'monotonicity' method identifies the complier PCE (= LATE) and reports Zhang-Rubin sharp bounds on the always-survivor SACE. 'principal_score' uses Ding-Lu covariate weighting to point-identify stratum-specific effects under principal ignorability. Validation: validated. Known limitations: Always-survivor SACE under encouragement design (Mealli & Pacini 2013, partial identification) is not yet implemented; only AIR / Wald LATE point estimates (tau_Y on outcome, tau_S on the post-treatment stratum) are reported when an instrument is supplied.",
+    "description": "Principal Stratification (Frangakis & Rubin 2002). 'monotonicity' method identifies the complier PCE (= LATE) and reports Zhang-Rubin sharp bounds on the always-survivor SACE. 'principal_score' uses Ding-Lu covariate weighting to point-identify stratum-specific effects under principal ignorability. Known limitations: Always-survivor SACE under encouragement design (Mealli & Pacini 2013, partial identification) is not yet implemented; only AIR / Wald LATE point estimates (tau_Y on outcome, tau_S on the post-treatment stratum) are reported when an instrument is supplied.",
     "name": "principal_strat",
     "parameters": {
       "properties": {
@@ -2699,7 +2699,7 @@
     }
   },
   {
-    "description": "Bartik / shift-share IV estimator (Adao-Kolesar-Morales 2019; Borusyak-Hull-Jaravel 2022). Uses pre-period industry / group shares x exogenous shocks as an instrument for local outcome exposure. Validation: validated.",
+    "description": "Bartik / shift-share IV estimator (Adao-Kolesar-Morales 2019; Borusyak-Hull-Jaravel 2022). Uses pre-period industry / group shares x exogenous shocks as an instrument for local outcome exposure.",
     "name": "bartik",
     "parameters": {
       "properties": {
@@ -2746,7 +2746,7 @@
     }
   },
   {
-    "description": "Bayesian sharp Regression Discontinuity -- full posterior over the RD jump via local polynomial with prior regularisation on bandwidth and bias-correction slopes. Reports HDI, rhat, ESS, divergences. Validation: validated.",
+    "description": "Bayesian sharp Regression Discontinuity -- full posterior over the RD jump via local polynomial with prior regularisation on bandwidth and bias-correction slopes. Reports HDI, rhat, ESS, divergences.",
     "name": "bayes_rd",
     "parameters": {
       "properties": {
@@ -2807,7 +2807,7 @@
     }
   },
   {
-    "description": "Bayesian fuzzy RD: joint model of first-stage jump in treatment probability and outcome jump, yielding posterior over the LATE at the cutoff (Wald ratio). Validation: validated.",
+    "description": "Bayesian fuzzy RD: joint model of first-stage jump in treatment probability and outcome jump, yielding posterior over the LATE at the cutoff (Wald ratio).",
     "name": "bayes_fuzzy_rd",
     "parameters": {
       "properties": {
@@ -2863,7 +2863,7 @@
     }
   },
   {
-    "description": "Bayesian Marginal Treatment Effect (Heckman-Vytlacil 2005). Full posterior over the MTE curve under essential heterogeneity, with bivariate-normal latent errors. Derives ATE / ATT / LATE / PRTE as posterior linear functionals. Validation: validated.",
+    "description": "Bayesian Marginal Treatment Effect (Heckman-Vytlacil 2005). Full posterior over the MTE curve under essential heterogeneity, with bivariate-normal latent errors. Derives ATE / ATT / LATE / PRTE as posterior linear functionals.",
     "name": "bayes_mte",
     "parameters": {
       "properties": {
@@ -2921,7 +2921,7 @@
     }
   },
   {
-    "description": "Create a 7-component target trial protocol (Hernan-Robins / JAMA 2022 framework). Formalizes eligibility, treatment strategies, time zero, follow-up, outcome, causal contrast, and analysis plan before any estimation. Validation: validated.",
+    "description": "Create a 7-component target trial protocol (Hernan-Robins / JAMA 2022 framework). Formalizes eligibility, treatment strategies, time zero, follow-up, outcome, causal contrast, and analysis plan before any estimation.",
     "name": "target_trial_protocol",
     "parameters": {
       "properties": {
@@ -2997,7 +2997,7 @@
     }
   },
   {
-    "description": "Clone-Censor-Weight (CCW) for sustained-treatment target trials. Clones each subject per strategy, artificially censors on deviation, and re-weights via IPCW. Validation: validated.",
+    "description": "Clone-Censor-Weight (CCW) for sustained-treatment target trials. Clones each subject per strategy, artificially censors on deviation, and re-weights via IPCW.",
     "name": "clone_censor_weight",
     "parameters": {
       "properties": {
@@ -3045,7 +3045,7 @@
     }
   },
   {
-    "description": "Inverse Probability of Censoring Weights -- corrects for informative censoring under conditional independent censoring given covariates. Validation: validated.",
+    "description": "Inverse Probability of Censoring Weights -- corrects for informative censoring under conditional independent censoring given covariates.",
     "name": "ipcw",
     "parameters": {
       "properties": {
@@ -3111,7 +3111,7 @@
     }
   },
   {
-    "description": "Shpitser-Pearl ID algorithm: decide if P(Y | do(X)) is non-parametrically identifiable on a semi-Markovian DAG, return the do-free estimand or a witness hedge. Validation: validated.",
+    "description": "Shpitser-Pearl ID algorithm: decide if P(Y | do(X)) is non-parametrically identifiable on a semi-Markovian DAG, return the do-free estimand or a witness hedge.",
     "name": "identify",
     "parameters": {
       "properties": {
@@ -3143,7 +3143,7 @@
     }
   },
   {
-    "description": "Build a Single-World Intervention Graph (SWIG) by node-splitting intervened variables. Bridges Pearl's SCM and Hernan-Robins potential-outcome languages. Validation: validated.",
+    "description": "Build a Single-World Intervention Graph (SWIG) by node-splitting intervened variables. Bridges Pearl's SCM and Hernan-Robins potential-outcome languages.",
     "name": "swig",
     "parameters": {
       "properties": {
@@ -3167,7 +3167,7 @@
     }
   },
   {
-    "description": "Invariant Causal Prediction: infer direct parents of Y by testing invariance of P(Y | X_S) across environments. Validation: validated.",
+    "description": "Invariant Causal Prediction: infer direct parents of Y by testing invariance of P(Y | X_S) across environments.",
     "name": "icp",
     "parameters": {
       "properties": {
@@ -3261,7 +3261,7 @@
     }
   },
   {
-    "description": "Pearl-Bareinboim transportability: enumerate s-admissible adjustment sets on a selection diagram; returns the transport formula or NOT identifiable. Validation: validated.",
+    "description": "Pearl-Bareinboim transportability: enumerate s-admissible adjustment sets on a selection diagram; returns the transport formula or NOT identifiable.",
     "name": "identify_transport",
     "parameters": {
       "properties": {
@@ -3301,7 +3301,7 @@
     }
   },
   {
-    "description": "Container returned by sp.ope.* estimators (IPS, SNIPS, DR, Switch-DR, DM). Reports value, SE, CI, importance-ratio diagnostics. Validation: validated.",
+    "description": "Container returned by sp.ope.* estimators (IPS, SNIPS, DR, Switch-DR, DM). Reports value, SE, CI, importance-ratio diagnostics.",
     "name": "OPEResult",
     "parameters": {
       "properties": {},
@@ -3310,7 +3310,7 @@
     }
   },
   {
-    "description": "Causal Effect Variational Auto-Encoder: infer a latent confounder Z from noisy proxies X, then estimate ITE via counterfactual decoding. Uses PyTorch when available, else a numpy linear-variational fallback. Validation: validated.",
+    "description": "Causal Effect Variational Auto-Encoder: infer a latent confounder Z from noisy proxies X, then estimate ITE via counterfactual decoding. Uses PyTorch when available, else a numpy linear-variational fallback.",
     "name": "cevae",
     "parameters": {
       "properties": {
@@ -3421,7 +3421,7 @@
     }
   },
   {
-    "description": "Odds ratio from a 2x2 table with Woolf (asymptotic) or Fisher-exact CI. Haldane-Anscombe correction for zero cells. Validation: validated.",
+    "description": "Odds ratio from a 2x2 table with Woolf (asymptotic) or Fisher-exact CI. Haldane-Anscombe correction for zero cells.",
     "name": "odds_ratio",
     "parameters": {
       "properties": {
@@ -3463,7 +3463,7 @@
     }
   },
   {
-    "description": "Relative risk (risk ratio) from a 2x2 table with Katz log-RR CI. Haldane correction for zero cells. Validation: validated.",
+    "description": "Relative risk (risk ratio) from a 2x2 table with Katz log-RR CI. Haldane correction for zero cells.",
     "name": "relative_risk",
     "parameters": {
       "properties": {
@@ -3496,7 +3496,7 @@
     }
   },
   {
-    "description": "Risk difference (absolute risk reduction) with Wald or Newcombe hybrid-score CI. Validation: validated.",
+    "description": "Risk difference (absolute risk reduction) with Wald or Newcombe hybrid-score CI.",
     "name": "risk_difference",
     "parameters": {
       "properties": {
@@ -3538,7 +3538,7 @@
     }
   },
   {
-    "description": "Attributable fractions in the exposed (AF) and in the population (Levin PAF) with delta-method CI. Validation: validated.",
+    "description": "Attributable fractions in the exposed (AF) and in the population (Levin PAF) with delta-method CI.",
     "name": "attributable_risk",
     "parameters": {
       "properties": {
@@ -3571,7 +3571,7 @@
     }
   },
   {
-    "description": "Person-time incidence rate ratio with exact Poisson CI (Clopper-Pearson on conditional binomial). Validation: validated.",
+    "description": "Person-time incidence rate ratio with exact Poisson CI (Clopper-Pearson on conditional binomial).",
     "name": "incidence_rate_ratio",
     "parameters": {
       "properties": {
@@ -3616,7 +3616,7 @@
     }
   },
   {
-    "description": "Mantel-Haenszel pooled OR or RR across K strata, with Robins-Breslow-Greenland variance and Cochran's Q homogeneity check. Validation: validated.",
+    "description": "Mantel-Haenszel pooled OR or RR across K strata, with Robins-Breslow-Greenland variance and Cochran's Q homogeneity check.",
     "name": "mantel_haenszel",
     "parameters": {
       "properties": {
@@ -3646,7 +3646,7 @@
     }
   },
   {
-    "description": "Breslow-Day test for homogeneity of the odds ratio across strata, with Tarone correction. Validation: validated.",
+    "description": "Breslow-Day test for homogeneity of the odds ratio across strata, with Tarone correction.",
     "name": "breslow_day_test",
     "parameters": {
       "properties": {
@@ -3667,7 +3667,7 @@
     }
   },
   {
-    "description": "Direct age/covariate standardization of a rate using external standard-population weights. Validation: validated.",
+    "description": "Direct age/covariate standardization of a rate using external standard-population weights.",
     "name": "direct_standardize",
     "parameters": {
       "properties": {
@@ -3707,7 +3707,7 @@
     }
   },
   {
-    "description": "Indirect standardization -> SMR (standardized morbidity / mortality ratio) with Garwood exact Poisson CI. Validation: validated.",
+    "description": "Indirect standardization -> SMR (standardized morbidity / mortality ratio) with Garwood exact Poisson CI.",
     "name": "indirect_standardize",
     "parameters": {
       "properties": {
@@ -3752,7 +3752,7 @@
     }
   },
   {
-    "description": "Structured 9-viewpoint Bradford-Hill causal-assessment rubric with prerequisite check (temporality required) and narrative verdict. Validation: validated.",
+    "description": "Structured 9-viewpoint Bradford-Hill causal-assessment rubric with prerequisite check (temporality required) and narrative verdict.",
     "name": "bradford_hill",
     "parameters": {
       "properties": {
@@ -3806,7 +3806,7 @@
     }
   },
   {
-    "description": "Cochran's Q (IVW) or Ruecker's Q' (Egger) heterogeneity statistic with I^2, used to detect horizontal pleiotropy. Validation: validated.",
+    "description": "Cochran's Q (IVW) or Ruecker's Q' (Egger) heterogeneity statistic with I^2, used to detect horizontal pleiotropy.",
     "name": "mr_heterogeneity",
     "parameters": {
       "properties": {
@@ -3841,7 +3841,7 @@
     }
   },
   {
-    "description": "Formal MR-Egger intercept test for directional (unbalanced) horizontal pleiotropy. Validation: validated.",
+    "description": "Formal MR-Egger intercept test for directional (unbalanced) horizontal pleiotropy.",
     "name": "mr_pleiotropy_egger",
     "parameters": {
       "properties": {
@@ -3867,7 +3867,7 @@
     }
   },
   {
-    "description": "Drop-one IVW sensitivity -- per-SNP table of estimates when each SNP is removed in turn. Validation: validated.",
+    "description": "Drop-one IVW sensitivity -- per-SNP table of estimates when each SNP is removed in turn. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "mr_leave_one_out",
     "parameters": {
       "properties": {
@@ -3905,7 +3905,7 @@
     }
   },
   {
-    "description": "Steiger directionality test -- verifies that the SNPs explain more variance in the exposure than the outcome, supporting the assumed causal direction. Validation: validated.",
+    "description": "Steiger directionality test -- verifies that the SNPs explain more variance in the exposure than the outcome, supporting the assumed causal direction.",
     "name": "mr_steiger",
     "parameters": {
       "properties": {
@@ -3950,7 +3950,7 @@
     }
   },
   {
-    "description": "MR-PRESSO global test + per-SNP outlier detection + outlier-corrected IVW estimate + distortion test. Validation: validated.",
+    "description": "MR-PRESSO global test + per-SNP outlier detection + outlier-corrected IVW estimate + distortion test. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "mr_presso",
     "parameters": {
       "properties": {
@@ -3995,7 +3995,7 @@
     }
   },
   {
-    "description": "Radial IVW MR (Bowden 2018) with per-SNP Bonferroni-thresholded outlier flagging. Validation: validated.",
+    "description": "Radial IVW MR (Bowden 2018) with per-SNP Bonferroni-thresholded outlier flagging. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "mr_radial",
     "parameters": {
       "properties": {
@@ -4028,7 +4028,7 @@
     }
   },
   {
-    "description": "Unified longitudinal causal-effect estimator. Auto-routes to IPW (no time-varying confounders) / MSM (dynamic regime with time-varying confounders) / parametric g-formula ICE (static regime). Accepts a string DSL or callable for the treatment regime. Validation: validated.",
+    "description": "Unified longitudinal causal-effect estimator. Auto-routes to IPW (no time-varying confounders) / MSM (dynamic regime with time-varying confounders) / parametric g-formula ICE (static regime). Accepts a string DSL or callable for the treatment regime.",
     "name": "longitudinal_analyze",
     "parameters": {
       "properties": {
@@ -4107,7 +4107,7 @@
     }
   },
   {
-    "description": "Plug-in estimator of E[Y(regime_a)] - E[Y(regime_b)] with delta-method SE. Validation: validated.",
+    "description": "Plug-in estimator of E[Y(regime_a)] - E[Y(regime_b)] with delta-method SE.",
     "name": "longitudinal_contrast",
     "parameters": {
       "properties": {
@@ -4153,7 +4153,7 @@
     }
   },
   {
-    "description": "Build a dynamic or static treatment regime from a string DSL, list, callable, or scalar. Supports 'if <cond> then <a> else <b>', 'always_treat', 'never_treat', and arbitrary safe expressions. Parsed via a whitelisted AST walker -- no dynamic code execution. Validation: validated.",
+    "description": "Build a dynamic or static treatment regime from a string DSL, list, callable, or scalar. Supports 'if <cond> then <a> else <b>', 'always_treat', 'never_treat', and arbitrary safe expressions. Parsed via a whitelisted AST walker -- no dynamic code execution.",
     "name": "regime",
     "parameters": {
       "properties": {
@@ -4181,7 +4181,7 @@
     }
   },
   {
-    "description": "Render a target-trial emulation result as a publication-ready Methods + Results block (Markdown / LaTeX / plain text), tracking the JAMA 2022 7-component spec.",
+    "description": "Render a target-trial emulation result as a manuscript-ready Methods + Results block (Markdown / LaTeX / plain text), tracking the JAMA 2022 7-component spec.",
     "name": "target_trial_report",
     "parameters": {
       "properties": {
@@ -4244,7 +4244,7 @@
     }
   },
   {
-    "description": "Declare a causal question up front (estimand-first). .identify() picks an estimator and lists identifying assumptions; .estimate() runs the analysis; .report() produces a Markdown Methods + Results paragraph. Auto-routes to IV / RD / DiD / longitudinal / selection-on-observables based on supplied fields. Validation: validated.",
+    "description": "Declare a causal question up front (estimand-first). .identify() picks an estimator and lists identifying assumptions; .estimate() runs the analysis; .report() produces a Markdown Methods + Results paragraph. Auto-routes to IV / RD / DiD / longitudinal / selection-on-observables based on supplied fields.",
     "name": "causal_question",
     "parameters": {
       "properties": {
@@ -4347,7 +4347,7 @@
     }
   },
   {
-    "description": "Weighted or simple mode-based MR estimator (Hartwig 2017). Consistent under the ZEMPA (zero-mode pleiotropy) assumption -- more permissive than the median's 50% rule. Validation: validated.",
+    "description": "Weighted or simple mode-based MR estimator (Hartwig 2017). Consistent under the ZEMPA (zero-mode pleiotropy) assumption -- more permissive than the median's 50% rule.",
     "name": "mr_mode",
     "parameters": {
       "properties": {
@@ -4401,7 +4401,7 @@
     }
   },
   {
-    "description": "Per-SNP F-statistic summary for instrument strength. Flags weak-instrument risk when any F < 10 (Staiger-Stock). Validation: validated.",
+    "description": "Per-SNP F-statistic summary for instrument strength. Flags weak-instrument risk when any F < 10 (Staiger-Stock).",
     "name": "mr_f_statistic",
     "parameters": {
       "properties": {
@@ -4426,7 +4426,7 @@
     }
   },
   {
-    "description": "Sensitivity, specificity, PPV, NPV, LR+ / LR- with Wilson score CIs. Accepts either raw binary labels or pre-computed confusion counts. Validation: validated.",
+    "description": "Sensitivity, specificity, PPV, NPV, LR+ / LR- with Wilson score CIs. Accepts either raw binary labels or pre-computed confusion counts.",
     "name": "sensitivity_specificity",
     "parameters": {
       "properties": {
@@ -4465,7 +4465,7 @@
     }
   },
   {
-    "description": "ROC curve with AUC (trapezoidal) and Hanley-McNeil (1982) standard error. Validation: validated.",
+    "description": "ROC curve with AUC (trapezoidal) and Hanley-McNeil (1982) standard error.",
     "name": "roc_curve",
     "parameters": {
       "properties": {
@@ -4491,7 +4491,7 @@
     }
   },
   {
-    "description": "Cohen's kappa for inter-rater agreement on nominal or ordinal scales. Supports linear / quadratic weighting. Validation: validated.",
+    "description": "Cohen's kappa for inter-rater agreement on nominal or ordinal scales. Supports linear / quadratic weighting.",
     "name": "cohen_kappa",
     "parameters": {
       "properties": {
@@ -4527,7 +4527,7 @@
     }
   },
   {
-    "description": "Write a pre-analysis plan (CausalQuestion) to YAML / JSON for OSF, AEA RCT Registry, or a repo-local PAP. Includes a metadata block with timestamp and statspai version. Validation: validated.",
+    "description": "Write a pre-analysis plan (CausalQuestion) to YAML / JSON for OSF, AEA RCT Registry, or a repo-local PAP. Includes a metadata block with timestamp and statspai version.",
     "name": "preregister",
     "parameters": {
       "properties": {
@@ -4566,7 +4566,7 @@
     }
   },
   {
-    "description": "Load a pre-registration file back into a CausalQuestion. Validation: validated.",
+    "description": "Load a pre-registration file back into a CausalQuestion.",
     "name": "load_preregister",
     "parameters": {
       "properties": {
@@ -4582,7 +4582,7 @@
     }
   },
   {
-    "description": "Run every applicable sensitivity analysis in one shot: E-value, Oster delta (when R^2 inputs given), Rosenbaum Gamma (when matched structure exposed), Sensemakr (regression models), and a breakdown-frontier bias estimate. Also available as result.sensitivity(). Validation: validated.",
+    "description": "Run every applicable sensitivity analysis in one shot: E-value, Oster delta (when R^2 inputs given), Rosenbaum Gamma (when matched structure exposed), Sensemakr (regression models), and a breakdown-frontier bias estimate. Also available as result.sensitivity().",
     "name": "unified_sensitivity",
     "parameters": {
       "properties": {
@@ -4626,7 +4626,7 @@
     }
   },
   {
-    "description": "Athey-Chetty-Imbens-Kang surrogate-index estimator for the long-term ATE: combines an experimental sample (treatment + short-term surrogate) with an observational sample (surrogate + long-term outcome) to extrapolate the effect on the long-term outcome. Validation: validated.",
+    "description": "Athey-Chetty-Imbens-Kang surrogate-index estimator for the long-term ATE: combines an experimental sample (treatment + short-term surrogate) with an observational sample (surrogate + long-term outcome) to extrapolate the effect on the long-term outcome.",
     "name": "surrogate_index",
     "parameters": {
       "properties": {
@@ -4687,7 +4687,7 @@
     }
   },
   {
-    "description": "Long-term ATE under multi-wave short-term surrogates; extends the classical surrogate index to sustained treatments via iterated conditional expectations (Ghassami et al. 2024). Validation: validated.",
+    "description": "Long-term ATE under multi-wave short-term surrogates; extends the classical surrogate index to sustained treatments via iterated conditional expectations (Ghassami et al. 2024).",
     "name": "long_term_from_short",
     "parameters": {
       "properties": {
@@ -4738,7 +4738,7 @@
     }
   },
   {
-    "description": "Inverse-variance pooling of an RCT and RWD estimate with optional transport shift (Dahabreh et al. 2020; arXiv:2511.19735 2025). Validation: validated.",
+    "description": "Inverse-variance pooling of an RCT and RWD estimate with optional transport shift (Dahabreh et al. 2020; arXiv:2511.19735 2025).",
     "name": "synthesise_evidence",
     "parameters": {
       "properties": {
@@ -4788,7 +4788,7 @@
     }
   },
   {
-    "description": "DerSimonian-Laird tau2 / Q / I2 heterogeneity statistics for multi-study evidence synthesis. Validation: validated.",
+    "description": "DerSimonian-Laird tau2 / Q / I2 heterogeneity statistics for multi-study evidence synthesis.",
     "name": "heterogeneity_of_effect",
     "parameters": {
       "properties": {
@@ -4815,7 +4815,7 @@
     }
   },
   {
-    "description": "Report-card: does the RWD estimate fall inside the RCT's 95% CI? Validation: validated.",
+    "description": "Report-card: does the RWD estimate fall inside the RCT's 95% CI?",
     "name": "rwd_rct_concordance",
     "parameters": {
       "properties": {
@@ -4841,7 +4841,7 @@
     }
   },
   {
-    "description": "Level-1 (knowledge) and Level-2 (deductive reasoning) evaluation of an LLM's causal-reasoning ability. Validation: validated.",
+    "description": "Level-1 (knowledge) and Level-2 (deductive reasoning) evaluation of an LLM's causal-reasoning ability.",
     "name": "llm_causal_assess",
     "parameters": {
       "properties": {
@@ -4870,7 +4870,7 @@
     }
   },
   {
-    "description": "Pairwise causal-direction discovery benchmark for an LLM. Validation: validated.",
+    "description": "Pairwise causal-direction discovery benchmark for an LLM.",
     "name": "pairwise_causal_benchmark",
     "parameters": {
       "properties": {
@@ -4891,7 +4891,7 @@
     }
   },
   {
-    "description": "Bareinboim-Forney-Pearl contextual causal bandit: pick the optimal arm by Monte-Carlo estimation of E[Y(a) | context]. Validation: validated.",
+    "description": "Bareinboim-Forney-Pearl contextual causal bandit: pick the optimal arm by Monte-Carlo estimation of E[Y(a) | context].",
     "name": "causal_bandit",
     "parameters": {
       "properties": {
@@ -4924,7 +4924,7 @@
     }
   },
   {
-    "description": "Counterfactual policy evaluation under a linear-Gaussian SCM via noise inversion (Oberst-Sontag 2019, Buesing et al. 2019). Validation: validated.",
+    "description": "Counterfactual policy evaluation under a linear-Gaussian SCM via noise inversion (Oberst-Sontag 2019, Buesing et al. 2019).",
     "name": "counterfactual_policy_optimization",
     "parameters": {
       "properties": {
@@ -4960,7 +4960,7 @@
     }
   },
   {
-    "description": "Fit a linear SVAR for a Markov decision process and roll out counterfactual trajectories under alternative policies. Validation: validated.",
+    "description": "Fit a linear SVAR for a Markov decision process and roll out counterfactual trajectories under alternative policies.",
     "name": "structural_mdp",
     "parameters": {
       "properties": {
@@ -5012,7 +5012,7 @@
     }
   },
   {
-    "description": "Overlap-weighted 2x2 DiD. Weights observations by e(X)(1-e(X)), where e(X) is the estimated propensity score, placing highest weight on units with the most overlap between treated and control covariate distributions. Useful when overlap is poor at the tails. Validation: validated.",
+    "description": "Overlap-weighted 2x2 DiD. Weights observations by e(X)(1-e(X)), where e(X) is the estimated propensity score, placing highest weight on units with the most overlap between treated and control covariate distributions. Useful when overlap is poor at the tails.",
     "name": "overlap_weighted_did",
     "parameters": {
       "properties": {
@@ -5067,7 +5067,7 @@
     }
   },
   {
-    "description": "Neural-net propensity score estimator (arXiv:2404.04794, 2024). Validation: validated.",
+    "description": "Neural-net propensity score estimator (arXiv:2404.04794, 2024).",
     "name": "dl_propensity_score",
     "parameters": {
       "properties": {
@@ -5103,7 +5103,7 @@
     }
   },
   {
-    "description": "Split-conformal prediction bands for continuous-treatment dose-response curves (Schroder, Frauen, Schweisthal, He, Melnychuk, Feuerriegel 2024, arXiv:2407.03094). Validation: validated.",
+    "description": "Split-conformal prediction bands for continuous-treatment dose-response curves (Schroder, Frauen, Schweisthal, He, Melnychuk, Feuerriegel 2024, arXiv:2407.03094).",
     "name": "conformal_continuous",
     "parameters": {
       "properties": {
@@ -5147,7 +5147,7 @@
     }
   },
   {
-    "description": "Cluster-exchangeable split-conformal prediction under network interference (2509.21660 systematic review). Validation: validated.",
+    "description": "Cluster-exchangeable split-conformal prediction under network interference (2509.21660 systematic review).",
     "name": "conformal_interference",
     "parameters": {
       "properties": {
@@ -5199,7 +5199,7 @@
     }
   },
   {
-    "description": "Sharp bounds on off-policy value under unobserved confounding via the marginal-sensitivity Gamma-model (Kallus, Mao, Uehara 2025). Validation: validated.",
+    "description": "Sharp bounds on off-policy value under unobserved confounding via the marginal-sensitivity Gamma-model (Kallus, Mao, Uehara 2025).",
     "name": "sharp_ope_unobserved",
     "parameters": {
       "properties": {
@@ -5240,7 +5240,7 @@
     }
   },
   {
-    "description": "Forest of doubly-robust policy trees: ensembles depth-limited trees over AIPW-scored actions to reduce variance and give honest policy-value SE (2025). Validation: validated.",
+    "description": "Forest of doubly-robust policy trees: ensembles depth-limited trees over AIPW-scored actions to reduce variance and give honest policy-value SE (2025).",
     "name": "causal_policy_forest",
     "parameters": {
       "properties": {
@@ -5284,7 +5284,7 @@
     }
   },
   {
-    "description": "Orthogonal learning of direct + spillover effects under network interference via cross-fitted double-residualisation (Wu & Yuan 2025, arXiv:2509.18484). Validation: validated.",
+    "description": "Orthogonal learning of direct + spillover effects under network interference via cross-fitted double-residualisation (Wu & Yuan 2025, arXiv:2509.18484).",
     "name": "network_hte",
     "parameters": {
       "properties": {
@@ -5328,7 +5328,7 @@
     }
   },
   {
-    "description": "Decompose network spillover into inward (incoming edges to unit i) and outward (from i to neighbours) components. Validation: validated.",
+    "description": "Decompose network spillover into inward (incoming edges to unit i) and outward (from i to neighbours) components.",
     "name": "inward_outward_spillover",
     "parameters": {
       "properties": {
@@ -5364,7 +5364,7 @@
     }
   },
   {
-    "description": "Bayesian Double Machine Learning (DiTraglia & Liu 2025): Normal-Normal conjugate update on a DML point estimate, with optional full PyMC MCMC over the orthogonal moment equation. Validation: validated.",
+    "description": "Bayesian Double Machine Learning (DiTraglia & Liu 2025): Normal-Normal conjugate update on a DML point estimate, with optional full PyMC MCMC over the orthogonal moment equation.",
     "name": "bayes_dml",
     "parameters": {
       "properties": {
@@ -5427,7 +5427,7 @@
     }
   },
   {
-    "description": "Bayesian Difference-in-Differences with staggered adoption -- hierarchical ATT(g,t) posterior with optional cohort / unit random effects. Full MCMC with PyMC; reports R-hat, ESS, divergences, and 94% HDI. Validation: validated.",
+    "description": "Bayesian Difference-in-Differences with staggered adoption -- hierarchical ATT(g,t) posterior with optional cohort / unit random effects. Full MCMC with PyMC; reports R-hat, ESS, divergences, and 94% HDI.",
     "name": "bayes_did",
     "parameters": {
       "properties": {
@@ -5483,7 +5483,7 @@
     }
   },
   {
-    "description": "Bayesian instrumental variables with full posterior over structural parameters. Handles weak instruments via shrinkage priors and reports posterior mass near zero on the first-stage coefficient. Validation: validated.",
+    "description": "Bayesian instrumental variables with full posterior over structural parameters. Handles weak instruments via shrinkage priors and reports posterior mass near zero on the first-stage coefficient.",
     "name": "bayes_iv",
     "parameters": {
       "properties": {
@@ -5536,7 +5536,7 @@
     }
   },
   {
-    "description": "Multivariable Mendelian randomization (Sanderson-Windmeijer 2019): direct causal effects of multiple correlated exposures via weighted least-squares on SNP-summary data, with conditional F-statistics for instrument strength. Validation: validated.",
+    "description": "Multivariable Mendelian randomization (Sanderson-Windmeijer 2019): direct causal effects of multiple correlated exposures via weighted least-squares on SNP-summary data, with conditional F-statistics for instrument strength.",
     "name": "mr_multivariable",
     "parameters": {
       "properties": {
@@ -5569,7 +5569,7 @@
     }
   },
   {
-    "description": "Two-step (network) MR: decompose the total causal effect of an exposure on an outcome into direct + indirect (mediated) components. Validation: validated.",
+    "description": "Two-step (network) MR: decompose the total causal effect of an exposure on an outcome into direct + indirect (mediated) components.",
     "name": "mr_mediation",
     "parameters": {
       "properties": {
@@ -5600,7 +5600,7 @@
     }
   },
   {
-    "description": "MR Bayesian model averaging over exposure subsets (Zuber et al. 2020). Outputs marginal inclusion probabilities and top posterior models. Validation: validated.",
+    "description": "MR Bayesian model averaging over exposure subsets (Zuber et al. 2020). Outputs marginal inclusion probabilities and top posterior models.",
     "name": "mr_bma",
     "parameters": {
       "properties": {
@@ -5637,7 +5637,7 @@
     }
   },
   {
-    "description": "Sample-overlap-corrected IVW MR (Burgess-Davies-Thompson 2016 closed-form correction). Removes first-order bias when exposure and outcome GWAS share participants; requires overlap_fraction and overlap_rho (e.g. from LD-score regression). Validation: validated.",
+    "description": "Sample-overlap-corrected IVW MR (Burgess-Davies-Thompson 2016 closed-form correction). Removes first-order bias when exposure and outcome GWAS share participants; requires overlap_fraction and overlap_rho (e.g. from LD-score regression).",
     "name": "mr_lap",
     "parameters": {
       "properties": {
@@ -5683,7 +5683,7 @@
     }
   },
   {
-    "description": "Clustered Mendelian randomization via finite Gaussian mixture on Wald ratios (Foley et al. 2021). EM with SNP-specific measurement SE; optional 'null' cluster at theta=0; K selected by BIC. Returns per-cluster estimate, SNP-to-cluster responsibilities, and the K-path. Validation: validated.",
+    "description": "Clustered Mendelian randomization via finite Gaussian mixture on Wald ratios (Foley et al. 2021). EM with SNP-specific measurement SE; optional 'null' cluster at theta=0; K selected by BIC. Returns per-cluster estimate, SNP-to-cluster responsibilities, and the K-path.",
     "name": "mr_clust",
     "parameters": {
       "properties": {
@@ -5740,7 +5740,7 @@
     }
   },
   {
-    "description": "GRAPPLE: profile-likelihood MR with joint weak-instrument and balanced-pleiotropy robustness (Wang et al. 2021). Model: beta_y = beta*beta_x + u, Var(u) = se_y^2 + beta^2*se_x^2 + tau^2; jointly MLE over (beta, tau^2) via L-BFGS-B; SE from observed Fisher info. Validation: validated.",
+    "description": "GRAPPLE: profile-likelihood MR with joint weak-instrument and balanced-pleiotropy robustness (Wang et al. 2021). Model: beta_y = beta*beta_x + u, Var(u) = se_y^2 + beta^2*se_x^2 + tau^2; jointly MLE over (beta, tau^2) via L-BFGS-B; SE from observed Fisher info.",
     "name": "grapple",
     "parameters": {
       "properties": {
@@ -5785,7 +5785,7 @@
     }
   },
   {
-    "description": "MR-cML-BIC: constrained maximum-likelihood MR with L0-sparse pleiotropy (Xue, Shen & Pan 2021). Block-coordinate descent jointly updates causal beta, true exposure effects, and a K-sparse pleiotropy vector; K selected by BIC. Robust to correlated + uncorrelated pleiotropy simultaneously. Validation: validated.",
+    "description": "MR-cML-BIC: constrained maximum-likelihood MR with L0-sparse pleiotropy (Xue, Shen & Pan 2021). Block-coordinate descent jointly updates causal beta, true exposure effects, and a K-sparse pleiotropy vector; K selected by BIC. Robust to correlated + uncorrelated pleiotropy simultaneously.",
     "name": "mr_cml",
     "parameters": {
       "properties": {
@@ -5825,7 +5825,7 @@
     }
   },
   {
-    "description": "MR-RAPS: Robust Adjusted Profile Score for two-sample summary-data MR (Zhao et al. 2020, Annals of Statistics). Profile-likelihood MR with Tukey biweight loss + weak-instrument correction; resistant to a small fraction of gross pleiotropy outliers. Complements GRAPPLE (Gaussian) with a robust-loss variant of the same structural model. Validation: validated.",
+    "description": "MR-RAPS: Robust Adjusted Profile Score for two-sample summary-data MR (Zhao et al. 2020, Annals of Statistics). Profile-likelihood MR with Tukey biweight loss + weak-instrument correction; resistant to a small fraction of gross pleiotropy outliers. Complements GRAPPLE (Gaussian) with a robust-loss variant of the same structural model.",
     "name": "mr_raps",
     "parameters": {
       "properties": {
@@ -5900,7 +5900,7 @@
     }
   },
   {
-    "description": "Hierarchical Bayesian Causal Forest for longitudinal data (BCFLong) -- allows mu_t(X), tau_t(X) to evolve across time with unit-level random intercepts. Validation: validated.",
+    "description": "Hierarchical Bayesian Causal Forest for longitudinal data (BCFLong) -- allows mu_t(X), tau_t(X) to evolve across time with unit-level random intercepts.",
     "name": "bcf_longitudinal",
     "parameters": {
       "properties": {
@@ -5959,7 +5959,7 @@
     }
   },
   {
-    "description": "Latent-PCMCI: time-series causal discovery allowing hidden common causes. Outputs a lag-specific adjacency tensor with typed edges (directed, bidirected, uncertain). Validation: validated.",
+    "description": "Latent-PCMCI: time-series causal discovery allowing hidden common causes. Outputs a lag-specific adjacency tensor with typed edges (directed, bidirected, uncertain).",
     "name": "lpcmci",
     "parameters": {
       "properties": {
@@ -5992,7 +5992,7 @@
     }
   },
   {
-    "description": "DYNOTEARS: continuous-optimisation structure learning for structural VARs. Returns contemporaneous (W) and lagged (A) adjacency matrices with the contemporaneous part enforced to be acyclic via the NOTEARS h(W) penalty. Validation: validated.",
+    "description": "DYNOTEARS: continuous-optimisation structure learning for structural VARs. Returns contemporaneous (W) and lagged (A) adjacency matrices with the contemporaneous part enforced to be acyclic via the NOTEARS h(W) penalty.",
     "name": "dynotears",
     "parameters": {
       "properties": {
@@ -6035,7 +6035,7 @@
     }
   },
   {
-    "description": "Sequential Synthetic DID for staggered-adoption panels (Arkhangelsky & Samkov 2024): processes cohorts in adoption order using not-yet-treated donors, avoiding TWFE negative weights and SDID overlap failures. Validation: validated.",
+    "description": "Sequential Synthetic DID for staggered-adoption panels (Arkhangelsky & Samkov 2024): processes cohorts in adoption order using not-yet-treated donors, avoiding TWFE negative weights and SDID overlap failures.",
     "name": "sequential_sdid",
     "parameters": {
       "properties": {
@@ -6100,7 +6100,7 @@
     }
   },
   {
-    "description": "Kusner-Loftus-Russell-Silva (2018) counterfactual-fairness test: compares factual vs. SCM-intervened predictions to measure path-specific dependence of a classifier on the protected attribute. Validation: validated.",
+    "description": "Kusner-Loftus-Russell-Silva (2018) counterfactual-fairness test: compares factual vs. SCM-intervened predictions to measure path-specific dependence of a classifier on the protected attribute.",
     "name": "counterfactual_fairness",
     "parameters": {
       "properties": {
@@ -6136,7 +6136,7 @@
     }
   },
   {
-    "description": "Residualize features against the protected attribute as a pre-processing step toward counterfactual fairness. Validation: validated.",
+    "description": "Residualize features against the protected attribute as a pre-processing step toward counterfactual fairness.",
     "name": "orthogonal_to_bias",
     "parameters": {
       "properties": {
@@ -6165,7 +6165,7 @@
     }
   },
   {
-    "description": "Demographic-parity gap between groups defined by the protected attribute. Validation: validated.",
+    "description": "Demographic-parity gap between groups defined by the protected attribute.",
     "name": "demographic_parity",
     "parameters": {
       "properties": {
@@ -6196,7 +6196,7 @@
     }
   },
   {
-    "description": "Hardt-Price-Srebro equalized-odds gap -- max of TPR and FPR group differences. Validation: validated.",
+    "description": "Hardt-Price-Srebro equalized-odds gap -- max of TPR and FPR group differences.",
     "name": "equalized_odds",
     "parameters": {
       "properties": {
@@ -6232,7 +6232,7 @@
     }
   },
   {
-    "description": "One-shot dashboard combining demographic parity, equalized odds, and (optionally) counterfactual fairness. Validation: validated.",
+    "description": "One-shot dashboard combining demographic parity, equalized odds, and (optionally) counterfactual fairness.",
     "name": "fairness_audit",
     "parameters": {
       "properties": {
@@ -6270,7 +6270,7 @@
     }
   },
   {
-    "description": "Proximal surrogate-index estimator: long-term ATE when an unobserved U confounds S->Y, using a proxy W and 2SLS-style bridge-function identification (Imbens-Kallus-Mao-Wang 2025, JRSS-B). Validation: validated.",
+    "description": "Proximal surrogate-index estimator: long-term ATE when an unobserved U confounds S->Y, using a proxy W and 2SLS-style bridge-function identification (Imbens-Kallus-Mao-Wang 2025, JRSS-B).",
     "name": "proximal_surrogate_index",
     "parameters": {
       "properties": {
@@ -6329,7 +6329,7 @@
     }
   },
   {
-    "description": "Gardner (2021) two-stage DID. Stage-1 fits two-way FEs on untreated observations; Stage-2 regresses the residualised outcome on treatment dummies (ATT or event study). Numerically close to Borusyak-Jaravel-Spiess imputation with unit-clustered SEs. Validation: validated.",
+    "description": "Gardner (2021) two-stage DID. Stage-1 fits two-way FEs on untreated observations; Stage-2 regresses the residualised outcome on treatment dummies (ATT or event study). Numerically close to Borusyak-Jaravel-Spiess imputation with unit-clustered SEs. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "gardner_did",
     "parameters": {
       "properties": {
@@ -6393,7 +6393,7 @@
     }
   },
   {
-    "description": "Model-averaging DML (PLR) per Ahrens et al. (2025, JAE). Fits DML-PLR under multiple candidate nuisance learners and reports a risk-weighted (or equal/single-best) average of their theta estimates with a covariance-adjusted SE. Validation: validated.",
+    "description": "Model-averaging DML (PLR) per Ahrens et al. (2025, JAE). Fits DML-PLR under multiple candidate nuisance learners and reports a risk-weighted (or equal/single-best) average of their theta estimates with a covariance-adjusted SE.",
     "name": "dml_model_averaging",
     "parameters": {
       "properties": {
@@ -6459,7 +6459,7 @@
     }
   },
   {
-    "description": "Long-panel Double/Debiased ML for static panel models with fixed effects (Clarke & Polselli 2025, simplified). Absorbs unit (and optional time) fixed effects via within-transform, cross-fits ML nuisance learners with folds that split units, and reports cluster-robust SE at the unit level. PLR moment (continuous or binary treatment). Validation: validated.",
+    "description": "Long-panel Double/Debiased ML for static panel models with fixed effects (Clarke & Polselli 2025, simplified). Absorbs unit (and optional time) fixed effects via within-transform, cross-fits ML nuisance learners with folds that split units, and reports cluster-robust SE at the unit level. PLR moment (continuous or binary treatment).",
     "name": "dml_panel",
     "parameters": {
       "properties": {
@@ -6535,7 +6535,7 @@
     }
   },
   {
-    "description": "Kernel IV regression with uniform confidence bands (Lob et al. 2025). Estimates the structural function h*(d) = E[Y | do(D=d)] via kernel-weighted local averaging under a continuous instrument Z, with wild-bootstrap uniform SEs. Validation: validated.",
+    "description": "Kernel IV regression with uniform confidence bands (Lob et al. 2025). Estimates the structural function h*(d) = E[Y | do(D=d)] via kernel-weighted local averaging under a continuous instrument Z, with wild-bootstrap uniform SEs.",
     "name": "kernel_iv",
     "parameters": {
       "properties": {
@@ -6594,7 +6594,7 @@
     }
   },
   {
-    "description": "Modern IV reporting bundle (R `ivDiag` analogue). Combines 2SLS point estimate, analytic + pairs/wild bootstrap SEs, Olea-Pflueger effective F, Lee-McCrary-Moreira-Porter (2022) tF-corrected critical value, Anderson-Rubin / CLR / K weak-IV-robust confidence sets, Kleibergen-Paap rk LM, Conley-Hansen-Rossi (2012) plausibly-exogenous LTZ sensitivity, and a Blandhol-Bonney-Mogstad-Torgovitsky (2022/2025) / Soczynski (2024) `TSLS-as-LATE` caveat into a single IVDiagResult. Validation: validated.",
+    "description": "Modern IV reporting bundle (R `ivDiag` analogue). Combines 2SLS point estimate, analytic + pairs/wild bootstrap SEs, Olea-Pflueger effective F, Lee-McCrary-Moreira-Porter (2022) tF-corrected critical value, Anderson-Rubin / CLR / K weak-IV-robust confidence sets, Kleibergen-Paap rk LM, Conley-Hansen-Rossi (2012) plausibly-exogenous LTZ sensitivity, and a Blandhol-Bonney-Mogstad-Torgovitsky (2022/2025) / Soczynski (2024) `TSLS-as-LATE` caveat into a single IVDiagResult.",
     "name": "iv_diag",
     "parameters": {
       "properties": {
@@ -6690,7 +6690,7 @@
     }
   },
   {
-    "description": "Run several k-class / JIVE estimators on the same IV specification and return a one-row-per-method comparison DataFrame (estimate, SE, CI, first-stage F). Useful as a sensitivity sanity check before reporting. Validation: validated.",
+    "description": "Run several k-class / JIVE estimators on the same IV specification and return a one-row-per-method comparison DataFrame (estimate, SE, CI, first-stage F). Useful as a sensitivity sanity check before reporting.",
     "name": "iv_compare",
     "parameters": {
       "properties": {
@@ -6728,7 +6728,7 @@
     }
   },
   {
-    "description": "LATE with a continuous instrument (Xie et al. 2025). Estimates the LATE on the maximal complier class via quantile-bin Wald ratios, weighted by the bin-pair with the largest first-stage response. Validation: validated.",
+    "description": "LATE with a continuous instrument (Xie et al. 2025). Estimates the LATE on the maximal complier class via quantile-bin Wald ratios, weighted by the bin-pair with the largest first-stage response.",
     "name": "continuous_iv_late",
     "parameters": {
       "properties": {
@@ -6779,7 +6779,7 @@
     }
   },
   {
-    "description": "TMLE with Highly Adaptive Lasso (HAL) nuisance learners (Qian & van der Laan 2025). The stable 'delta' variant plugs HAL into standard TMLE. The reserved 'projection' variant raises NotImplementedError until the Riesz-projection targeting step has reference parity. Validation: validated. Known limitations: variant='projection' raises NotImplementedError -- the Riesz-projection targeting step from Li-Qiu-Wang-vdL (2025) Section 3.2 is not yet ported (the v1.11.x code path was a no-op on the point estimate; see CHANGELOG). The implementation roadmap and parity-test gates are in docs/rfc/hal_tmle_projection.md.",
+    "description": "TMLE with Highly Adaptive Lasso (HAL) nuisance learners (Qian & van der Laan 2025). The stable 'delta' variant plugs HAL into standard TMLE. The reserved 'projection' variant raises NotImplementedError until the Riesz-projection targeting step has reference parity. Known limitations: variant='projection' raises NotImplementedError -- the Riesz-projection targeting step from Li-Qiu-Wang-vdL (2025) Section 3.2 is not yet ported (the v1.11.x code path was a no-op on the point estimate; see CHANGELOG). The implementation roadmap and parity-test gates are in docs/rfc/hal_tmle_projection.md.",
     "name": "hal_tmle",
     "parameters": {
       "properties": {
@@ -6860,7 +6860,7 @@
     }
   },
   {
-    "description": "Synthetic Survival Control (Han & Shah 2025, arXiv:2511.14133). Fits a convex combination of donor Kaplan-Meier curves on the complementary log-log scale to match the treated arm's pre-treatment survival, then reports the post-treatment survival gap with placebo UCBs. Validation: validated.",
+    "description": "Synthetic Survival Control (Han & Shah 2025, arXiv:2511.14133). Fits a convex combination of donor Kaplan-Meier curves on the complementary log-log scale to match the treated arm's pre-treatment survival, then reports the post-treatment survival gap with placebo UCBs.",
     "name": "synth_survival",
     "parameters": {
       "properties": {
@@ -6916,7 +6916,7 @@
     }
   },
   {
-    "description": "Unified dispatcher for six causal-inference bridging theorems (2025-2026): DiD==SC (Shi-Athey), EWM==CATE (Ferman), IPW==DR==CB (Zhao-Percival), Bunching==RDD (Lu-Wang-Xie), DR-via-Calibration (Zhang), Long-term-surrogate==PCI (Imbens-Kallus-Mao-Wang). Reports both path estimates + doubly-robust recommendation. Validation: validated.",
+    "description": "Unified dispatcher for six causal-inference bridging theorems (2025-2026): DiD==SC (Shi-Athey), EWM==CATE (Ferman), IPW==DR==CB (Zhao-Percival), Bunching==RDD (Lu-Wang-Xie), DR-via-Calibration (Zhang), Long-term-surrogate==PCI (Imbens-Kallus-Mao-Wang). Reports both path estimates + doubly-robust recommendation.",
     "name": "bridge",
     "parameters": {
       "properties": {
@@ -6938,7 +6938,7 @@
     }
   },
   {
-    "description": "Causal deep Q-network (Li, Zhang, Bareinboim 2025, arXiv:2510.21110) for offline policy learning under unobserved confounding. Learns a confounding-robust Q-function via bootstrap data augmentation. Validation: validated.",
+    "description": "Causal deep Q-network (Li, Zhang, Bareinboim 2025, arXiv:2510.21110) for offline policy learning under unobserved confounding. Learns a confounding-robust Q-function via bootstrap data augmentation.",
     "name": "causal_dqn",
     "parameters": {
       "properties": {
@@ -6993,7 +6993,7 @@
     }
   },
   {
-    "description": "Fortified proximal causal inference (Yu, Shi & Tchetgen Tchetgen 2025). Adds a bridge-function stability constraint that gives robust ATT under mild misspecification of the outcome/treatment bridge. Validation: validated.",
+    "description": "Fortified proximal causal inference (Yu, Shi & Tchetgen Tchetgen 2025). Adds a bridge-function stability constraint that gives robust ATT under mild misspecification of the outcome/treatment bridge.",
     "name": "fortified_pci",
     "parameters": {
       "properties": {
@@ -7042,7 +7042,7 @@
     }
   },
   {
-    "description": "Bidirectional proximal causal inference (Min, Zhang & Luo 2025). Solves for both outcome and treatment bridges simultaneously in a single two-way regression system. Validation: validated.",
+    "description": "Bidirectional proximal causal inference (Min, Zhang & Luo 2025). Solves for both outcome and treatment bridges simultaneously in a single two-way regression system.",
     "name": "bidirectional_pci",
     "parameters": {
       "properties": {
@@ -7091,7 +7091,7 @@
     }
   },
   {
-    "description": "Proximal causal inference for modified treatment policies (Park & Ying 2025). Estimates the effect of a policy that shifts the treatment distribution (e.g., raises the dose by 10%) under unobserved confounding identified by PCI. Validation: validated.",
+    "description": "Proximal causal inference for modified treatment policies (Park & Ying 2025). Estimates the effect of a policy that shifts the treatment distribution (e.g., raises the dose by 10%) under unobserved confounding identified by PCI.",
     "name": "pci_mtp",
     "parameters": {
       "properties": {
@@ -7138,7 +7138,7 @@
     }
   },
   {
-    "description": "Cluster-randomised trial under cross-cluster interference (Ding et al. 2025). Estimates direct + spillover effects when treatment of one cluster affects outcomes in adjacent clusters. Validation: validated.",
+    "description": "Cluster-randomised trial under cross-cluster interference (Ding et al. 2025). Estimates direct + spillover effects when treatment of one cluster affects outcomes in adjacent clusters.",
     "name": "cluster_cross_interference",
     "parameters": {
       "properties": {
@@ -7174,7 +7174,7 @@
     }
   },
   {
-    "description": "Beyond-average LATE (Xie-Wu 2025). Identifies the entire treatment-effect distribution among compliers under incomplete compliance, not just its mean. Validation: validated.",
+    "description": "Beyond-average LATE (Xie-Wu 2025). Identifies the entire treatment-effect distribution among compliers under incomplete compliance, not just its mean.",
     "name": "beyond_average_late",
     "parameters": {
       "properties": {
@@ -7212,7 +7212,7 @@
     }
   },
   {
-    "description": "Counterfactual-fair conformal prediction for ITE (2025). Wraps standard conformal ITE intervals with a demographic-parity adjustment, giving distribution-free coverage under protected-attribute shifts. Validation: validated.",
+    "description": "Counterfactual-fair conformal prediction for ITE (2025). Wraps standard conformal ITE intervals with a demographic-parity adjustment, giving distribution-free coverage under protected-attribute shifts.",
     "name": "conformal_fair_ite",
     "parameters": {
       "properties": {
@@ -7391,7 +7391,7 @@
     }
   },
   {
-    "description": "Harvest every valid 2x2 DID comparison from a staggered panel and aggregate them via precision-weighted / simple / cohort-weighted averages. Agnostic to cohort structure; useful for robustness comparisons against CS / SA / BJS. Validation: validated.",
+    "description": "Harvest every valid 2x2 DID comparison from a staggered panel and aggregate them via precision-weighted / simple / cohort-weighted averages. Agnostic to cohort structure; useful for robustness comparisons against CS / SA / BJS.",
     "name": "harvest_did",
     "parameters": {
       "properties": {
@@ -7456,7 +7456,7 @@
     }
   },
   {
-    "description": "Bayesian Causal Forest for ordered / dose-level treatment (Zorzetto et al. 2026). Estimates cumulative dose-response curves via chained BCF between consecutive levels. Validation: validated.",
+    "description": "Bayesian Causal Forest for ordered / dose-level treatment (Zorzetto et al. 2026). Estimates cumulative dose-response curves via chained BCF between consecutive levels.",
     "name": "bcf_ordinal",
     "parameters": {
       "properties": {
@@ -7524,7 +7524,7 @@
     }
   },
   {
-    "description": "BCF on PCA-factor scores of a high-dimensional exposure vector (arXiv:2601.16595, 2026). Compresses exposures via SVD or user-supplied loadings, then fits one BCF per factor. Validation: validated.",
+    "description": "BCF on PCA-factor scores of a high-dimensional exposure vector (arXiv:2601.16595, 2026). Compresses exposures via SVD or user-supplied loadings, then fits one BCF per factor.",
     "name": "bcf_factor_exposure",
     "parameters": {
       "properties": {
@@ -7590,7 +7590,7 @@
     }
   },
   {
-    "description": "Multi-agent LLM causal discovery (arXiv:2509.00987, 2025). Runs proposer / critic / domain-expert / synthesiser agents over several rounds, returns per-edge confidence + audit log. Validation: validated.",
+    "description": "Multi-agent LLM causal discovery (arXiv:2509.00987, 2025). Runs proposer / critic / domain-expert / synthesiser agents over several rounds, returns per-edge confidence + audit log.",
     "name": "causal_mas",
     "parameters": {
       "properties": {
@@ -7650,7 +7650,7 @@
     }
   },
   {
-    "description": "End-to-end 'data + question -> publication draft' pipeline. Parses a natural-language question, runs sp.causal() (diagnose + recommend + estimate + robustness), and assembles a Markdown / LaTeX / Word draft with EDA, identification verdict, estimator rationale, results, and robustness sections. Validation: validated.",
+    "description": "End-to-end 'data + question -> publication draft' pipeline. Parses a natural-language question, runs sp.causal() (diagnose + recommend + estimate + robustness), and assembles a Markdown / LaTeX / Word draft with EDA, identification verdict, estimator rationale, results, and robustness sections.",
     "name": "paper",
     "parameters": {
       "properties": {
@@ -7765,7 +7765,7 @@
     }
   },
   {
-    "description": "Package an analysis (PaperDraft / fitted result / list of results) into a journal-ready replication zip: data CSV + schema manifest, caller code, frozen environment, rendered paper (md/qmd/tex/docx), citations, and an aggregated lineage.json from any results carrying Provenance. The archive's MANIFEST.json records SHA-256 for every file plus the git SHA when available. Validation: validated.",
+    "description": "Package an analysis (PaperDraft / fitted result / list of results) into a replication zip: data CSV + schema manifest, caller code, frozen environment, rendered paper (md/qmd/tex/docx), citations, and an aggregated lineage.json from any results carrying Provenance. The archive's MANIFEST.json records SHA-256 for every file plus the git SHA when available.",
     "name": "replication_pack",
     "parameters": {
       "properties": {
@@ -7835,7 +7835,7 @@
     }
   },
   {
-    "description": "[experimental] [experimental] Veitch-Wang-Blei (2020) text-as-treatment ATE estimation. Embeds a text column into n_components features (default hash embedder, deterministic) and uses them as confounder adjustment in OLS with HC1 SEs. Validation: experimental. Known limitations: embedder='sbert' requires the optional sentence-transformers extra; the bundled 'hash' embedder is a deterministic fallback, not a published parity reference; Veitch et al. (2020) full BERT/topic-model recipe is not yet implemented -- see module docstring.",
+    "description": "[experimental] Veitch-Wang-Blei (2020) text-as-treatment ATE estimation. Embeds a text column into n_components features (default hash embedder, deterministic) and uses them as confounder adjustment in OLS with HC1 SEs. Validation status: experimental. Known limitations: embedder='sbert' requires the optional sentence-transformers extra; the bundled 'hash' embedder is a deterministic fallback, not a published parity reference; Veitch et al. (2020) full BERT/topic-model recipe is not yet implemented -- see module docstring.",
     "name": "text_treatment_effect",
     "parameters": {
       "properties": {
@@ -7897,7 +7897,7 @@
     }
   },
   {
-    "description": "[experimental] [experimental] Egami et al. (2024) measurement-error correction for downstream OLS coefficients when the treatment indicator was produced by an LLM (or any imperfect classifier). Binary T uses Hausman (1998) 1/(1 - p_01 - p_10) inflation; multi-class T (K>=3) uses the inverse-confusion-matrix transform built from the validation-set Bayes posterior. Optional bias-corrected bootstrap jointly resamples the validation set and the unlabeled corpus for honest CIs. SE inflation factor (delta-method) always reported in diagnostics. Validation: experimental. Known limitations: method='hausman' is the only supported correction; the logistic and Bayesian variants from Egami et al. (2024) are not yet implemented.",
+    "description": "[experimental] Egami et al. (2024) measurement-error correction for downstream OLS coefficients when the treatment indicator was produced by an LLM (or any imperfect classifier). Binary T uses Hausman (1998) 1/(1 - p_01 - p_10) inflation; multi-class T (K>=3) uses the inverse-confusion-matrix transform built from the validation-set Bayes posterior. Optional bias-corrected bootstrap jointly resamples the validation set and the unlabeled corpus for honest CIs. SE inflation factor (delta-method) always reported in diagnostics. Validation status: experimental. Known limitations: method='hausman' is the only supported correction; the logistic and Bayesian variants from Egami et al. (2024) are not yet implemented.",
     "name": "llm_annotator_correct",
     "parameters": {
       "properties": {
@@ -7954,7 +7954,7 @@
     }
   },
   {
-    "description": "Closed-loop LLM-assisted DAG discovery: iterate LLM-propose -> constrained PC -> CI-test validate -> demote, until edge set converges or max_iter is hit. Returns a final DAG with per-edge LLM confidence and CI-test p-value. Validation: validated.",
+    "description": "Closed-loop LLM-assisted DAG discovery: iterate LLM-propose -> constrained PC -> CI-test validate -> demote, until edge set converges or max_iter is hit. Returns a final DAG with per-edge LLM confidence and CI-test p-value.",
     "name": "llm_dag_constrained",
     "parameters": {
       "properties": {
@@ -8018,7 +8018,7 @@
     }
   },
   {
-    "description": "Per-edge CI-test validation of a declared DAG. For each directed edge a->b, run partial-correlation independence test conditioning on parents(b)\\{a}. Edges with p>alpha are flagged unsupported. Validation: validated.",
+    "description": "Per-edge CI-test validation of a declared DAG. For each directed edge a->b, run partial-correlation independence test conditioning on parents(b)\\{a}. Edges with p>alpha are flagged unsupported.",
     "name": "llm_dag_validate",
     "parameters": {
       "properties": {
@@ -8052,7 +8052,7 @@
     }
   },
   {
-    "description": "Park-Xu (2026) political-science shift-share IV: long-difference Bartik IV with AKM shock-cluster SE, Rotemberg top-K, and share-balance diagnostics. Validation: validated.",
+    "description": "Park-Xu (2026) political-science shift-share IV: long-difference Bartik IV with AKM shock-cluster SE, Rotemberg top-K, and share-balance diagnostics.",
     "name": "shift_share_political",
     "parameters": {
       "properties": {
@@ -8115,7 +8115,7 @@
     }
   },
   {
-    "description": "Closed-form Kalman filter over a stream of causal-effect estimates + SEs. Produces a running posterior over the time-varying (or static) causal effect. Validation: validated.",
+    "description": "Closed-form Kalman filter over a stream of causal-effect estimates + SEs. Produces a running posterior over the time-varying (or static) causal effect. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "causal_kalman",
     "parameters": {
       "properties": {
@@ -8162,7 +8162,7 @@
     }
   },
   {
-    "description": "End-to-end Assimilative Causal Inference pipeline (Nature Communications 2026): for each data batch, apply `estimator` to get (theta, SE), then fuse via Kalman filtering or particle filter. Validation: validated.",
+    "description": "End-to-end Assimilative Causal Inference pipeline (Nature Communications 2026): for each data batch, apply `estimator` to get (theta, SE), then fuse via Kalman filtering or particle filter. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "assimilative_causal",
     "parameters": {
       "properties": {
@@ -8215,7 +8215,7 @@
     }
   },
   {
-    "description": "Multi-period panel shift-share IV (Park-Xu 2026 Section 4.2): pooled 2SLS with unit/time/two-way FEs over a time-varying Bartik instrument. Reports per-period event-study, aggregate Rotemberg top-K, and share-balance F-tests. Validation: validated.",
+    "description": "Multi-period panel shift-share IV (Park-Xu 2026 Section 4.2): pooled 2SLS with unit/time/two-way FEs over a time-varying Bartik instrument. Reports per-period event-study, aggregate Rotemberg top-K, and share-balance F-tests.",
     "name": "shift_share_political_panel",
     "parameters": {
       "properties": {
@@ -8294,7 +8294,7 @@
     }
   },
   {
-    "description": "Bootstrap SIR particle filter for non-Gaussian assimilative causal inference. Supports arbitrary prior sampler, transition sampler, and observation log-pdf, with systematic resampling triggered by an ESS threshold. Validation: validated.",
+    "description": "Bootstrap SIR particle filter for non-Gaussian assimilative causal inference. Supports arbitrary prior sampler, transition sampler, and observation log-pdf, with systematic resampling triggered by an ESS threshold.",
     "name": "particle_filter",
     "parameters": {
       "properties": {
@@ -8447,7 +8447,7 @@
     }
   },
   {
-    "description": "Unified Mendelian Randomization dispatcher. method= selects the estimator: 'ivw' / 'egger' / 'median' / 'penalized_median' / 'mode' / 'all' (runs IVW+Egger+Median together) / 'mvmr' / 'mediation' / 'bma' (multi-exposure) / 'presso' / 'radial' / 'leave_one_out' / 'steiger' / 'heterogeneity' / 'pleiotropy_egger' / 'f_statistic' (diagnostics). Kwargs are passed through to the target function unchanged; see sp.mendelian_family guide. Validation: validated.",
+    "description": "Unified Mendelian Randomization dispatcher. method= selects the estimator: 'ivw' / 'egger' / 'median' / 'penalized_median' / 'mode' / 'all' (runs IVW+Egger+Median together) / 'mvmr' / 'mediation' / 'bma' (multi-exposure) / 'presso' / 'radial' / 'leave_one_out' / 'steiger' / 'heterogeneity' / 'pleiotropy_egger' / 'f_statistic' (diagnostics). Kwargs are passed through to the target function unchanged; see sp.mendelian_family guide.",
     "name": "mr",
     "parameters": {
       "properties": {
@@ -8462,7 +8462,7 @@
     }
   },
   {
-    "description": "Unified conformal causal inference dispatcher. kind= selects the estimator: 'cate' / 'counterfactual' / 'ite' (Lei-Candes 2021 base) / 'weighted' (TBCR 2019 primitive) / 'density' / 'multidp' / 'debiased' / 'fair' (2025-2026 frontier) / 'continuous' (dose-response) / 'interference' (cluster-exchangeable). Kwargs pass through to the target function; see sp.conformal_family guide. Validation: validated.",
+    "description": "Unified conformal causal inference dispatcher. kind= selects the estimator: 'cate' / 'counterfactual' / 'ite' (Lei-Candes 2021 base) / 'weighted' (TBCR 2019 primitive) / 'density' / 'multidp' / 'debiased' / 'fair' (2025-2026 frontier) / 'continuous' (dose-response) / 'interference' (cluster-exchangeable). Kwargs pass through to the target function; see sp.conformal_family guide.",
     "name": "conformal",
     "parameters": {
       "properties": {
@@ -8477,7 +8477,7 @@
     }
   },
   {
-    "description": "Unified interference / spillover dispatcher. design= selects the estimator: 'partial' (Hudgens-Halloran cluster) / 'network_exposure' (Aronow-Samii HT) / 'peer_effects' (Manski / Bramoulle linear-in-means) / 'network_hte' (Wu & Yuan 2025 orthogonal, arXiv:2509.18484) / 'inward_outward' (directed network; Fang, Airoldi & Forastiere 2025, arXiv:2506.06615) / 'cluster_matched_pair' (Bai 2022) / 'cluster_cross' (Ding et al. 2025) / 'cluster_staggered' (Zhou et al. 2025) / 'dnc_gnn' (Zhao et al. 2026). Kwargs pass through to the target function; see sp.interference_family guide. Validation: validated.",
+    "description": "Unified interference / spillover dispatcher. design= selects the estimator: 'partial' (Hudgens-Halloran cluster) / 'network_exposure' (Aronow-Samii HT) / 'peer_effects' (Manski / Bramoulle linear-in-means) / 'network_hte' (Wu & Yuan 2025 orthogonal, arXiv:2509.18484) / 'inward_outward' (directed network; Fang, Airoldi & Forastiere 2025, arXiv:2506.06615) / 'cluster_matched_pair' (Bai 2022) / 'cluster_cross' (Ding et al. 2025) / 'cluster_staggered' (Zhou et al. 2025) / 'dnc_gnn' (Zhao et al. 2026). Kwargs pass through to the target function; see sp.interference_family guide.",
     "name": "interference",
     "parameters": {
       "properties": {
@@ -8492,7 +8492,7 @@
     }
   },
   {
-    "description": "Quantile Difference-in-Differences (Athey & Imbens 2006 CIC). Estimates QTE at multiple quantiles via changes-in-changes on a 2x2 design with bootstrap SE. Validation: validated.",
+    "description": "Quantile Difference-in-Differences (Athey & Imbens 2006 CIC). Estimates QTE at multiple quantiles via changes-in-changes on a 2x2 design with bootstrap SE.",
     "name": "qdid",
     "parameters": {
       "properties": {
@@ -8540,7 +8540,7 @@
     }
   },
   {
-    "description": "Quantile Treatment Effect via quantile regression or IPW weighting. Returns QTE at supplied quantiles with bootstrap SE. Validation: validated.",
+    "description": "Quantile Treatment Effect via quantile regression or IPW weighting. Returns QTE at supplied quantiles with bootstrap SE.",
     "name": "qte",
     "parameters": {
       "properties": {
@@ -8599,7 +8599,7 @@
     }
   },
   {
-    "description": "Dose-response function for a continuous treatment under unconfoundedness. Uses generalised propensity-score weighting or double ML for the conditional expectation E[Y(d)]. Validation: validated.",
+    "description": "Dose-response function for a continuous treatment under unconfoundedness. Uses generalised propensity-score weighting or double ML for the conditional expectation E[Y(d)].",
     "name": "dose_response",
     "parameters": {
       "properties": {
@@ -8650,7 +8650,7 @@
     }
   },
   {
-    "description": "Direct + spillover treatment effect estimation under partial interference (within-cluster). Uses the Hudgens-Halloran decomposition with chosen exposure function. Validation: validated.",
+    "description": "Direct + spillover treatment effect estimation under partial interference (within-cluster). Uses the Hudgens-Halloran decomposition with chosen exposure function.",
     "name": "spillover",
     "parameters": {
       "properties": {
@@ -8708,7 +8708,7 @@
     }
   },
   {
-    "description": "Effects of multi-valued (3+ level) treatments via AIPW. Returns pairwise contrasts versus a reference level. Validation: validated.",
+    "description": "Effects of multi-valued (3+ level) treatments via AIPW. Returns pairwise contrasts versus a reference level.",
     "name": "multi_treatment",
     "parameters": {
       "properties": {
@@ -8756,7 +8756,7 @@
     }
   },
   {
-    "description": "Aronow-Samii Horvitz-Thompson estimator for arbitrary interference via a user-supplied exposure mapping. Handles Bernoulli randomisation designs with simulated conservative variance. Validation: validated. Known limitations: design='complete' is reserved but not implemented; passing it raises NotImplementedError. Use design='bernoulli' with p_treat=K/N as an approximation only if that matches the assignment mechanism you are willing to assume.",
+    "description": "Aronow-Samii Horvitz-Thompson estimator for arbitrary interference via a user-supplied exposure mapping. Handles Bernoulli randomisation designs with simulated conservative variance. Known limitations: design='complete' is reserved but not implemented; passing it raises NotImplementedError. Use design='bernoulli' with p_treat=K/N as an approximation only if that matches the assignment mechanism you are willing to assume.",
     "name": "network_exposure",
     "parameters": {
       "properties": {
@@ -8811,7 +8811,7 @@
     }
   },
   {
-    "description": "DiD with continuous treatment intensity. Four modes: (i) 'twfe' TWFE with dosexpost interaction; (ii) 'att_gt' dose-quantile group-time ATT versus the untreated (dose=0) arm with bootstrap SE (heuristic); (iii) 'dose_response' local-linear regression of DeltaY=Y_post-Y_pre on baseline dose; (iv) 'cgs' Callaway-Goodman-Bacon-Sant'Anna (2024) ATT(d|g,t) MVP -- 2-period design, OR only, bootstrap SE, [pending verification] markers on paper formulas. Full CGS parity (cohort aggregation, DR/IPW, analytical IF variance) is on the roadmap -- see docs/rfc/continuous_did_cgs.md. Validation: validated. Known limitations: method='cgs' is an MVP -- 2-period design, OR only, bootstrap SE; full CGS parity (cohort aggregation, DR/IPW, analytical IF variance) is on the roadmap (see docs/rfc/continuous_did_cgs.md). Other modes (twfe / att_gt / dose_response) are stable.",
+    "description": "DiD with continuous treatment intensity. Four modes: (i) 'twfe' TWFE with dosexpost interaction; (ii) 'att_gt' dose-quantile group-time ATT versus the untreated (dose=0) arm with bootstrap SE (heuristic); (iii) 'dose_response' local-linear regression of DeltaY=Y_post-Y_pre on baseline dose; (iv) 'cgs' Callaway-Goodman-Bacon-Sant'Anna (2024) ATT(d|g,t) MVP -- 2-period design, OR only, bootstrap SE, [pending verification] markers on paper formulas. Full CGS parity (cohort aggregation, DR/IPW, analytical IF variance) is on the roadmap -- see docs/rfc/continuous_did_cgs.md. Known limitations: method='cgs' is an MVP -- 2-period design, OR only, bootstrap SE; full CGS parity (cohort aggregation, DR/IPW, analytical IF variance) is on the roadmap (see docs/rfc/continuous_did_cgs.md). Other modes (twfe / att_gt / dose_response) are stable.",
     "name": "continuous_did",
     "parameters": {
       "properties": {
@@ -8900,7 +8900,7 @@
     }
   },
   {
-    "description": "de Chaisemartin & D'Haultfuille (2020) DID_M estimator. Weighted average of consecutive-period DID cells where treatment 'switchers' are compared to 'stayers'. Handles treatments that switch on AND off (unlike Callaway-Sant'Anna which assumes staggered adoption). Supports placebo lags, dynamic horizons, cluster bootstrap SE, joint placebo test and average-cumulative-effect summary from dCDH (2024). The heteroskedastic-weights variant and full dCDH (2024) intertemporal event-study (did_multiplegt_dyn Stata) are on the roadmap -- see docs/rfc/multiplegt_dyn.md. Validation: validated.",
+    "description": "de Chaisemartin & D'Haultfuille (2020) DID_M estimator. Weighted average of consecutive-period DID cells where treatment 'switchers' are compared to 'stayers'. Handles treatments that switch on AND off (unlike Callaway-Sant'Anna which assumes staggered adoption). Supports placebo lags, dynamic horizons, cluster bootstrap SE, joint placebo test and average-cumulative-effect summary from dCDH (2024). The heteroskedastic-weights variant and full dCDH (2024) intertemporal event-study (did_multiplegt_dyn Stata) are on the roadmap -- see docs/rfc/multiplegt_dyn.md. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "did_multiplegt",
     "parameters": {
       "properties": {
@@ -8971,7 +8971,7 @@
     }
   },
   {
-    "description": "Canonical 2x2 DID: two groups (treated / control) x two periods (pre / post). Point estimate via either group-means differencing or OLS on the treat x post interaction; optional covariates, robust / cluster SE, and sample weights. Validation: validated.",
+    "description": "Canonical 2x2 DID: two groups (treated / control) x two periods (pre / post). Point estimate via either group-means differencing or OLS on the treat x post interaction; optional covariates, robust / cluster SE, and sample weights.",
     "name": "did_2x2",
     "parameters": {
       "properties": {
@@ -9383,7 +9383,7 @@
     }
   },
   {
-    "description": "Changes-in-Changes (Athey & Imbens 2006). Nonparametric quantile DiD that identifies the full counterfactual outcome distribution for treated units, not just the mean. Reports quantile treatment effects (QTE) via empirical-CDF transformation; bootstrap SE. Validation: validated.",
+    "description": "Changes-in-Changes (Athey & Imbens 2006). Nonparametric quantile DiD that identifies the full counterfactual outcome distribution for treated units, not just the mean. Reports quantile treatment effects (QTE) via empirical-CDF transformation; bootstrap SE.",
     "name": "cic",
     "parameters": {
       "properties": {
@@ -9440,7 +9440,7 @@
     }
   },
   {
-    "description": "Stacked DiD (Cengiz, Dube, Lindner, Zipperer 2019). For each treatment cohort, constructs a sub-experiment with only that cohort + clean (never-treated or not-yet-treated) controls, then TWFE on the stacked panel. Robust to staggered-adoption contamination at the cost of dropping late-treated units in early sub-experiments. Validation: validated.",
+    "description": "Stacked DiD (Cengiz, Dube, Lindner, Zipperer 2019). For each treatment cohort, constructs a sub-experiment with only that cohort + clean (never-treated or not-yet-treated) controls, then TWFE on the stacked panel. Robust to staggered-adoption contamination at the cost of dropping late-treated units in early sub-experiments.",
     "name": "stacked_did",
     "parameters": {
       "properties": {
@@ -9508,7 +9508,7 @@
     }
   },
   {
-    "description": "Cohort-anchored event study. Instead of averaging across cohorts at each relative-time bin (which can contaminate leads / lags with other cohorts' dynamics), estimates separate event-study paths per cohort and then aggregates with cohort weights. Successor to the Rambachan-Roth sensitivity-friendly specification. Validation: validated.",
+    "description": "Cohort-anchored event study. Instead of averaging across cohorts at each relative-time bin (which can contaminate leads / lags with other cohorts' dynamics), estimates separate event-study paths per cohort and then aggregates with cohort weights. Successor to the Rambachan-Roth sensitivity-friendly specification.",
     "name": "cohort_anchored_event_study",
     "parameters": {
       "properties": {
@@ -9563,7 +9563,7 @@
     }
   },
   {
-    "description": "Design-robust event study with explicit negative-weight diagnostics per cohort x relative-time cell. Reports which event-study coefficients receive negative weights in TWFE and flags the affected horizons. Validation: validated.",
+    "description": "Design-robust event study with explicit negative-weight diagnostics per cohort x relative-time cell. Reports which event-study coefficients receive negative weights in TWFE and flags the affected horizons.",
     "name": "design_robust_event_study",
     "parameters": {
       "properties": {
@@ -9618,7 +9618,7 @@
     }
   },
   {
-    "description": "Staggered DiD robust to treatment-timing misclassification and anticipation. Adjusts the CS-style aggregation for a user-supplied misclassification probability pi_misclass and a known anticipation horizon. Use when first-treat dates are noisy (e.g., survey-reported). Validation: validated.",
+    "description": "Staggered DiD robust to treatment-timing misclassification and anticipation. Adjusts the CS-style aggregation for a user-supplied misclassification probability pi_misclass and a known anticipation horizon. Use when first-treat dates are noisy (e.g., survey-reported).",
     "name": "did_misclassified",
     "parameters": {
       "properties": {
@@ -9673,7 +9673,7 @@
     }
   },
   {
-    "description": "[experimental] dCDH (2024) intertemporal event-study DiD (MVP -- see docs/rfc/multiplegt_dyn.md). At each horizon l in {-placebo, ..., dynamic}, compares Y_{F+l} - Y_{F-1} between units first switching at F and a not-yet-treated or never-treated control set held stable across the horizon. **MVP caveats**: analytical influence-function variance [pending verification] is not yet implemented (SE via cluster bootstrap); switch-off events are ignored; heteroskedastic-weights variant pending. Validation: experimental. Known limitations: switch-on only -- switch-off events are silently dropped; SE is cluster bootstrap; the paper's analytical influence-function variance is not yet implemented; heteroskedastic-weights variant (dCDH 2023 EJ survey) is not implemented.",
+    "description": "[experimental] dCDH (2024) intertemporal event-study DiD (MVP -- see docs/rfc/multiplegt_dyn.md). At each horizon l in {-placebo, ..., dynamic}, compares Y_{F+l} - Y_{F-1} between units first switching at F and a not-yet-treated or never-treated control set held stable across the horizon. **MVP caveats**: analytical influence-function variance [pending verification] is not yet implemented (SE via cluster bootstrap); switch-off events are ignored; heteroskedastic-weights variant pending. Validation status: experimental. Known limitations: switch-on only -- switch-off events are silently dropped; SE is cluster bootstrap; the paper's analytical influence-function variance is not yet implemented; heteroskedastic-weights variant (dCDH 2023 EJ survey) is not implemented.",
     "name": "did_multiplegt_dyn",
     "parameters": {
       "properties": {
@@ -9746,7 +9746,7 @@
     }
   },
   {
-    "description": "DiD with time-varying covariates frozen at baseline (Caetano, Callaway, Payne & Rodrigues 2022 [pending verification]). Avoids the bad-controls bias that arises when treatment affects the covariates: freezes X at period g + baseline_offset (default g-1) per cohort and uses the frozen values as controls in a per-(g, t) outcome-regression DiD. Aggregates via cohort-size weights. Validation: validated.",
+    "description": "DiD with time-varying covariates frozen at baseline (Caetano, Callaway, Payne & Rodrigues 2022 [pending verification]). Avoids the bad-controls bias that arises when treatment affects the covariates: freezes X at period g + baseline_offset (default g-1) per cohort and uses the frozen values as controls in a per-(g, t) outcome-regression DiD. Aggregates via cohort-size weights.",
     "name": "did_timevarying_covariates",
     "parameters": {
       "properties": {
@@ -9814,7 +9814,7 @@
     }
   },
   {
-    "description": "Heterogeneity-robust triple differences (DDD) for staggered adoption. Decomposes DDD into per-(cohort, time) cells via a Callaway-Sant'Anna-style aggregation, with the unaffected subgroup's DID as a placebo. Avoids the negative-weight issue that textbook TWFE DDD inherits from TWFE DID (Goodman-Bacon 2021 analogue). Validation: validated.",
+    "description": "Heterogeneity-robust triple differences (DDD) for staggered adoption. Decomposes DDD into per-(cohort, time) cells via a Callaway-Sant'Anna-style aggregation, with the unaffected subgroup's DID as a placebo. Avoids the negative-weight issue that textbook TWFE DDD inherits from TWFE DID (Goodman-Bacon 2021 analogue).",
     "name": "ddd_heterogeneous",
     "parameters": {
       "properties": {
@@ -9874,7 +9874,7 @@
     }
   },
   {
-    "description": "Local-Projections DiD (Dube-Girardi-Jorda-Taylor 2023). At each event-time horizon h in {-P, ..., H}, runs a separate OLS of Y_{t+h} - Y_{t-1} on the treatment change Deltad_{t} with time FE and cluster-robust SE, using 'not-yet-treated' or 'never-treated' units as controls. Event-study beta_h paths are returned in ``model_info['event_study']``. Validation: validated.",
+    "description": "Local-Projections DiD (Dube-Girardi-Jorda-Taylor 2023). At each event-time horizon h in {-P, ..., H}, runs a separate OLS of Y_{t+h} - Y_{t-1} on the treatment change Deltad_{t} with time FE and cluster-robust SE, using 'not-yet-treated' or 'never-treated' units as controls. Event-study beta_h paths are returned in ``model_info['event_study']``.",
     "name": "lp_did",
     "parameters": {
       "properties": {
@@ -9951,7 +9951,7 @@
     }
   },
   {
-    "description": "Bayesian Causal Forests DiD. Fits a BART-style ensemble with treatment and prognostic terms on the DiD residuals, providing heterogeneous treatment-effect posterior draws per unit. Useful for machine-learning DiD with covariates. Validation: validated.",
+    "description": "Bayesian Causal Forests DiD. Fits a BART-style ensemble with treatment and prognostic terms on the DiD residuals, providing heterogeneous treatment-effect posterior draws per unit. Useful for machine-learning DiD with covariates.",
     "name": "did_bcf",
     "parameters": {
       "properties": {
@@ -10008,7 +10008,7 @@
     }
   },
   {
-    "description": "Production function estimator (Cobb-Douglas) -- unified method= dispatcher. Solves the simultaneity between input choices and unobserved productivity by inverting an input policy as a control function. method= selects: 'op' (Olley-Pakes 1996, investment proxy), 'lp' (Levinsohn-Petrin 2003, intermediate-input proxy), 'acf' (Ackerberg-Caves-Frazer 2015, corrected identification -- DEFAULT), 'wrdg' (Wooldridge 2009, one-step joint GMM). Validation: validated.",
+    "description": "Production function estimator (Cobb-Douglas) -- unified method= dispatcher. Solves the simultaneity between input choices and unobserved productivity by inverting an input policy as a control function. method= selects: 'op' (Olley-Pakes 1996, investment proxy), 'lp' (Levinsohn-Petrin 2003, intermediate-input proxy), 'acf' (Ackerberg-Caves-Frazer 2015, corrected identification -- DEFAULT), 'wrdg' (Wooldridge 2009, one-step joint GMM).",
     "name": "prod_fn",
     "parameters": {
       "properties": {
@@ -10096,7 +10096,7 @@
     }
   },
   {
-    "description": "Olley-Pakes (1996) production function estimator. Two-stage control function with INVESTMENT as the productivity proxy. Drops zero-investment firms (required for the inversion). Note: beta_l identification can fail if labor responds to current productivity (ACF critique) -- prefer sp.acf for modern work. Validation: validated.",
+    "description": "Olley-Pakes (1996) production function estimator. Two-stage control function with INVESTMENT as the productivity proxy. Drops zero-investment firms (required for the inversion). Note: beta_l identification can fail if labor responds to current productivity (ACF critique) -- prefer sp.acf for modern work.",
     "name": "olley_pakes",
     "parameters": {
       "properties": {
@@ -10179,7 +10179,7 @@
     }
   },
   {
-    "description": "Levinsohn-Petrin (2003) production function estimator. Uses intermediate inputs (materials/energy) as proxy -- avoids the OP zero-investment selection problem. Same ACF caveat applies to beta_l identification: prefer sp.acf for rigorous identification. Validation: validated.",
+    "description": "Levinsohn-Petrin (2003) production function estimator. Uses intermediate inputs (materials/energy) as proxy -- avoids the OP zero-investment selection problem. Same ACF caveat applies to beta_l identification: prefer sp.acf for rigorous identification.",
     "name": "levinsohn_petrin",
     "parameters": {
       "properties": {
@@ -10257,7 +10257,7 @@
     }
   },
   {
-    "description": "Ackerberg-Caves-Frazer (2015) production function estimator. Modern default. Corrects the OP/LP identification problem: all coefficient identification moves to stage 2, with free inputs instrumented by their lagged values and state inputs at the contemporaneous level. Aliased as sp.acf. Validation: validated.",
+    "description": "Ackerberg-Caves-Frazer (2015) production function estimator. Modern default. Corrects the OP/LP identification problem: all coefficient identification moves to stage 2, with free inputs instrumented by their lagged values and state inputs at the contemporaneous level. Aliased as sp.acf.",
     "name": "ackerberg_caves_frazer",
     "parameters": {
       "properties": {
@@ -10335,7 +10335,7 @@
     }
   },
   {
-    "description": "Wooldridge (2009) one-step GMM production function estimator. Stacks the level equation and the productivity-substituted equation into a single nonlinear LS problem. More efficient than two-step ACF; covariance matrix available without bootstrap. Validation: validated.",
+    "description": "Wooldridge (2009) one-step GMM production function estimator. Stacks the level equation and the productivity-substituted equation into a single nonlinear LS problem. More efficient than two-step ACF; covariance matrix available without bootstrap.",
     "name": "wooldridge_prod",
     "parameters": {
       "properties": {
@@ -10404,7 +10404,7 @@
     }
   },
   {
-    "description": "Alias for sp.ackerberg_caves_frazer. Ackerberg-Caves-Frazer (2015) production function estimator. Modern default. Corrects the OP/LP identification problem: all coefficient identification moves to stage 2, with free inputs instrumented by their lagged values and state inputs at the contemporaneous level. Aliased as sp.acf. Validation: validated.",
+    "description": "Alias for sp.ackerberg_caves_frazer. Ackerberg-Caves-Frazer (2015) production function estimator. Modern default. Corrects the OP/LP identification problem: all coefficient identification moves to stage 2, with free inputs instrumented by their lagged values and state inputs at the contemporaneous level. Aliased as sp.acf.",
     "name": "acf",
     "parameters": {
       "properties": {
@@ -10482,7 +10482,7 @@
     }
   },
   {
-    "description": "Alias for sp.olley_pakes. Olley-Pakes (1996) production function estimator. Two-stage control function with INVESTMENT as the productivity proxy. Drops zero-investment firms (required for the inversion). Note: beta_l identification can fail if labor responds to current productivity (ACF critique) -- prefer sp.acf for modern work. Validation: validated.",
+    "description": "Alias for sp.olley_pakes. Olley-Pakes (1996) production function estimator. Two-stage control function with INVESTMENT as the productivity proxy. Drops zero-investment firms (required for the inversion). Note: beta_l identification can fail if labor responds to current productivity (ACF critique) -- prefer sp.acf for modern work.",
     "name": "opreg",
     "parameters": {
       "properties": {
@@ -10565,7 +10565,7 @@
     }
   },
   {
-    "description": "Alias for sp.levinsohn_petrin. Levinsohn-Petrin (2003) production function estimator. Uses intermediate inputs (materials/energy) as proxy -- avoids the OP zero-investment selection problem. Same ACF caveat applies to beta_l identification: prefer sp.acf for rigorous identification. Validation: validated.",
+    "description": "Alias for sp.levinsohn_petrin. Levinsohn-Petrin (2003) production function estimator. Uses intermediate inputs (materials/energy) as proxy -- avoids the OP zero-investment selection problem. Same ACF caveat applies to beta_l identification: prefer sp.acf for rigorous identification.",
     "name": "levpet",
     "parameters": {
       "properties": {
@@ -10643,7 +10643,7 @@
     }
   },
   {
-    "description": "De Loecker & Warzynski (2012) firm-time markup estimator. Takes a fitted ProductionResult plus revenue and input-cost columns; returns mu_it = theta_v_it * (PQ)/(P_v V) where theta_v is the output elasticity of the flexible input. Cobb-Douglas only for now (translog forthcoming). Validation: validated.",
+    "description": "De Loecker & Warzynski (2012) firm-time markup estimator. Takes a fitted ProductionResult plus revenue and input-cost columns; returns mu_it = theta_v_it * (PQ)/(P_v V) where theta_v is the output elasticity of the flexible input. Cobb-Douglas only for now (translog forthcoming).",
     "name": "markup",
     "parameters": {
       "properties": {
@@ -10679,7 +10679,7 @@
     }
   },
   {
-    "description": "Augmented inverse-probability weighting (AIPW) -- the canonical doubly-robust ATE estimator. Cross-fits an outcome regression and a propensity model and combines them via the efficient-influence-function formula, so the estimate is consistent if either nuisance is correctly specified (Robins, Rotnitzky & Zhao 1994). Validation: validated.",
+    "description": "Augmented inverse-probability weighting (AIPW) -- the canonical doubly-robust ATE estimator. Cross-fits an outcome regression and a propensity model and combines them via the efficient-influence-function formula, so the estimate is consistent if either nuisance is correctly specified (Robins, Rotnitzky & Zhao 1994). Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "aipw",
     "parameters": {
       "properties": {
@@ -10737,7 +10737,7 @@
     }
   },
   {
-    "description": "Aggregate Callaway-Sant'Anna group-time ATTs into interpretable summaries -- overall ATT, event-study by relative time, group-specific ATT(g), or calendar-time ATT(t). Inference uses the multiplier bootstrap on the pre-stored influence functions, so SEs are correct under clustering at the unit level. Validation: validated.",
+    "description": "Aggregate Callaway-Sant'Anna group-time ATTs into interpretable summaries -- overall ATT, event-study by relative time, group-specific ATT(g), or calendar-time ATT(t). Inference uses the multiplier bootstrap on the pre-stored influence functions, so SEs are correct under clustering at the unit level. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "aggte",
     "parameters": {
       "properties": {
@@ -10815,7 +10815,7 @@
     }
   },
   {
-    "description": "Joint Wald test of pre-treatment ATTs (or event-study leads) against zero -- the canonical sanity check for the parallel-trends assumption in DiD designs. Failing to reject is necessary but not sufficient evidence for parallel trends; always pair with sp.honest_did / sp.sensitivity_rr for design-robust inference. Validation: validated.",
+    "description": "Joint Wald test of pre-treatment ATTs (or event-study leads) against zero -- the canonical sanity check for the parallel-trends assumption in DiD designs. Failing to reject is necessary but not sufficient evidence for parallel trends; always pair with sp.honest_did / sp.sensitivity_rr for design-robust inference.",
     "name": "pretrends_test",
     "parameters": {
       "properties": {
@@ -10882,7 +10882,7 @@
     }
   },
   {
-    "description": "McCrary (2008) density test for manipulation of the running variable at the cutoff in regression-discontinuity designs. A significant discontinuity in the density of x at c is direct evidence that units are sorting around the cutoff (e.g. test-taking strategy, income manipulation), invalidating local randomisation. Validation: validated.",
+    "description": "McCrary (2008) density test for manipulation of the running variable at the cutoff in regression-discontinuity designs. A significant discontinuity in the density of x at c is direct evidence that units are sorting around the cutoff (e.g. test-taking strategy, income manipulation), invalidating local randomisation.",
     "name": "mccrary_test",
     "parameters": {
       "properties": {
@@ -10921,7 +10921,7 @@
     }
   },
   {
-    "description": "Oster (2019) sensitivity to selection on unobservables -- computes the bounding coefficient under the assumption that selection on unobservables (proportional to delta x selection on observables) brings the explained variance to r_max. The breakdown delta tells you how strong unobserved selection has to be to overturn your result. Validation: validated.",
+    "description": "Oster (2019) sensitivity to selection on unobservables -- computes the bounding coefficient under the assumption that selection on unobservables (proportional to delta x selection on observables) brings the explained variance to r_max. The breakdown delta tells you how strong unobserved selection has to be to overturn your result.",
     "name": "oster_bounds",
     "parameters": {
       "properties": {
@@ -10980,7 +10980,7 @@
     }
   },
   {
-    "description": "Cameron-Gelbach-Miller (2008) wild cluster bootstrap -- the canonical fix for cluster-robust inference with few clusters (G < 30). Re-samples cluster-level Rademacher weights to construct a percentile-t reference distribution that has correct size when the standard cluster-robust z-test rejects too often. Validation: validated.",
+    "description": "Cameron-Gelbach-Miller (2008) wild cluster bootstrap -- the canonical fix for cluster-robust inference with few clusters (G < 30). Re-samples cluster-level Rademacher weights to construct a percentile-t reference distribution that has correct size when the standard cluster-robust z-test rejects too often.",
     "name": "wild_cluster_bootstrap",
     "parameters": {
       "properties": {
@@ -11048,7 +11048,7 @@
     }
   },
   {
-    "description": "Armstrong-Kolesar (2018) honest confidence intervals for sharp regression discontinuity -- the only RD inference procedure with provable finite-sample coverage without bandwidth-selection bias. M is the upper bound on the second derivative of E[Y|X] near the cutoff; smaller M means tighter CIs but riskier coverage if the true curvature is larger. Validation: validated.",
+    "description": "Armstrong-Kolesar (2018) honest confidence intervals for sharp regression discontinuity -- the only RD inference procedure with provable finite-sample coverage without bandwidth-selection bias. M is the upper bound on the second derivative of E[Y|X] near the cutoff; smaller M means tighter CIs but riskier coverage if the true curvature is larger.",
     "name": "rd_honest",
     "parameters": {
       "properties": {
@@ -11111,7 +11111,7 @@
     }
   },
   {
-    "description": "RD with flexible covariate adjustment via cross-fit ML residualisation (Noack-Olma-Rothe 2025). Reduces variance of tau at the cutoff by subtracting an ML estimate of E[Y|W] before running rdrobust; consistent under free-of-cutoff continuity of eta, asymptotically efficient when eta converges to E[Y|X=c, W]. Validation: validated.",
+    "description": "RD with flexible covariate adjustment via cross-fit ML residualisation (Noack-Olma-Rothe 2025). Reduces variance of tau at the cutoff by subtracting an ML estimate of E[Y|W] before running rdrobust; consistent under free-of-cutoff continuity of eta, asymptotically efficient when eta converges to E[Y|X=c, W].",
     "name": "rd_flex",
     "parameters": {
       "properties": {
@@ -11184,7 +11184,7 @@
     }
   },
   {
-    "description": "Bias-aware confidence interval for fuzzy RD via Anderson-Rubin test inversion (Noack-Rothe 2024 Econometrica). Robust to weak first stages and avoids the power asymmetry of conventional 2SLS-style fuzzy RD CIs (Kaliski-Keane-Neal 2025). Validation: validated.",
+    "description": "Bias-aware confidence interval for fuzzy RD via Anderson-Rubin test inversion (Noack-Rothe 2024 Econometrica). Robust to weak first stages and avoids the power asymmetry of conventional 2SLS-style fuzzy RD CIs (Kaliski-Keane-Neal 2025).",
     "name": "rd_bias_aware_fuzzy",
     "parameters": {
       "properties": {
@@ -11247,7 +11247,7 @@
     }
   },
   {
-    "description": "Honest CI for RD when the running variable takes only a moderate number of distinct values (Kolesar-Rothe 2018 AER). Uses bounded second derivative or bounded misspecification smoothness classes; robust to the loss of asymptotics that affects rdrobust under sparse mass points. Validation: validated.",
+    "description": "Honest CI for RD when the running variable takes only a moderate number of distinct values (Kolesar-Rothe 2018 AER). Uses bounded second derivative or bounded misspecification smoothness classes; robust to the loss of asymptotics that affects rdrobust under sparse mass points.",
     "name": "rd_discrete",
     "parameters": {
       "properties": {
@@ -11821,7 +11821,7 @@
     }
   },
   {
-    "description": "Compute the breakdown value of M. Validation: validated.",
+    "description": "Compute the breakdown value of M. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "breakdown_m",
     "parameters": {
       "properties": {
@@ -12914,7 +12914,7 @@
     }
   },
   {
-    "description": "Render a :func:`did_summary` result as a publication-ready LaTeX",
+    "description": "Render a :func:`did_summary` result as a manuscript-ready LaTeX",
     "name": "did_summary_to_latex",
     "parameters": {
       "properties": {
@@ -15605,7 +15605,7 @@
     }
   },
   {
-    "description": "Entropy Balancing treatment effect estimator. Validation: validated.",
+    "description": "Entropy Balancing treatment effect estimator. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "ebalance",
     "parameters": {
       "properties": {
@@ -17993,7 +17993,7 @@
     }
   },
   {
-    "description": "Overlap-weight (ATO) treatment effect estimator. Validation: validated.",
+    "description": "Overlap-weight (ATO) treatment effect estimator. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "overlap_weights",
     "parameters": {
       "properties": {
@@ -18059,7 +18059,7 @@
     }
   },
   {
-    "description": "Covariate-Balancing Propensity Score estimator (Imai-Ratkovic 2014). Validation: validated.",
+    "description": "Covariate-Balancing Propensity Score estimator (Imai-Ratkovic 2014). Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "cbps",
     "parameters": {
       "properties": {
@@ -21665,7 +21665,7 @@
     }
   },
   {
-    "description": "CJM (2020) density discontinuity test for RD manipulation. Validation: certified evidence with scoped limitations. Known limitations: Certified conclusion-level density-test evidence is available, but the native default bandwidth selector and local-density estimates can differ from rddensity::rddensity; use backend='r' with R/rddensity installed when exact cross-language selector/test-statistic matching matters. Manual side-specific bandwidths are sensitivity controls, not a reference-parity guarantee.",
+    "description": "CJM (2020) density discontinuity test for RD manipulation. Validation: certified evidence with scoped limitations. Known limitations: Certified native reference-parity evidence covers the default rddensity::rddensity unrestricted triangular-kernel selector and test path on the JSS Lee/RD Senate fixture. Manual side-specific bandwidths are explicit user controls, not a reference-parity guarantee; backend='r' remains available when direct R package execution is required.",
     "name": "rddensity",
     "parameters": {
       "properties": {
@@ -21676,7 +21676,7 @@
         },
         "backend": {
           "default": "native",
-          "description": "``\"native\"`` uses StatsPAI's dependency-light implementation. ``\"r\"`` delegates to ``rddensity::rddensity`` through ``Rscript`` when the R package is installed, matching the reference package's selector and test statistic.",
+          "description": "``\"native\"`` uses StatsPAI's Python port of the default ``rddensity`` unrestricted triangular-kernel selector/test path. ``\"r\"`` delegates to ``rddensity::rddensity`` through ``Rscript`` when the R package is installed, matching the reference package's selector and test statistic.",
           "enum": [
             "native",
             "r"
@@ -26020,7 +26020,7 @@
     }
   },
   {
-    "description": "Estimate heterogeneous treatment effects using Bayesian Causal Forest. Validation: validated.",
+    "description": "Estimate heterogeneous treatment effects using Bayesian Causal Forest. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "bcf",
     "parameters": {
       "properties": {
@@ -29223,7 +29223,7 @@
     }
   },
   {
-    "description": "Generate Difference-in-Differences panel data. Validation: validated.",
+    "description": "Generate Difference-in-Differences panel data. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "dgp_did",
     "parameters": {
       "properties": {
@@ -30158,7 +30158,7 @@
     }
   },
   {
-    "description": "Limited Information Maximum Likelihood (LIML) estimator. Validation: validated.",
+    "description": "Limited Information Maximum Likelihood (LIML) estimator. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "liml",
     "parameters": {
       "properties": {
@@ -31923,7 +31923,7 @@
     }
   },
   {
-    "description": "MR-Egger regression. Validation: validated.",
+    "description": "MR-Egger regression. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "mr_egger",
     "parameters": {
       "properties": {
@@ -31959,7 +31959,7 @@
     }
   },
   {
-    "description": "Inverse-Variance Weighted (IVW) MR estimator. Validation: validated.",
+    "description": "Inverse-Variance Weighted (IVW) MR estimator. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "mr_ivw",
     "parameters": {
       "properties": {
@@ -31995,7 +31995,7 @@
     }
   },
   {
-    "description": "Weighted median MR estimator. Validation: validated.",
+    "description": "Weighted median MR estimator. Validation: validated evidence tier (known-truth, reference, external-parity, or Monte Carlo artifact).",
     "name": "mr_median",
     "parameters": {
       "properties": {

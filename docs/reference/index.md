@@ -1,7 +1,8 @@
 # API Reference — Overview
 
-StatsPAI exposes 550+ top-level functions under a single `import statspai as sp`
-namespace. Reference pages are grouped by methodological area:
+StatsPAI exposes 1,020 registered public functions under a single
+`import statspai as sp` namespace. Reference pages are grouped by
+methodological area:
 
 | Area | Page | Flagship functions |
 | --- | --- | --- |
@@ -22,7 +23,7 @@ namespace. Reference pages are grouped by methodological area:
 | Survival | [survival](survival.md) | `cox`, `aft`, `frailty`, `kaplan_meier`, `log_rank_test`, `competing_risks` |
 | Agent-native workflows | [smart](smart.md) | `detect_design`, `preflight`, `audit`, `examples`, `session`, `brief`, `bib_for` |
 
-Every result object follows the same contract:
+Mature estimator result objects follow the shared reporting contract:
 
 ```python
 r = sp.someestimator(...)
