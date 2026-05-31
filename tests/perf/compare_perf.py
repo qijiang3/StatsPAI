@@ -22,6 +22,7 @@ RESULTS_DIR = HERE / "results"
 FIGURES_DIR = HERE / "figures"
 PAPER_TABLES_DIR = ROOT / "Paper-JSS" / "manuscript" / "tables"
 PAPER_FIGURES_DIR = ROOT / "Paper-JSS" / "manuscript" / "figures"
+PDF_METADATA = {"CreationDate": None}
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 PAPER_TABLES_DIR.mkdir(parents=True, exist_ok=True)
 PAPER_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -176,7 +177,7 @@ def render_figure() -> Path:
     )
     fig.tight_layout()
     out = FIGURES_DIR / "track_c_loglog.pdf"
-    fig.savefig(out, bbox_inches="tight")
+    fig.savefig(out, bbox_inches="tight", metadata=PDF_METADATA)
     fig.savefig(FIGURES_DIR / "track_c_loglog.png", bbox_inches="tight", dpi=150)
     plt.close(fig)
     shutil.copyfile(out, PAPER_FIGURES_DIR / "track_c_loglog.pdf")

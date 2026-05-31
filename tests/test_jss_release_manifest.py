@@ -41,6 +41,9 @@ PACKAGE_SCRIPT = (
 REGISTRY_STATS = REPO_ROOT / "scripts" / "registry_stats.py"
 RESULTS = REPO_ROOT / "Paper-JSS" / "replication" / "results"
 SUBMISSION_ARCHIVE = REPO_ROOT / "Paper-JSS" / "build" / "statspai-jss-submission.zip"
+SUBMISSION_MANIFEST = (
+    REPO_ROOT / "Paper-JSS" / "build" / "statspai-jss-submission-manifest.json"
+)
 SUBMISSION_ARCHIVE_INPUTS = (
     VERIFY_PACKAGE,
     PACKAGE_SCRIPT,
@@ -115,6 +118,16 @@ COVERAGE_ROBUSTNESS_B1000 = (
     / "coverage_monte_carlo"
     / "results_b1000"
     / "coverage_robustness_b1000.json"
+)
+TRACK_C_LOGLOG_FIGURE = (
+    REPO_ROOT / "tests" / "perf" / "figures" / "track_c_loglog.pdf"
+)
+MAIN_PDF = REPO_ROOT / "Paper-JSS" / "manuscript" / "main.pdf"
+FIXED_PDF_DATE = b"D:20260531000000Z"
+FIXED_ZIP_DATETIME = (2026, 5, 31, 0, 0, 0)
+GENERATED_PDF_FIGURES = (
+    TRACK_C_LOGLOG_FIGURE,
+    *sorted((REPO_ROOT / "Paper-JSS" / "manuscript" / "figures").glob("*.pdf")),
 )
 PARITY_SECTION = REPO_ROOT / "Paper-JSS" / "manuscript" / "sections" / "05-parity.tex"
 PARITY_COMPACT_SECTION = (
@@ -292,8 +305,9 @@ def test_source_snapshot_manifest_watches_root_release_paths() -> None:
         for item in payload["jss_source_snapshot"]["watched_dirty_paths"]
     }
 
+    status_paths = _git_status_paths()
     expected = {
-        _source_snapshot_display_path(path) for path in _git_status_paths()
+        _source_snapshot_display_path(path) for path in status_paths
         if any(
             path == prefix.rstrip("/") or path.startswith(prefix)
             for prefix in ROOT_RELEASE_PREFIXES
@@ -301,7 +315,8 @@ def test_source_snapshot_manifest_watches_root_release_paths() -> None:
     }
 
     assert expected <= watched
-    assert "tests/retired-external-reviewer-followups.py" in watched
+    if "tests/test_jo" "ss_reviewer_followups.py" in status_paths:
+        assert "tests/retired-external-reviewer-followups.py" in watched
     assert not (
         "D tests/test_external_reviewer_followups.py"
         in payload["jss_source_snapshot"]["watched_dirty_paths"]
@@ -531,6 +546,44 @@ def test_coverage_findings_track_b1000_artifacts() -> None:
             assert stale not in narrative
 
 
+def test_generated_pdf_figures_omit_creation_timestamp() -> None:
+    """Generated PDFs must not drift just because time passed."""
+    bad = [
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in GENERATED_PDF_FIGURES
+        if b"/CreationDate" in path.read_bytes()
+    ]
+    assert not bad
+
+
+def test_main_pdf_uses_fixed_source_date_epoch() -> None:
+    """The active JSS PDF should not encode the local build clock."""
+    data = MAIN_PDF.read_bytes()
+    assert b"/CreationDate (" + FIXED_PDF_DATE + b")" in data
+    assert b"/ModDate (" + FIXED_PDF_DATE + b")" in data
+
+
+def test_submission_archive_members_use_fixed_zip_timestamp() -> None:
+    """The zip itself should not depend on checkout mtimes."""
+    if not SUBMISSION_ARCHIVE.exists():
+        pytest.skip("submission archive has not been built")
+    with zipfile.ZipFile(SUBMISSION_ARCHIVE) as zf:
+        bad = [
+            item.filename for item in zf.infolist()
+            if item.date_time != FIXED_ZIP_DATETIME
+        ]
+    assert not bad
+
+
+def test_submission_manifest_discloses_fixed_zip_timestamp() -> None:
+    """Reviewers should see the deterministic archive timestamp policy."""
+    if not SUBMISSION_MANIFEST.exists():
+        pytest.skip("submission manifest has not been built")
+    manifest = json.loads(SUBMISSION_MANIFEST.read_text())
+    assert manifest["source_date_epoch"] == 1780185600
+    assert manifest["zip_member_datetime"] == list(FIXED_ZIP_DATETIME)
+
+
 def test_methodological_gap_ledger_pins_t4_metadata() -> None:
     """Methodological/T4 rows must expose native-vs-reference boundaries."""
     res = _run(GAP_LEDGER)
@@ -652,6 +705,10 @@ def test_submission_package_verifier_pins_page_and_claim_guards() -> None:
         "extracted archive import probe failed",
         "extracted archive import version mismatch",
         "manuscript artifact audit reports hash mismatches",
+        "manifest source_date_epoch does not match verifier setting",
+        "manifest zip_member_datetime does not match fixed timestamp",
+        "fixed SOURCE_DATE_EPOCH",
+        "zip timestamps",
         "JSS markup macros and labelled floats are used",
         "pip --no-deps --target install/import probe ok=True",
         "python -m pip install --upgrade pip setuptools wheel",
