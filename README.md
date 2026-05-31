@@ -11,10 +11,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/brycewang-stanford/statspai/blob/main/LICENSE)
 [![Tests](https://github.com/brycewang-stanford/statspai/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/brycewang-stanford/statspai/actions)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/statspai?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/statspai)
-[![status](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332/status.svg)](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19933900.svg)](https://doi.org/10.5281/zenodo.19933900)
 
-StatsPAI is a **validation-tiered** Python platform for causal inference and applied econometrics. One `import`, **1,000+ registered functions** across **80+ submodules** (live count: `python scripts/registry_stats.py`), covering the empirical research workflow from classical econometrics to ML/AI causal methods to publication-ready tables in Word, Excel, and LaTeX.
+StatsPAI is a **validation-tiered** Python platform for causal inference and applied econometrics. One `import`, **1,000+ registered functions** across **80+ submodules** (live count: `python scripts/registry_stats.py`), covering the empirical research workflow from classical econometrics to ML/AI causal methods to manuscript-ready tables in Word, Excel, and LaTeX.
 
 **Built for AI agents**: every registered function has machine-readable discovery metadata (`list_functions()`, `describe_function()`, `function_schema()`), and parity-backed functions expose an explicit `validation_status` so agents and humans can distinguish certified numerical evidence from API-stable breadth.
 
@@ -22,12 +21,12 @@ It brings R's [Causal Inference Task View](https://cran.r-project.org/web/views/
 
 ---
 
-## For JOSS Reviewers
+## For JSS Reviewers
 
 The shortest review path is:
 
-1. Install and smoke-test the package with [`docs/joss_reviewer_guide.md`](docs/joss_reviewer_guide.md).
-2. Inspect validation evidence in [`docs/joss_validation_dossier.md`](docs/joss_validation_dossier.md).
+1. Start with the JSS replication guide in [`Paper-JSS/README.md`](Paper-JSS/README.md).
+2. Inspect source-audit evidence in [`docs/jss_source_audit_dossier.md`](docs/jss_source_audit_dossier.md).
 3. Run representative offline examples from [`examples/`](examples/).
 4. Check contribution and support pathways in [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SUPPORT.md`](SUPPORT.md), and the GitHub issue templates under [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
 
@@ -109,7 +108,7 @@ Beyond the point estimate, every `.summary()` above prints inference scaffolding
 - **RD** — Conventional (0.073) and Robust bias-corrected (0.062) estimators print side-by-side with effective-sample counts (440 left / 443 right) at the mserd bandwidth.
 - **Synth** — full 12-period treated-vs-counterfactual gap table; `ridge_lambda ≈ 112.9` flags that the ASCM (Ben-Michael, Feller & Rothstein 2021) branch is active. Pass `method='adh'` to fall back to classical Abadie–Diamond–Hainmueller (ATT ≈ -13.1 on the same panel).
 
-Every result object exposes the same interface — `.summary()` / `.tidy()` / `.plot()` / `.to_latex()` / `.to_docx()` / `.to_agent_summary()` — across every registered estimator. For deeper walkthroughs (staggered DiD, weak-IV diagnostics, RD bandwidth choice, 20 synth methods, DML, matching, spatial, ...) see [`docs/guides/`](docs/guides/).
+Mature estimator result objects expose a shared reporting subset — commonly `.summary()` / `.tidy()` / `.plot()` / `.to_latex()` / `.to_docx()` / `.to_agent_summary()` — while auxiliary helpers advertise their own capabilities through `describe_function()`. For deeper walkthroughs (staggered DiD, weak-IV diagnostics, RD bandwidth choice, 20 synth methods, DML, matching, spatial, ...) see [`docs/guides/`](docs/guides/).
 
 ---
 
@@ -119,25 +118,25 @@ StatsPAI's focus is **causal inference**. The grid below summarizes method-famil
 
 | Method family                                                 | Stata | R | sm+lm | DoubleML | **StatsPAI** |
 | ------------------------------------------------------------- | :---: | :---: | :---: | :---: | :---: |
-| DiD — staggered (CS/SA/BJS/dCdH/Gardner/Wooldridge ET) + event-study + honest CIs | ⚠️ | ✅ | ❌ | ❌ | 🏆 |
-| IV — classical (2SLS/LIML/GMM) + modern (Kernel IV / Deep IV / KAN-DeepIV) | ✅ classical only | ✅ classical only | ⚠️ classical | ⚠️ | 🏆 |
-| RD — CCT + 2D / boundary + multi-cutoff + honest CIs + ML-CATE (18+ estimators) | ⚠️ | ✅ (`rdrobust`) | ❌ | ❌ | 🏆 |
-| Synthetic Control — ADH / ASCM / gsynth / BSTS / Bayesian / PenSCM / FDID (20 methods) | ⚠️ | ⚠️ (7 pkgs) | ❌ | ❌ | 🏆 |
-| Double / Debiased ML                                          | ❌    | ✅   | ❌   | ✅   | ✅ |
-| Meta-Learners (S/T/X/R/DR) + Causal Forest / GRF              | ❌    | ✅   | ❌   | ❌   | ✅ |
-| TMLE / HAL-TMLE                                               | ❌    | ✅   | ❌   | ❌   | ✅ |
-| Neural causal (TARNet / CFRNet / DragonNet)                   | ❌    | ❌   | ❌   | ❌   | 🏆 |
-| Causal discovery (NOTEARS / PC / LiNGAM / GES)                | ❌    | ⚠️   | ❌   | ❌   | 🏆 |
-| Proximal CI (fortified / bidirectional / MTP / DNC)           | ❌    | ⚠️   | ❌   | ❌   | 🏆 |
-| QTE / distributional TE / CiC / dist-IV                       | ⚠️    | ⚠️   | ❌   | ❌   | ✅ |
-| Mendelian randomization (IVW/Egger/median/mode/PRESSO/MVMR/BMA) | ❌  | ✅   | ❌   | ❌   | ✅ |
-| Conformal causal inference                                    | ❌    | ❌   | ❌   | ❌   | 🏆 |
-| Bayesian Causal Forest (BCF / ordinal / factor-exposure)      | ❌    | ⚠️   | ❌   | ❌   | ✅ |
-| Spatial econometrics (weights → ESDA → ML/GMM → GWR/MGWR → panel) | ❌ | ⚠️ (5 pkgs) | ❌ | ❌ | 🏆 |
+| DiD — staggered (CS/SA/BJS/dCdH/Gardner/Wooldridge ET) + event-study + honest CIs | P | Y | N | N | B |
+| IV — classical (2SLS/LIML/GMM) + modern (Kernel IV / Deep IV / KAN-DeepIV) | Y classical only | Y classical only | P classical | P | B |
+| RD — CCT + 2D / boundary + multi-cutoff + honest CIs + ML-CATE (18+ estimators) | P | Y (`rdrobust`) | N | N | B |
+| Synthetic Control — ADH / ASCM / gsynth / BSTS / Bayesian / PenSCM / FDID (20 methods) | P | P (7 pkgs) | N | N | B |
+| Double / Debiased ML                                          | N    | Y   | N   | Y   | Y |
+| Meta-Learners (S/T/X/R/DR) + Causal Forest / GRF              | N    | Y   | N   | N   | Y |
+| TMLE / HAL-TMLE                                               | N    | Y   | N   | N   | Y |
+| Neural causal (TARNet / CFRNet / DragonNet)                   | N    | N   | N   | N   | B |
+| Causal discovery (NOTEARS / PC / LiNGAM / GES)                | N    | P   | N   | N   | B |
+| Proximal CI (fortified / bidirectional / MTP / DNC)           | N    | P   | N   | N   | B |
+| QTE / distributional TE / CiC / dist-IV                       | P    | P   | N   | N   | Y |
+| Mendelian randomization (IVW/Egger/median/mode/PRESSO/MVMR/BMA) | N  | Y   | N   | N   | Y |
+| Conformal causal inference                                    | N    | N   | N   | N   | B |
+| Bayesian Causal Forest (BCF / ordinal / factor-exposure)      | N    | P   | N   | N   | Y |
+| Spatial econometrics (weights → ESDA → ML/GMM → GWR/MGWR → panel) | N | P (5 pkgs) | N | N | B |
 
-**Legend**: 🏆 most complete across ecosystems · ✅ full coverage · ⚠️ partial / scattered / single algorithm · ❌ not available.
+**Legend**: B = broad API coverage within this comparison table; Y = implemented entry points; P = partial, scattered, or single-algorithm support; N = no first-class entry point. These are API-breadth labels, not validation tiers.
 
-**StatsPAI at a glance**: 1,020 registered functions in the live agent registry · 81 submodules · 266k LOC (core) + 93k LOC (tests). All four numbers are reproducible from the canonical generator (`python scripts/registry_stats.py`); the per-module table in [`docs/stats.md`](docs/stats.md) is regenerated from the same script. For the full coverage matrix (23 method families) and cross-ecosystem line-count comparison, see [`docs/stats.md`](docs/stats.md).
+**StatsPAI at a glance**: 1,020 registered functions in the live agent registry · 81 submodules · 269k LOC (core) + 96k LOC (tests). All four numbers are reproducible from the canonical generator (`python scripts/registry_stats.py`); the per-module table in [`docs/stats.md`](docs/stats.md) is regenerated from the same script. For the API-breadth matrix (23 method families) and cross-ecosystem line-count comparison, see [`docs/stats.md`](docs/stats.md).
 
 **Validation tiers matter**: `stability="stable"` means the public API is SemVer-stable; it does not by itself mean R/Stata/paper parity. Use `sp.list_functions(validation_status="certified")` for cross-language or published-reference evidence, and inspect `sp.describe_function(name)["limitations"]` before production use. See [`docs/guides/stability.md`](docs/guides/stability.md).
 
@@ -229,12 +228,12 @@ Lee-McCrary-Moreira-Porter `tF` adjusted CI, Anderson-Rubin / Moreira
 CLR / Kleibergen K weak-IV-robust sets, Conley-Hansen-Rossi LTZ
 sensitivity, Blandhol-Mogstad-Słoczyński TSLS-as-LATE caveat) plus
 `sp.iv.iv_compare` forest comparison and four IV diagnostic plots.
-**Synth**: supported synthetic-control result objects gain a publication-grade
+**Synth**: supported synthetic-control result objects gain a publication-oriented
 `.to_latex()` / `.to_excel()` / `.to_word()` table-export pipeline,
 trajectory and gap plots get prediction-interval / pre-RMSPE ribbons
 (Cattaneo-Feng-Titiunik 2021 / Cattaneo-Feng-Palomba-Titiunik 2025), and
 the SDID schema is canonicalised so `sp.synth_report(method='sdid')`
-produces a full report. **Decomposition**: a new Yu-Elwert (2024)
+produces a bundled report. **Decomposition**: a new Yu-Elwert (2024)
 distributional-decomposition module + a unified `sp.decompose()`
 dispatcher and shared influence-function / WLS / statistic-value
 backbone. **ML+causal**: `sp.dml_sensitivity` (Chernozhukov-Cinelli-
@@ -279,8 +278,11 @@ original-paper replays (Card 1995, Callaway–Sant'Anna `mpdta`, Abadie
 Basque, LaLonde NSW + PSID-1 — all bit-equal to the published headline
 numbers), a Track-C performance harness (HDFE / CS-DiD / SCM / DML
 log-log scaling), a B=1000 Monte-Carlo coverage run on
-`tests/coverage_monte_carlo/` (OLS 0.952 / 2×2 DiD 0.955 / strong-Z IV
-0.962, all inside the 99% Wilson band [0.935, 0.967]), and a 900-trial
+`tests/coverage_monte_carlo/` (seven materialized nominal rows:
+OLS 0.952 / 2×2 DiD 0.955 / strong-Z IV 0.962 / Callaway-Sant'Anna
+0.946 / entropy balancing 1.000 / DML 0.969 / causal-forest AIPW
+0.977; rows above the 99% Wilson band [0.935, 0.967] are reported as
+conservative over-coverage), and a 900-trial
 CausalAgentBench prompt suite (mock mode shipped, `--api` one switch
 away). Three new top-level meta-APIs — `sp.validation_report()`,
 `sp.coverage_matrix()`, `sp.reproduce_jss_tables()` — let referees
@@ -436,7 +438,7 @@ StatsPAI 1.4.0 is Sprint 2 of the 知识地图 v3 roadmap. Closes the four secon
 
 **Previously in v0.9.1 — Regression Discontinuity**: **18+ RD estimators, diagnostics, and inference methods across 14 modules (~10,300 LOC)**. This release expanded the RD API surface substantially; validation status still lives at the function and test-artifact level rather than in the breadth claim. Covers CCT sharp/fuzzy/kink, 2D/boundary RD (`rd2d`), RDIT, multi-cutoff & multi-score, honest CIs (Armstrong-Kolesar), local randomization (`rdrandinf`/`rdwinselect`/`rdsensitivity`), CJM density tests, Rosenbaum bounds, CATE via `rdhte` + ML variants (`rd_forest`/`rd_boost`/`rd_lasso`), external-validity extrapolation (Angrist-Rokkanen), power (`rdpower`/`rdsampsi`), and a diagnostic `sp.rdsummary()` dashboard. 97 RD tests pass; `rd/_core.py` consolidates kernel/WLS/sandwich primitives from 9 files into one 191-line canonical module.
 
-**Previously in v0.9.0 — Synthetic Control**: **20 SCM estimators + 6 inference strategies + full research workflow**, all behind the unified `sp.synth(method=...)` dispatcher. Seven new estimators in this release: `bayesian_synth` (Dirichlet MCMC), `bsts_synth` / `causal_impact` (Kalman smoother), `penscm` (Abadie-L'Hour 2021), `fdid` (Forward DID), `cluster_synth`, `sparse_synth` (LASSO), `kernel_synth` + `kernel_ridge_synth`. Research workflow: `synth_compare()` runs all 20 · `synth_recommend()` auto-selects · `synth_power()` + `synth_mde()` first power-analysis tool for SCM · `synth_sensitivity()` · `synth_report(format='latex')`. ASCM re-implemented to Ben-Michael et al. (2021) Eq. 3; Bayesian MCMC Jacobian corrected; 9 release-blocker fixes from a 5-agent review; 144 synth tests passing. Canonical datasets: `california_tobacco()`, `german_reunification()`, `basque_terrorism()`. See the [synth guide](https://github.com/brycewang-stanford/statspai/blob/main/docs/guides/synth.md).
+**Previously in v0.9.0 — Synthetic Control**: **20 SCM estimators + 6 inference strategies + analysis workflow**, all behind the unified `sp.synth(method=...)` dispatcher. Seven new estimators in this release: `bayesian_synth` (Dirichlet MCMC), `bsts_synth` / `causal_impact` (Kalman smoother), `penscm` (Abadie-L'Hour 2021), `fdid` (Forward DID), `cluster_synth`, `sparse_synth` (LASSO), `kernel_synth` + `kernel_ridge_synth`. Research workflow: `synth_compare()` runs all 20 · `synth_recommend()` auto-selects · `synth_power()` + `synth_mde()` first power-analysis tool for SCM · `synth_sensitivity()` · `synth_report(format='latex')`. ASCM re-implemented to Ben-Michael et al. (2021) Eq. 3; Bayesian MCMC Jacobian corrected; 9 release-blocker fixes from a 5-agent review; 144 synth tests passing. Canonical datasets: `california_tobacco()`, `german_reunification()`, `basque_terrorism()`. See the [synth guide](https://github.com/brycewang-stanford/statspai/blob/main/docs/guides/synth.md).
 
 **Previously in v0.8.0**: **Spatial Econometrics Full-Stack** — 38 new API symbols covering weights, ESDA, ML/GMM regression, GWR/MGWR, and spatial panel. Plus: local projections, GARCH, ARIMA, BVAR, LiNGAM, GES, optimal matching, cardinality matching, RIF decomposition, mediation sensitivity, Cox frailty, AFT survival, rdpower, survey calibration. **60+ new functions across 10 domains.**
 
@@ -619,7 +621,7 @@ Where a method exists in R, the development target is explicit parity evidence o
 | `sp.cs_report()` | One-call Callaway–Sant'Anna report: estimation + four aggregations + pre-trend test + Rambachan–Roth breakdown M\* | CS2021 + RR2023 |
 | `sp.ggdid()` | `aggte()` visualiser with uniform-band overlay | mirrors R `did::ggdid` |
 | `CSReport.plot()` | 2×2 summary figure (event study / θ(g) / θ(t) / RR breakdown) | — |
-| `CSReport.to_markdown()` | GitHub-Flavoured Markdown export of the full report | — |
+| `CSReport.to_markdown()` | GitHub-Flavoured Markdown export of the bundled report | — |
 | `CSReport.to_latex()` | Booktabs LaTeX fragment, jinja2-free | — |
 | `CSReport.to_excel()` | Six-sheet Excel workbook | — |
 
@@ -836,7 +838,7 @@ wrappers, no runtime dependencies on upstream DID packages.
 | `set_theme()` | Publication themes (`'academic'`, `'aea'`, `'minimal'`, `'cn_journal'`) | — |
 | `interactive()` | WYSIWYG plot editor with 29 themes & auto code generation | Jupyter ipywidgets |
 
-Every result object has:
+Mature estimator result objects commonly expose:
 
 ```python
 result.summary()      # Formatted text summary
@@ -852,9 +854,9 @@ Stata users know the Graph Editor: double-click a figure to enter a WYSIWYG edit
 
 **`sp.interactive(fig)`** turns any matplotlib figure into a live editing panel — figure preview on the left, property controls on the right, just like Stata's Graph Editor. But it does two things Stata can't:
 
-1. **29 academic themes, one-click switching.** From AER journal style to ggplot, FiveThirtyEight, dark presentation mode — select and see the result instantly. Stata's `scheme` requires regenerating the plot; here it's real-time.
+1. **29 academic themes, interactive switching.** From AER journal style to ggplot, FiveThirtyEight, dark presentation mode — select and see the result instantly. Stata's `scheme` requires regenerating the plot; here it's real-time.
 
-2. **Every edit auto-generates reproducible Python code.** Adjust title size, change colors, add annotations in the GUI — the editor records each operation as standard matplotlib code (`ax.set_title(...)`, `ax.spines[...].set_visible(...)`). Copy with one click, paste into your script, and it reproduces exactly. Stata's Graph Editor cannot export edits to do-file commands.
+2. **Every edit auto-generates reproducible Python code.** Adjust title size, change colors, add annotations in the GUI — the editor records each operation as standard matplotlib code (`ax.set_title(...)`, `ax.spines[...].set_visible(...)`). Copy the generated code into your script, and it reproduces exactly. Stata's Graph Editor cannot export edits to do-file commands.
 
 Five tabs cover all editing needs: **Theme** (29 themes) · **Text** (titles, labels, fonts) · **Style** (line colors, widths, markers) · **Layout** (spines, grid, figure size, legend, axis limits) · **Export** (save, undo/redo, reset).
 
@@ -974,7 +976,7 @@ sp.subgroup_analysis(card, formula="lwage ~ educ + exper",
 | --- | --- |
 | **Unified API** | One package, one `import`, consistent `.summary()` / `.plot()` / `.to_latex()` across all methods. Stata requires paid add-ons; R requires 20+ packages with different interfaces. |
 | **Modern ML causal methods** | DML, Causal Forest, Meta-Learners (S/T/X/R/DR), TMLE, DeepIV, TARNet/CFRNet/DragonNet, Policy Trees — all in one place. Stata has almost none of these. R has them scattered across incompatible packages. |
-| **Accelerator-ready selected workloads** | Neural causal estimators can route through PyTorch CUDA/MPS, and HDFE residualization exposes a JAX backend, while keeping the same result object, diagnostics, and export API. |
+| **Accelerator-ready selected workloads** | Neural causal estimators can route through PyTorch CUDA/MPS, and HDFE residualization exposes a JAX backend, while preserving the estimator-specific result surface, diagnostics, and export API used by those workloads. |
 | **Robustness automation** | `spec_curve()`, `robustness_report()`, `subgroup_analysis()` — no manual re-running. Neither Stata nor R offers this out-of-the-box. |
 | **Free & open source** | MIT license, \$0. Stata costs \$695–\$1,595/year. |
 | **Python ecosystem** | Integrates naturally with pandas, scikit-learn, PyTorch, Jupyter, cloud pipelines. |
@@ -1071,18 +1073,18 @@ Plot Editor:    interactive (WYSIWYG editor), set_theme (29 academic themes)
 **4. Econometric Trinity — three new P0 pillars** (~1,170 LOC).
 
 - **`sp.dml(model='pliv', instrument=...)`** — Partially Linear IV (Chernozhukov et al. 2018, §4.2) with Neyman-orthogonal score and cross-fitted `g`/`m`/`r` nuisances; influence-function SEs.
-- **`sp.mixlogit`** — Random-coefficient MNL via simulated ML with Halton draws. Normal / log-normal / triangular mixing; diagonal or Cholesky covariance; panel repeated-choice; OPG-sandwich SEs. Python's first feature-complete implementation.
+- **`sp.mixlogit`** — Random-coefficient MNL via simulated ML with Halton draws. Normal / log-normal / triangular mixing; diagonal or Cholesky covariance; panel repeated-choice; OPG-sandwich SEs.
 - **`sp.ivqreg`** — Chernozhukov-Hansen IV quantile regression via inverse-QR profile. Grid + Brent (scalar endogenous); BFGS on `b̂(α)` (multi-dim); pairs-bootstrap SEs.
 
 **5. Smart workflow — posterior verification.** **`sp.verify`** / **`sp.verify_benchmark`** — aggregates bootstrap stability + placebo pass rate + subsample agreement into a `verify_score ∈ [0, 100]` for any `sp.recommend()` output. Opt-in via `recommend(verify=True)`; zero overhead when off.
 
 **Quality bar.** Multilevel passed oracle + code-reviewer audit (4 BLOCKER + 5 HIGH fixed); econ-trinity passed self-audit (4 BLOCKER + 7 HIGH fixed); frontier self-audit fixed Mills-tail, TVD-loop, cost-panel, summary-dump issues. GLMM hardening added 18 new tests (TestAGHQ × 7, TestMEGamma × 3, TestMENegBin × 3, TestMEOLogit × 5) on top of the 35 prior multilevel tests. Test count: 93/93 frontier, 53/53 multilevel (incl. GLMM), 18/18 smart, 10/10 econ-trinity pass.
 
-**Meta.** Author attribution corrected from "Bryce Wang" to **"Biaoyue Wang"** in `pyproject.toml`, `__author__`, English/Chinese READMEs, `docs/index.md`, and `mkdocs.yml` (JOSS `paper.md` was already correct).
+**Meta.** Author attribution corrected from "Bryce Wang" to **"Biaoyue Wang"** in `pyproject.toml`, `__author__`, English/Chinese READMEs, `docs/index.md`, and `mkdocs.yml` (the software-journal `paper.md` was already correct).
 
 ### v0.9.2 (2026-04-16) — Decomposition Analysis Mega-Release
 
-Release focus: `statspai.decomposition`. **18 first-class decomposition methods across 13 modules (~6,200 LOC, 54 tests)** — Python's first (and most complete) implementation of the full decomposition toolkit spanning mean, distributional, inequality, demographic, and causal decomposition. Occupies the previously empty Python high-ground where only one unmaintained 2018-vintage PyPI package existed.
+Release focus: `statspai.decomposition`. **18 first-class decomposition methods across 13 modules (~6,200 LOC, 54 tests)** — a broad Python implementation of mean, distributional, inequality, demographic, and causal decomposition. It targets a Python gap where only narrow or unmaintained packages were available.
 
 **18 methods (30 aliases) under `sp.decompose()`:**
 
@@ -1135,7 +1137,7 @@ Release focus: `statspai.rd`. **18+ RD estimators, diagnostics, and inference me
 
 **External validity & extrapolation:** `rd_extrapolate` (Angrist-Rokkanen 2015), `rd_multi_extrapolate` (CKTV 2024).
 
-**Diagnostics & one-click dashboard:** `rdsummary` (rdrobust + density test + bandwidth sensitivity + placebo cutoffs + covariate balance), `rdplot` (IMSE-optimal binning), `rddensity` (CJM 2020), `rdbalance`, `rdplacebo`.
+**Diagnostics & bundled dashboard:** `rdsummary` (rdrobust + density test + bandwidth sensitivity + placebo cutoffs + covariate balance), `rdplot` (IMSE-optimal binning), `rddensity` (CJM 2020), `rdbalance`, `rdplacebo`.
 
 **Power analysis:** `rdpower`, `rdsampsi`.
 
@@ -1148,7 +1150,7 @@ Release focus: `statspai.rd`. **18+ RD estimators, diagnostics, and inference me
 
 ### v0.9.0 (2026-04-16) — Synthetic Control Mega-Expansion
 
-Release focus: `statspai.synth`. **20 SCM methods + 6 inference strategies + full research workflow** (compare / power / sensitivity / reports), all behind the unified `sp.synth(method=...)` dispatcher. This is an API-breadth statement; exact validation evidence is recorded by `validation_status` and the parity artifacts.
+Release focus: `statspai.synth`. **20 SCM methods + 6 inference strategies + analysis workflow** (compare / power / sensitivity / reports), all behind the unified `sp.synth(method=...)` dispatcher. This is an API-breadth statement; exact validation evidence is recorded by `validation_status` and the parity artifacts.
 
 **Seven new SCM estimators:**
 
@@ -1168,7 +1170,7 @@ Previous methods — classic, penalized, demeaned, unconstrained, augmented (ASC
 
 - `synth_compare(df, ...)` — run every method at once, tabular + graphical comparison
 - `synth_recommend(df, ...)` — auto-select best estimator by pre-fit + robustness
-- `synth_report(result, format='markdown'|'latex'|'text')` — one-click publication-ready report
+- `synth_report(result, format='markdown'|'latex'|'text')` — one-command manuscript-ready report
 - `synth_power(df, effect_sizes=[...])` — first power-analysis tool for SCM designs
 - `synth_mde(df, target_power=0.8)` — minimum detectable effect
 - `synth_sensitivity(result)` — LOO + time placebos + donor sensitivity + RMSPE filtering
@@ -1176,7 +1178,7 @@ Previous methods — classic, penalized, demeaned, unconstrained, augmented (ASC
 
 **Release-blocker fixes (5-parallel-agent code review — correctness / numerics / API / perf / docs):**
 
-- **ASCM correction formula** — `augsynth` now follows Ben-Michael, Feller & Rothstein (2021) Eq. 3 per-period ridge bias `(Y1_pre − Y0'γ) @ β(T0, T1)`, replacing the scalar mean-residual placeholder; `_ridge_fit` RHS bug also fixed
+- **ASCM correction formula** — `augsynth` now follows the `augsynth::augsynth` Ridge+SCM convention: center pre-outcomes by the control mean, solve SCM on the centered matrix, select the ridge penalty by time-holdout CV, and apply the ridge correction to the donor weights themselves; the native Basque fixture matches the R package within iterative solver tolerance
 - **Bayesian likelihood scale** — covariate rows z-scored to pooled pre-outcome SD before concatenation
 - **Bayesian MCMC Jacobian** — missing `log(σ′/σ)` correction for log-normal random-walk proposal on σ added to MH acceptance ratio
 - **BSTS Kalman filter** — innovation variance floored at `1e-12`; RTS smoother `inv → solve + pinv` fallback on near-singular predicted covariance
@@ -1315,7 +1317,7 @@ Interactive Plot Editor: Font presets redesigned to show actual font names; sepa
 
 **Major refactoring and expansion of core modules (+5,800 lines of new code):**
 
-- **DID**: Added Triple Differences (`ddd()`), one-call `did_analysis()` workflow (auto design detection → Bacon decomposition → estimation → event study → sensitivity), and 8 publication-ready plot functions (`parallel_trends_plot`, `bacon_plot`, `group_time_plot`, `enhanced_event_study_plot`, `treatment_rollout_plot`, `sensitivity_plot`, `cohort_event_study_plot`)
+- **DID**: Added Triple Differences (`ddd()`), one-call `did_analysis()` workflow (auto design detection → Bacon decomposition → estimation → event study → sensitivity), and 8 manuscript-oriented plot functions (`parallel_trends_plot`, `bacon_plot`, `group_time_plot`, `enhanced_event_study_plot`, `treatment_rollout_plot`, `sensitivity_plot`, `cohort_event_study_plot`)
 - **Synthetic Control**: Modular rewrite — `demeaned_synth()`, `robust_synth()` (penalized SCM), `gsynth()` (Generalized SCM with interactive fixed effects), `staggered_synth()` (multi-unit staggered adoption), `conformal_synth()` (distribution-free inference), and comprehensive `synth_plot()` / `synth_weight_plot()` / `synth_gap_plot()`
 - **Panel**: Major expansion of `panel()` — Hausman test, Breusch-Pagan LM, Pesaran CD, Wooldridge autocorrelation, panel unit root tests; added `panel_summary_plot()`, `fe_plot()`, `re_comparison_plot()`
 - **RD**: New `rd_diagnostics()` suite — bandwidth sensitivity, placebo cutoffs, donut-hole robustness, covariate balance at cutoff, density test
@@ -1429,9 +1431,9 @@ swap in the version-specific DOI shown on the [Zenodo record](https://doi.org/10
 for that release.
 
 The canonical metadata lives in [`CITATION.cff`](CITATION.cff) (GitHub renders
-a "Cite this repository" button from it). A JOSS paper for StatsPAI is
-currently under review; once accepted, the journal article will become the
-preferred citation and `sp.citation()` will be updated to return it.
+a "Cite this repository" button from it). Until a journal article is accepted,
+the software citation above and the version-specific Zenodo DOI are the
+preferred citation targets.
 
 ## Star History
 

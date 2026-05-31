@@ -55,7 +55,7 @@ class TargetTrialResult:
         )
 
     def to_paper(self, fmt: str = "markdown", title: str | None = None) -> str:
-        """Render a publication-ready Methods/Results block.
+        """Render a manuscript-ready Methods/Results block.
 
         See :func:`statspai.target_trial.to_paper` for details.
         """

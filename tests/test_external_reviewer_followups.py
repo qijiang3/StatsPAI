@@ -1,4 +1,4 @@
-"""Focused coverage for JOSS reviewer follow-up items.
+"""Focused coverage for external reviewer follow-up items.
 
 These tests target user-facing paths called out during review: generic
 ``EconometricResults.predict()``, DAG reasoning helpers, and advanced

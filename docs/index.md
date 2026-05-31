@@ -9,7 +9,7 @@ synthetic control, decomposition, stochastic frontier, multilevel /
 mixed-effects, modern ML causal inference, the full three-school
 (Econometrics / Epidemiology / ML) toolkit, 2025-2026 research-frontier
 modules (bridging theorems, fairness, surrogates, PCMCI, TMLE survival,
-etc.), and publication-ready output in Word / Excel / LaTeX / HTML.
+etc.), and manuscript/reporting output in Word / Excel / LaTeX / HTML.
 
 > **Current release: v1.16.0 (2026-05-29)** — correctness fixes
 > (`sp.qreg` √n standard-error fix and an `sp.xtabond` Arellano–Bond GMM
@@ -66,7 +66,7 @@ multi-score designs, `sp.rdhonest` (Armstrong-Kolesar), local
 randomization (`sp.rdrandinf`, `sp.rdwinselect`, `sp.rdsensitivity`),
 `sp.cjm_density`, ML-based CATE (`sp.rd_forest`, `sp.rd_boost`,
 `sp.rd_lasso`), Angrist-Rokkanen extrapolation, `sp.rdpower`,
-`sp.rdsampsi`, one-click `sp.rdsummary` dashboard.
+`sp.rdsampsi`, bundled `sp.rdsummary` dashboard.
 
 **Synthetic control (20 estimators).**
 Classical SCM, SDID, Augmented SCM (ASCM), Bayesian SCM (MCMC), BSTS

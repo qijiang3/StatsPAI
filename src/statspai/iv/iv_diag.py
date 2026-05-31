@@ -25,7 +25,7 @@ What it returns
 
 The result object exposes ``.summary()``, ``.to_frame()``,
 ``.to_dict()``, ``.to_latex()``, ``.to_excel()``, ``.to_word()``, and
-``.plot()`` for one-call publication-ready output.
+``.plot()`` for one-call manuscript-ready output.
 
 References
 ----------

@@ -1210,10 +1210,10 @@ __all__ = [
     "compute_data_hash",
     "format_provenance",
     "lineage_summary",
-    # Replication pack (journal-ready zip)
+    # Replication pack (audited archive)
     "ReplicationPack",
     "replication_pack",
-    # great_tables adapter (publication-grade tables)
+    # great_tables adapter (manuscript/reporting tables)
     "gt",
     "is_great_tables_available",
     # Bibliography / CSL (Quarto citation pipeline)

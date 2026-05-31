@@ -66,23 +66,26 @@ Tier-B:
 | `typical_n_min` | Rule-of-thumb minimum sample size; `None` allowed only when no rule exists. | Documented in `validation_notes` if `None`. |
 
 The target is **70% of independent design points**, not 70% of the
-1018-function surface.  Many functions are method variants behind a
+1,020-function surface.  Many functions are method variants behind a
 dispatcher (`sp.synth(method=...)` has 20+) and should inherit from
 their parent via `FunctionSpec.inherits_from` (Sprint 2).  See the
 collapse-strategy doc once it lands.
 
-### Tier-S — certified (target: flagship 50+)
+### Tier-S — certified/validated evidence (target: flagship 50+)
 
 Tier-A *and* `validation_status ∈ {certified, validated}`:
 
-- **certified** — cross-language or published-reference parity evidence
-  in `tests/reference_parity/` or `tests/external_parity/`.
-- **validated** — analytic / reference-test evidence in this checkout
-  (closed-form, Monte Carlo at scale, etc.).
+- **certified** — cross-language or published-reference parity evidence,
+  typically from `tests/r_parity/`, `tests/stata_parity/`, or original-data
+  published-reference fixtures.
+- **validated** — known-truth, reference-parity, external-parity, coverage,
+  or explicit convention evidence in this checkout.
 
 This tier is gated by the parity-test work tracked separately in
-[`scripts/stability_audit.py`](../scripts/stability_audit.py).  It does
-not block Tier-A completion.
+[`scripts/stability_audit.py`](../scripts/stability_audit.py) and by the
+JSS validation-evidence audit. It does not block Tier-A completion, and it
+is not a marketing ratchet: if evidence weakens, a function should be
+demoted to `api_stable` until the numerical evidence is repaired.
 
 ## The seven flagship families (must reach Tier-S)
 
@@ -95,7 +98,7 @@ not block Tier-A completion.
 7. `matching` family (psmatch, ip-weighting, entropy balancing)
 
 These are the most frequent agent invocations.  If any of them slip from
-Tier-S, that's a release blocker.
+Tier-S, treat it as a release-gate issue.
 
 ## Where to write the data
 
@@ -195,20 +198,26 @@ nothing.
 
 The floor in
 [`scripts/agent_card_coverage_floor.json`](../scripts/agent_card_coverage_floor.json)
-tracks 15 counters: per-tier totals + per-field counts + per-validation-status
-counts for `certified` / `validated-or-better`.  Each may only go up.  To
-intentionally raise the bar, run:
+tracks card-completeness counters: per-tier totals, per-field counts, and
+the evidence-tier counts exposed to agents. Non-validation card coverage is
+a ratchet. Validation-status counts are evidence-audit outputs, not vanity
+floors: they may go down when a function is honestly demoted from
+`certified`/`validated` to `api_stable`. To intentionally raise the
+card-completeness bar, run:
 
 ```bash
 python scripts/agent_card_coverage.py --write-floor
 ```
 
 after the new content is merged.  CI runs `--check` and fails if any
-counter dropped.  **Never lower the floor to make CI pass.**
+non-validation coverage counter dropped. Do not lower card-completeness
+floors to hide missing metadata; do update validation-status expectations
+when the evidence audit justifies a demotion.
 
 ## Status
 
-Snapshot at v1.15.5 — Tier-B 127 / 1018 · Tier-A 84 / 1018 · Tier-S 78 / 1018.
+Historical snapshot at v1.15.5 — Tier-B 127, Tier-A 84, Tier-S 78; denominators
+are preserved in `scripts/agent_card_coverage_floor.json`.
 
 | Sprint | Goal | Status |
 | --- | --- | --- |

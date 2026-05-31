@@ -1,7 +1,7 @@
 """
 Diagnostic dashboards, multi-method comparison, and robustness tables for RD.
 
-Three publication-grade utilities sit on top of the canonical estimators
+Three publication-oriented utilities sit on top of the canonical estimators
 in :mod:`statspai.rd`:
 
 - :func:`rd_dashboard` — single-figure 4-panel diagnostic (RD plot, density,
@@ -343,7 +343,7 @@ def rd_robustness_table(
 ) -> pd.DataFrame:
     """
     Sweep over (kernel, bwselect, polynomial, donut) and return a
-    publication-ready robustness table.
+    manuscript-ready robustness table.
 
     Each row is one specification.  The DataFrame contains both
     "Conventional" and "Robust" point estimates and CIs from

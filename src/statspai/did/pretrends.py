@@ -1,7 +1,7 @@
 """
 Pre-trends testing and sensitivity analysis for Difference-in-Differences.
 
-Implements three state-of-the-art methods:
+Implements three current-methodology routines:
 
 1. **pretrends_power** -- Roth (2022) power analysis for pre-trend tests.
    A non-significant pre-trend test is uninformative when power is low.

@@ -1,5 +1,5 @@
 """
-DID Analysis Workflow — one-call comprehensive DID analysis.
+DID Analysis Workflow — one-call DID analysis.
 
 Automates the standard DID workflow from Cunningham (2021, *Causal
 Inference: The Mixtape*):

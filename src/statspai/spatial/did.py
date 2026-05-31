@@ -3,7 +3,7 @@ Spatial Difference-in-Differences (Spatial DiD).
 
 This module implements the local-spillover DiD design of Delgado and
 Florax (2015) with StatsPAI's modern result surface: diagnostics,
-event-study support, plotting, and publication-ready exports.
+event-study support, plotting, and manuscript-ready exports.
 
 The baseline specification is a two-way fixed-effect outcome equation
 augmented with the spatial lag of treatment:

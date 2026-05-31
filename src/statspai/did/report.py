@@ -231,7 +231,7 @@ class CSReport:
         float_format: Optional[str] = "%.6f",
         engine: Optional[str] = None,
     ) -> str:
-        """Dump the full report to a multi-sheet Excel workbook.
+        """Dump the report to a multi-sheet Excel workbook.
 
         Creates one sheet per block — ``Summary``, ``Dynamic``,
         ``Group``, ``Calendar``, ``Breakdown``, ``Meta`` — so
@@ -322,7 +322,7 @@ class CSReport:
     def to_latex(self, float_format: str = "%.4f",
                  caption: Optional[str] = None,
                  label: Optional[str] = None) -> str:
-        """Render the report as a publication-ready LaTeX fragment.
+        """Render the report as a manuscript-ready LaTeX fragment.
 
         Uses the ``booktabs`` package for each sub-table and wraps the
         result in a single ``table`` float.  Requires ``\\usepackage{booktabs}``

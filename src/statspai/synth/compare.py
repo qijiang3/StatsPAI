@@ -199,11 +199,11 @@ class SynthComparison:
         return synthplot(result_list, type="compare", **kwargs)
 
     # ------------------------------------------------------------------ #
-    #  Publication-grade exports
+    #  Manuscript/reporting exports
     # ------------------------------------------------------------------ #
 
     def to_latex(self, **kwargs) -> str:
-        """Render the comparison as a publication-grade LaTeX table.
+        """Render the comparison as a manuscript-ready LaTeX table.
 
         Forwards to :func:`statspai.synth.exports.synth_to_latex` with
         the side-by-side multi-method layout.

@@ -1068,7 +1068,7 @@ def _handle_tools_call(params: Dict[str, Any]) -> Dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════════════
 #
 # MCP clients (Claude Desktop, Cursor) surface ``prompts/list`` entries
-# in their UI as one-click "use this prompt" buttons. We ship a small
+# in their UI as prompt shortcut buttons. We ship a small
 # set of curated workflow templates so users can spin up a typical
 # StatsPAI agent loop without writing the prompt from scratch.
 #

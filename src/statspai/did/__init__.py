@@ -12,7 +12,7 @@ Provides estimators for:
 - de Chaisemartin & D'Haultfoeuille (2020) — DID with treatment switching
 - Borusyak, Jaravel & Spiess (2024) — imputation DID estimator
 - Stacked DID (Cengiz, Dube, Lindner & Zipperer, 2019)
-- did_analysis() — one-call comprehensive workflow
+- did_analysis() — one-call DID workflow
 - Wooldridge (2021) — extended TWFE with cohort × time interactions
 - Sant'Anna & Zhao (2020) — doubly robust DID
 - TWFE decomposition — Bacon (2021) + de Chaisemartin–D'Haultfoeuille (2020) weights

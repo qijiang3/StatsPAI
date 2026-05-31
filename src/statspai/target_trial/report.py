@@ -153,7 +153,7 @@ def to_paper(
     background: Optional[str] = None,
     limitations: Optional[str] = None,
 ) -> str:
-    """Render a target trial emulation result as a publication-ready
+    """Render a target trial emulation result as a manuscript-ready
     Methods/Results block.
 
     Parameters

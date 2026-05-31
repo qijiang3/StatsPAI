@@ -393,7 +393,7 @@ def did_summary(
 
 
 # ═══════════════════════════════════════════════════════════════════════
-#  Export helpers: publication-ready Markdown / LaTeX from a did_summary
+#  Export helpers: manuscript-ready Markdown / LaTeX from a did_summary
 # ═══════════════════════════════════════════════════════════════════════
 
 def _ensure_did_summary(result: CausalResult) -> pd.DataFrame:
@@ -504,7 +504,7 @@ def did_summary_to_latex(
     caption: str = "DID method-robustness summary.",
 ) -> str:
     """
-    Render a :func:`did_summary` result as a publication-ready LaTeX
+    Render a :func:`did_summary` result as a manuscript-ready LaTeX
     ``booktabs`` table.
 
     Parameters
@@ -624,7 +624,7 @@ def did_report(
 
     - ``did_summary.txt`` : text dump of ``result.summary()``.
     - ``did_summary.md``  : GitHub-Flavoured Markdown table.
-    - ``did_summary.tex`` : publication-ready LaTeX ``booktabs`` fragment.
+    - ``did_summary.tex`` : manuscript-ready LaTeX ``booktabs`` fragment.
     - ``did_summary.png`` : forest plot (requires matplotlib).
     - ``did_summary.json`` : detail table + model_info in JSON.
 

@@ -1,5 +1,5 @@
 ---
-title: 'StatsPAI: An Agent-Native Python Toolkit for Causal Inference and Applied Econometrics'
+title: 'StatsPAI: Validation-Tiered Python Workflows for Causal Inference'
 tags:
   - Python
   - causal inference
@@ -22,9 +22,18 @@ affiliations:
     ror: 00f54p054
   - name: StatsPAI Inc., United States
     index: 2
-date: 12 May 2026
+date: 31 May 2026
 bibliography: paper.bib
 ---
+
+# Current Submission Boundary
+
+This root Markdown manuscript is kept as a software-journal record for
+citation-audit and historical continuity. It is not the authoritative
+JSS submission. The current JSS manuscript source is
+`Paper-JSS/manuscript/main.tex`, the generated PDF is
+`Paper-JSS/manuscript/main.pdf`, and the reviewer replication guide is
+`Paper-JSS/README.md`.
 
 # Summary
 
@@ -43,9 +52,11 @@ for heterogeneous treatment effects.
 The package is designed for policy evaluation, social science and
 public health research, and other empirical workflows where researchers
 must move between research design, estimation, diagnostics, robustness
-checks, and publication tables. A common result contract gives users `.summary()`,
-`.plot()`, `.to_latex()`, `.to_docx()`, and `.cite()` methods where
-appropriate. `StatsPAI` is also agent-native: registered functions
+checks, and publication tables. Mature estimator results expose common
+reporting hooks such as `.summary()`, `.plot()`, `.to_latex()`,
+`.to_docx()`, and `.cite()` where those capabilities are implemented;
+auxiliary helpers advertise narrower capabilities through registry
+metadata. `StatsPAI` is also agent-native: registered functions
 expose machine-readable schemas (structured descriptions of each
 function's arguments and outputs that programs can parse directly) and
 structured failure metadata so that LLM-driven research assistants can
@@ -78,10 +89,10 @@ economists, policy researchers, and data scientists who want a
 Python-native workflow without giving up the breadth of Stata or the
 methodological depth of R. The goal of StatsPAI is not to replace every specialized
 implementation. Instead, it provides a coherent empirical workspace:
-shared formula conventions, common result objects, consistent export
-methods, citations attached to estimators, and validation metadata that
-make the relationship between methods, assumptions, and evidence
-explicit.
+shared formula conventions, compatible result surfaces for mature
+estimators, export methods where supported, citations attached to
+estimators, and validation metadata that make the relationship between
+methods, assumptions, and evidence explicit.
 
 # State of the Field
 
@@ -139,17 +150,19 @@ PyPI under the MIT license.
 # Research Impact Statement
 
 `StatsPAI` has a concrete validation and community-readiness dossier.
-The repository includes Python tests, 36 R-parity modules,
-21 Stata-parity modules, original-paper replay fixtures, and Monte Carlo
-coverage checks. Published-reference anchors include Card-style
+The repository includes Python tests, a 51-module R-joined Track A
+parity table, 44 frozen Stata parity modules (43 R-joined rows plus
+one Py-Stata-only `xtabond` migration check), original-paper replay
+fixtures, and Monte Carlo coverage checks. Published-reference anchors include Card-style
 returns-to-schooling IV estimates, LaLonde/Dehejia-Wahba job-training benchmarks,
 Lee-style regression discontinuity estimates, Callaway-Sant'Anna
 difference-in-differences examples, and synthetic-control benchmarks.
 The validation suite also includes a 1000-replication coverage run for
 representative OLS, difference-in-differences, and strong-instrument IV
 designs, with empirical coverage close to the nominal 95 percent level.
-A reviewer-facing validation dossier and a short reviewer guide are
-included in the repository documentation.
+The current reviewer-facing source-audit dossier is
+`docs/jss_source_audit_dossier.md`; the JSS replication guide is
+`Paper-JSS/README.md`.
 
 The near-term research impact is a more reproducible empirical workflow
 for applied policy evaluation. Because methods share one interface,
@@ -171,10 +184,10 @@ Generative AI tools, including Claude Code and OpenAI ChatGPT/Codex,
 were used for code-generation assistance, refactoring suggestions, test
 scaffolding, documentation drafting, and manuscript copy-editing. Exact
 model identifiers were not retained for all exploratory sessions. Human
-authors made the core design decisions; reviewed, edited, and validated
+authors made the core design decisions; reviewed, edited, and checked
 AI-assisted code and prose; and checked citations and software claims
 against repository evidence. The authors will not use generative AI to
-produce substantive responses to JOSS editors or reviewers. All authors
+produce substantive responses to journal editors or reviewers. All authors
 take responsibility for the correctness, originality, licensing, and
 compliance of the package and this paper.
 

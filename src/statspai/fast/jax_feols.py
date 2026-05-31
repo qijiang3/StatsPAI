@@ -1,6 +1,6 @@
 """JAX-backed end-to-end ``feols``.
 
-This module ships a drop-in replacement for :func:`statspai.fast.feols`
+This module ships an API-compatible backend for :func:`statspai.fast.feols`
 whose **WLS solve + HC1 sandwich** computations execute on JAX/XLA
 (CPU / GPU / TPU). The FE residualisation step still goes through the
 Rust ``demean`` kernel because, on typical FE cardinalities, the

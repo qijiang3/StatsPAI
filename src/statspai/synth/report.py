@@ -1,7 +1,7 @@
 """
 Synthetic Control Analysis Report.
 
-Generates a publication-ready SCM report combining main estimation,
+Generates a manuscript-ready SCM report combining main estimation,
 placebo inference, and sensitivity diagnostics into a single formatted
 output (plain text, Markdown, or LaTeX).
 
@@ -970,7 +970,7 @@ def synth_report(
 
     Runs ``synth()`` for the main estimation and optionally
     ``synth_sensitivity()`` for robustness diagnostics, then formats
-    everything into a publication-ready report.
+    everything into a manuscript-ready report.
 
     Parameters
     ----------

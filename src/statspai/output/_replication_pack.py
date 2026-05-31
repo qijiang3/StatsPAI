@@ -1,4 +1,4 @@
-"""``sp.replication_pack`` — package an analysis into a journal-ready zip.
+"""``sp.replication_pack`` — package an analysis into a replication zip.
 
 The AEA / AEJ data editor checklist requires a self-contained
 replication archive: code, data, environment, README, and an obvious
@@ -400,7 +400,7 @@ def replication_pack(
     include_git_sha: bool = True,
     overwrite: bool = True,
 ) -> ReplicationPack:
-    """Build a journal-ready replication archive.
+    """Build a replication archive.
 
     Parameters
     ----------

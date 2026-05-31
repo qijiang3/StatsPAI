@@ -1,6 +1,6 @@
 """``sp.gt(result)`` — :pkg:`great_tables` adapter for StatsPAI tables.
 
-R's ``gt`` package (Iannone et al.) is the canonical publication-grade
+R's ``gt`` package (Iannone et al.) is a canonical publication-oriented
 table grammar: cell-level styling, spanners, footnote marks, themes,
 multi-target rendering. Posit shipped a Python port (``great_tables``)
 in 2024 and it is now stable at 0.21.

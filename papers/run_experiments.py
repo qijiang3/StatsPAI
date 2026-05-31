@@ -1,5 +1,5 @@
 """
-Numerical validation experiments for StatsPAI arXiv/JOSS paper.
+Numerical validation examples for the StatsPAI software-journal materials.
 
 Generates all tables reported in the paper:
   - Table 1: Single-run validation with known DGPs

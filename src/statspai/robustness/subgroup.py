@@ -2,7 +2,7 @@
 Subgroup Heterogeneity Analysis with Forest Plot
 
 Run treatment-effect estimation across user-defined subgroups and
-present results in a publication-ready forest plot.
+present results in a manuscript-ready forest plot.
 
 This solves a common pain point: researchers manually split samples,
 re-run regressions, and hand-assemble forest plots.  Now one call

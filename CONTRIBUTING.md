@@ -197,8 +197,8 @@ src/statspai/
 
 ## 🧾 Authorship & Acknowledgments
 
-StatsPAI is an academic project that publishes a JOSS paper and
-follow-on methodological work. To keep expectations transparent, we
+StatsPAI is an academic software project with JSS-facing replication
+materials and follow-on methodological work. To keep expectations transparent, we
 separate **acknowledgment** from **paper authorship**.
 
 ### Acknowledgments (automatic)
@@ -207,9 +207,9 @@ Everyone whose pull request is merged into `main` is automatically
 credited. Specifically:
 
 - Added to `CONTRIBUTORS.md` (name + GitHub handle + area of contribution).
-- Listed in the **Acknowledgments** section of the JOSS paper and any
-  subsequent methodological papers that build on the codebase they
-  touched.
+- Listed, when substantively relevant, in the **Acknowledgments** section
+  of software-journal or methodological papers that build on the codebase
+  they touched.
 - Credited in release notes (`CHANGELOG.md`) for the version that
   ships their change.
 

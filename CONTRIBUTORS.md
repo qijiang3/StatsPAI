@@ -1,8 +1,8 @@
 # Contributors
 
 StatsPAI is built by the people listed here. Every merged pull request
-earns a line in this file and a slot in the Acknowledgments section of
-the project's JOSS paper.
+earns a line in this file and, when applicable, acknowledgment in the
+project's software-journal manuscripts and release notes.
 
 > Paper **authorship** is separate — extended by invitation at the
 > maintainers' discretion. See the "Authorship & Acknowledgments"

@@ -488,7 +488,7 @@ Default MAP and `solver='lsmr'` / `'lsqr'` agree on identical data to
 `atol=1e-6` on two-way FE OLS (with and without weights, with and
 without clustering). See the cross-solver parity suite in
 `tests/test_hdfe_native.py`. We do not take a runtime dependency on
-`pyreghdfe`; correctness is anchored to scipy's battle-tested
+`pyreghdfe`; correctness is anchored to scipy's well-established
 `scipy.sparse.linalg.lsmr` / `lsqr` plus the internal MAP baseline.
 
 ### When to prefer which solver

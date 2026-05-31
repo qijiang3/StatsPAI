@@ -852,7 +852,7 @@ def diff_citation(c: Citation, truth: PaperMeta) -> list[str]:
         if other_matches:
             before_id = before_id[other_matches[-1].end():]
     # Multi-citation reference fields stack 5+ citations in one string
-    # (registry.py FunctionSpec.reference fields, JOSS bullet lists,
+    # (registry.py FunctionSpec.reference fields, software-paper bullet lists,
     # etc.). When prior citations don't carry a parseable id (no DOI /
     # arXiv / NBER number, e.g. "Lee, McCrary, Moreira and Porter (2022)
     # AER 112(10), 3260-3290."), the chop loop above can't separate

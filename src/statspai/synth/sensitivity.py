@@ -522,7 +522,7 @@ def synth_sensitivity(
     Run all SCM sensitivity diagnostics in a single call.
 
     Combines leave-one-out, time placebos, donor pool bootstrap,
-    and pre-RMSPE filtering into one comprehensive report.
+    and pre-RMSPE filtering into one bundled report.
 
     Parameters
     ----------

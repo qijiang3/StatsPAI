@@ -297,7 +297,7 @@ class PaperDraft:
     ) -> str:
         """Render to a Quarto (``.qmd``) document.
 
-        Quarto is the publication-grade default: a single source compiles
+        Quarto is the multi-format manuscript default: a single source compiles
         to PDF / HTML / DOCX / Beamer with cross-refs, citations (CSL),
         and embedded code chunks. ``sp.paper()`` already produces all
         the prose; this method just wraps it in the correct YAML

@@ -24,7 +24,7 @@ caller transposing before passing in.
 
 References
 ----------
-- Networkx layout choices follow Hagberg, Schult, Swart (2008), JOSS 1(2).
+- NetworkX layout choices follow Hagberg, Schult, and Swart (2008).
 - Graphviz DOT format: https://graphviz.org/doc/info/lang.html
 """
 

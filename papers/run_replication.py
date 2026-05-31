@@ -1,13 +1,15 @@
 """
-External validation experiments for StatsPAI arXiv/JOSS paper.
+External validation examples for the StatsPAI software-journal materials.
 
 Proves StatsPAI's quality by:
   1. Replicating classic published results (Card 1995, Lee 2008, Prop 99)
   2. Cross-validating against EconML on the same data
   3. Comparing OLS vs IV on real Card (1995) data
 
-These experiments show StatsPAI produces the SAME answers as established
-packages and reproduces known results from the literature.
+These examples are evidence inputs, not blanket validation claims: they
+compare selected StatsPAI outputs with established packages or published
+benchmarks and leave method-specific validation status to the registry and
+JSS audit ledgers.
 
 Usage:
     python run_replication.py

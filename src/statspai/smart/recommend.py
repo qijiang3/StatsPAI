@@ -1132,7 +1132,7 @@ def recommend(
     # Stability gating (v1.13): by default, drop recommendations that
     # point at a function whose registry entry is
     # ``stability='experimental'`` or ``'deprecated'``, so an agent
-    # asking ``sp.recommend(...)`` for a publication-grade analysis
+    # asking ``sp.recommend(...)`` for an applied analysis
     # never silently lands on a frontier MVP.  Pass
     # ``allow_experimental=True`` to opt back in (e.g. when the user
     # is explicitly exploring frontier methods).  See

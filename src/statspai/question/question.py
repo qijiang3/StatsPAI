@@ -205,7 +205,7 @@ class CausalQuestion:
     # --- Report ---------------------------------------------------------- #
 
     def report(self, fmt: str = "markdown") -> str:
-        """Render a publication-ready Methods + Results narrative."""
+        """Render a manuscript-ready Methods + Results narrative."""
         if self._plan is None:
             self.identify()
         if self._result is None:
