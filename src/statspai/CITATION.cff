@@ -1,15 +1,17 @@
 cff-version: 1.2.0
 message: "If you use StatsPAI in your research, please cite it using the metadata below."
-title: "StatsPAI: The Agent-Native Causal Inference & Econometrics Toolkit for Python"
+title: "StatsPAI: Validation-Tiered Causal Inference and Econometrics Workflows for Python"
 abstract: >-
-  StatsPAI is a unified, agent-native Python toolkit for causal inference and
-  econometrics covering difference-in-differences, instrumental variables,
+  StatsPAI is a validation-tiered Python toolkit for applied econometrics and
+  causal inference covering difference-in-differences, instrumental variables,
   regression discontinuity, synthetic control, double machine learning,
-  meta-learners, Bayesian causal forest, causal discovery, structural
-  estimation, panel data, spatial models, and time-series analysis. Every
-  estimator returns a unified ``CausalResult`` with ``.summary()``, ``.plot()``,
-  ``.to_latex()`` / ``.to_word()`` / ``.to_excel()``, and ``.cite()``, and the
-  full API is exposed through a single ``import statspai as sp`` entry point.
+  meta-learners, causal forests, causal discovery, structural estimation,
+  panel data, spatial models, and time-series analysis. Public estimators return
+  structured result objects with common summary, plotting, export, citation,
+  audit, and serialization methods where supported. The registry records
+  stability and validation status separately, so API breadth is not presented as
+  numerical validation evidence, and the callable surface is exposed through a
+  single ``import statspai as sp`` entry point plus machine-readable schemas.
 type: software
 authors:
   - family-names: "Wang"
@@ -49,7 +51,7 @@ keywords:
   - causal-discovery
   - tmle
   - python
-  - agent-native
+  - agent-facing
 # When the JOSS paper is accepted, fill in DOI / volume / pages and uncomment.
 # Until then, cite the software entry above (versioned Zenodo DOI is
 # preferable once the GitHub-Zenodo integration mints one for a release).
@@ -65,7 +67,7 @@ keywords:
 #       given-names: "Scott"
 #       affiliation: "Stanford REAP, Stanford University"
 #       email: "rozelle@stanford.edu"
-#   title: "StatsPAI: The Agent-Native Causal Inference & Econometrics Toolkit for Python"
+#   title: "StatsPAI: Validation-Tiered Causal Inference and Econometrics Workflows for Python"
 #   journal: "Journal of Open Source Software"
 #   year: 2026
 #   doi: "TBD"

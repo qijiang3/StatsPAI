@@ -1,5 +1,5 @@
 """
-StatsPAI: The AI-powered Statistics & Econometrics Toolkit for Python
+StatsPAI: Validation-tiered statistics and econometrics workflows for Python
 
 Unified API for causal inference and econometrics:
 

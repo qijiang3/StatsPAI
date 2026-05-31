@@ -242,7 +242,7 @@ class HelpResult:
 
 _TOP_BANNER = r"""
 ╔══════════════════════════════════════════════════════════════════════╗
-║  StatsPAI — The Agent-Native Causal Inference Toolkit for Python     ║
+║  StatsPAI — Validation-Tiered Causal Inference for Python            ║
 ║  Version {version}                                                         ║
 ╚══════════════════════════════════════════════════════════════════════╝
 """

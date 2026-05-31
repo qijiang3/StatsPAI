@@ -1,10 +1,10 @@
 [English](https://github.com/brycewang-stanford/statspai/blob/main/README.md) | [中文](https://github.com/brycewang-stanford/statspai/blob/main/README_CN.md)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/brycewang-stanford/StatsPAI/main/docs/logo/readme-1.png" alt="StatsPAI — Agent-Native Causal Inference for Python" width="780">
+  <img src="https://raw.githubusercontent.com/brycewang-stanford/StatsPAI/main/docs/logo/readme-1.png" alt="StatsPAI - validation-tiered causal inference for Python" width="780">
 </p>
 
-# StatsPAI: The Agent-Native Causal Inference & Econometrics Toolkit for Python
+# StatsPAI: Validation-Tiered Causal Inference & Econometrics Workflows for Python
 
 [![PyPI version](https://img.shields.io/pypi/v/StatsPAI.svg)](https://pypi.org/project/StatsPAI/)
 [![Python versions](https://img.shields.io/pypi/pyversions/StatsPAI.svg)](https://pypi.org/project/StatsPAI/)
@@ -14,7 +14,7 @@
 [![status](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332/status.svg)](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19933900.svg)](https://doi.org/10.5281/zenodo.19933900)
 
-StatsPAI is an **agent-native** Python platform for causal inference and applied econometrics. One `import`, **1,000+ registered functions** across **80+ submodules** (live count: `python scripts/registry_stats.py`), covering the empirical research workflow — from classical econometrics to ML/AI causal methods to publication-ready tables in Word, Excel, and LaTeX.
+StatsPAI is a **validation-tiered** Python platform for causal inference and applied econometrics. One `import`, **1,000+ registered functions** across **80+ submodules** (live count: `python scripts/registry_stats.py`), covering the empirical research workflow from classical econometrics to ML/AI causal methods to publication-ready tables in Word, Excel, and LaTeX.
 
 **Built for AI agents**: every registered function has machine-readable discovery metadata (`list_functions()`, `describe_function()`, `function_schema()`), and parity-backed functions expose an explicit `validation_status` so agents and humans can distinguish certified numerical evidence from API-stable breadth.
 
@@ -229,7 +229,7 @@ Lee-McCrary-Moreira-Porter `tF` adjusted CI, Anderson-Rubin / Moreira
 CLR / Kleibergen K weak-IV-robust sets, Conley-Hansen-Rossi LTZ
 sensitivity, Blandhol-Mogstad-Słoczyński TSLS-as-LATE caveat) plus
 `sp.iv.iv_compare` forest comparison and four IV diagnostic plots.
-**Synth**: every estimator gains a publication-grade
+**Synth**: supported synthetic-control result objects gain a publication-grade
 `.to_latex()` / `.to_excel()` / `.to_word()` table-export pipeline,
 trajectory and gap plots get prediction-interval / pre-RMSPE ribbons
 (Cattaneo-Feng-Titiunik 2021 / Cattaneo-Feng-Palomba-Titiunik 2025), and
@@ -434,7 +434,7 @@ StatsPAI 1.4.0 is Sprint 2 of the 知识地图 v3 roadmap. Closes the four secon
 
 **Previously in v0.9.2 — Decomposition Analysis**: **18 first-class decomposition methods across 13 modules (~6,200 LOC, 54 tests)**, unified under `sp.decompose(method=...)`. Mean (Blinder-Oaxaca/Gelbach/Fairlie/Bauer-Sinning/Yun), distributional (RIF/FFL/DFL/Machado-Mata/Melly/CFM), inequality (Theil/Atkinson/Dagum/Shapley/Lerman-Yitzhaki), demographic (Kitagawa/Das-Gupta), and causal (gap_closing/mediation_decompose/disparity_decompose). Closed-form influence functions for Theil/Atkinson, weighted O(n log n) Dagum Gini, cross-method consistency checks.
 
-**Previously in v0.9.1 — Regression Discontinuity**: **18+ RD estimators, diagnostics, and inference methods across 14 modules (~10,300 LOC)** — now the most feature-complete RD package in any language. Covers CCT sharp/fuzzy/kink, 2D/boundary RD (`rd2d`), RDIT, multi-cutoff & multi-score, honest CIs (Armstrong-Kolesar), local randomization (`rdrandinf`/`rdwinselect`/`rdsensitivity`), CJM density tests, Rosenbaum bounds, CATE via `rdhte` + ML variants (`rd_forest`/`rd_boost`/`rd_lasso`), external-validity extrapolation (Angrist-Rokkanen), power (`rdpower`/`rdsampsi`), and a one-click `sp.rdsummary()` dashboard. 97 RD tests pass; `rd/_core.py` consolidates kernel/WLS/sandwich primitives from 9 files into one 191-line canonical module.
+**Previously in v0.9.1 — Regression Discontinuity**: **18+ RD estimators, diagnostics, and inference methods across 14 modules (~10,300 LOC)**. This release expanded the RD API surface substantially; validation status still lives at the function and test-artifact level rather than in the breadth claim. Covers CCT sharp/fuzzy/kink, 2D/boundary RD (`rd2d`), RDIT, multi-cutoff & multi-score, honest CIs (Armstrong-Kolesar), local randomization (`rdrandinf`/`rdwinselect`/`rdsensitivity`), CJM density tests, Rosenbaum bounds, CATE via `rdhte` + ML variants (`rd_forest`/`rd_boost`/`rd_lasso`), external-validity extrapolation (Angrist-Rokkanen), power (`rdpower`/`rdsampsi`), and a diagnostic `sp.rdsummary()` dashboard. 97 RD tests pass; `rd/_core.py` consolidates kernel/WLS/sandwich primitives from 9 files into one 191-line canonical module.
 
 **Previously in v0.9.0 — Synthetic Control**: **20 SCM estimators + 6 inference strategies + full research workflow**, all behind the unified `sp.synth(method=...)` dispatcher. Seven new estimators in this release: `bayesian_synth` (Dirichlet MCMC), `bsts_synth` / `causal_impact` (Kalman smoother), `penscm` (Abadie-L'Hour 2021), `fdid` (Forward DID), `cluster_synth`, `sparse_synth` (LASSO), `kernel_synth` + `kernel_ridge_synth`. Research workflow: `synth_compare()` runs all 20 · `synth_recommend()` auto-selects · `synth_power()` + `synth_mde()` first power-analysis tool for SCM · `synth_sensitivity()` · `synth_report(format='latex')`. ASCM re-implemented to Ben-Michael et al. (2021) Eq. 3; Bayesian MCMC Jacobian corrected; 9 release-blocker fixes from a 5-agent review; 144 synth tests passing. Canonical datasets: `california_tobacco()`, `german_reunification()`, `basque_terrorism()`. See the [synth guide](https://github.com/brycewang-stanford/statspai/blob/main/docs/guides/synth.md).
 
@@ -451,7 +451,7 @@ StatsPAI 1.4.0 is Sprint 2 of the 知识地图 v3 roadmap. Closes the four secon
 | Pain point | Stata | R | StatsPAI |
 | --- | --- | --- | --- |
 | Scattered packages | One environment, but \$695+/yr license | 20+ packages with incompatible APIs | **One `import`, unified API** |
-| Publication tables | `outreg2` (limited formats) | `modelsummary` (best-in-class) | **Word + Excel + LaTeX + HTML in every function** |
+| Publication tables | `outreg2` (limited formats) | `modelsummary` (mature table layer) | **Word + Excel + LaTeX + HTML on supported result objects** |
 | Robustness checks | Manual re-runs | Manual re-runs | **`spec_curve()` + `robustness_report()` — one call** |
 | Heterogeneity analysis | Manual subgroup splits + forest plots | Manual `lapply` + `ggplot` | **`subgroup_analysis()` with Wald test** |
 | Modern ML causal | Limited (no DML, no causal forest) | Fragmented (DoubleML, grf, SuperLearner separate) | **DML, Causal Forest, Meta-Learners, TMLE, DeepIV** |
@@ -469,13 +469,13 @@ StatsPAI 1.4.0 is Sprint 2 of the 知识地图 v3 roadmap. Closes the four secon
 
 StatsPAI is **not** a wrapper for R. We independently re-implement every algorithm from the original papers (with citations exposed via `.cite()`), and for a few mature engines (pyfixest, rdrobust) we use explicit, transparent bindings. What makes StatsPAI different is **the unifying layer on top**:
 
-- **One result object, one API surface.** Every estimator — from `regress()` to `callaway_santanna()` to `causal_forest()` to `notears()` — returns a `CausalResult` with the same `.summary()` / `.plot()` / `.to_latex()` / `.cite()` interface. R users juggle 20+ incompatible S3 classes; StatsPAI users juggle one.
+- **Structured result objects, one API surface.** Paper-facing estimators return structured result objects with common `.summary()`, plotting, export, citation, and serialization methods where supported. R users juggle many incompatible S3 classes; StatsPAI narrows that interface cost without pretending every helper has identical statistical output.
 - **Scope no single R or Python package matches.** DID + RD + Synth + Matching + DML + Meta-learners + TMLE + Neural Causal + Causal Discovery + Policy Learning + Conformal + Bunching + Spillover + Matrix Completion — all consistent, all under `sp.*`.
-- **Agent-native by design.** Self-describing schemas (`list_functions()`, `describe_function()`, `function_schema()`) make StatsPAI the first econometrics toolkit built for LLM-driven research workflows. No other package — in any language — offers this.
+- **Agent-facing schema layer.** Self-describing schemas (`list_functions()`, `describe_function()`, `function_schema()`) expose the registry to LLM-driven research workflows. The schema layer is a software-interface claim, not behavioural evidence that an autonomous agent chooses the right design.
 - **Accelerator-ready where it matters.** Selected workloads can opt into accelerator backends without changing the public API: neural causal estimators route through PyTorch CUDA/MPS via `STATSPAI_TORCH_DEVICE`; the HDFE residualizer exposes `backend="jax"`; `sp.fast.feols_jax` runs end-to-end OLS on XLA; and **`sp.fast.feols_jax_bootstrap`** uses `jax.vmap` to lift four bootstrap variants — pairs, cluster, wild, and wild cluster — into a single batched device program, 10–100x faster on CUDA / TPU than a sequential CPU loop at B ≥ 1000. See [GPU acceleration guide](docs/guides/gpu_acceleration.md). This is not a universal GPU-speed claim; most StatsPAI estimators are CPU-only by design (and that's the right choice for them).
-- **Publication pipeline out of the box.** Word + Excel + LaTeX + HTML + Markdown export from every estimator, not a separate `modelsummary`-style dance.
+- **Publication pipeline out of the box.** Word + Excel + LaTeX + HTML + Markdown export for supported structured results, without requiring a separate table package for the common workflows.
 
-If a method exists in R, we aim to match or exceed its feature set in Python — and then add what Python can uniquely offer: sklearn integration, opt-in JAX/PyTorch accelerator backends, and agent-native schemas.
+Where a method exists in R, the development target is explicit parity evidence or a documented implementation-boundary note, then Python-specific ergonomics such as sklearn integration, opt-in JAX/PyTorch accelerator backends, and agent-facing schemas.
 
 ---
 
@@ -1113,7 +1113,7 @@ result.summary(); result.plot(); result.to_latex()
 
 ### v0.9.1 (2026-04-16) — Regression Discontinuity Mega-Upgrade
 
-Release focus: `statspai.rd`. **18+ RD estimators, diagnostics, and inference methods across 14 modules (~10,300 LOC)** — the most feature-complete RD package in Python, R, or Stata. Full machinery behind CCT, Cattaneo-Jansson-Ma density tests, Armstrong-Kolesar honest CIs, Cattaneo-Titiunik-Vazquez-Bare local randomization, Cattaneo-Titiunik-Yu boundary (2D) RD, and Angrist-Rokkanen external validity — all under `sp.*`.
+Release focus: `statspai.rd`. **18+ RD estimators, diagnostics, and inference methods across 14 modules (~10,300 LOC)**. Full machinery behind CCT, Cattaneo-Jansson-Ma density tests, Armstrong-Kolesar honest CIs, Cattaneo-Titiunik-Vazquez-Bare local randomization, Cattaneo-Titiunik-Yu boundary (2D) RD, and Angrist-Rokkanen external validity is exposed under `sp.*`; validation remains method-specific.
 
 **Core estimation:**
 
@@ -1148,7 +1148,7 @@ Release focus: `statspai.rd`. **18+ RD estimators, diagnostics, and inference me
 
 ### v0.9.0 (2026-04-16) — Synthetic Control Mega-Expansion
 
-Release focus: `statspai.synth`. **20 SCM methods + 6 inference strategies + full research workflow** (compare / power / sensitivity / one-click reports), all behind the unified `sp.synth(method=...)` dispatcher. No competing package in Python, R, or Stata offers this breadth.
+Release focus: `statspai.synth`. **20 SCM methods + 6 inference strategies + full research workflow** (compare / power / sensitivity / reports), all behind the unified `sp.synth(method=...)` dispatcher. This is an API-breadth statement; exact validation evidence is recorded by `validation_status` and the parity artifacts.
 
 **Seven new SCM estimators:**
 
@@ -1296,7 +1296,9 @@ Interactive Plot Editor: Font presets redesigned to show actual font names; sepa
 - **Matching `ps_poly=`**: Polynomial propensity score models (Cunningham 2021, Ch. 5)
 - **Synth RMSPE plot**: `synthplot(result, type='rmspe')` histogram (Abadie et al. 2010)
 - **Graddy (2006) replication**: Fulton Fish Market IV example in `sp.replicate()`
-- **Numerical validation**: Cross-validated against Stata/R reference values
+- **Numerical validation**: early selected Stata/R reference checks; current
+  evidence is reported through `validation_status`, not a blanket package
+  validation claim
 
 ### v0.6.1 (2026-04-07) — Interactive Editor Fixes & Improvements
 
@@ -1413,7 +1415,7 @@ resolves to the latest version):
 ```bibtex
 @software{wang2026statspai,
   author       = {Wang, Biaoyue and Rozelle, Scott},
-  title        = {StatsPAI: The Agent-Native Causal Inference \& Econometrics Toolkit for Python},
+  title        = {StatsPAI: Validation-Tiered Causal Inference and Econometrics Workflows for Python},
   year         = {2026},
   version      = {1.16.0},
   doi          = {10.5281/zenodo.19933900},

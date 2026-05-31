@@ -1,8 +1,8 @@
 """
 Decomposition Analysis module for StatsPAI.
 
-World-class decomposition toolkit covering mean, distributional,
-inequality, demographic, and causal decomposition methods under a
+Decomposition toolkit covering mean, distributional, inequality,
+demographic, and causal decomposition methods under a
 unified API: ``sp.decompose(method=...)``.
 
 Methods (19 in total — Yu-Elwert added in v1.15)

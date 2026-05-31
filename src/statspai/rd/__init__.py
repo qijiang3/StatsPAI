@@ -1,7 +1,7 @@
 """
 Regression Discontinuity (RD) module for StatsPAI.
 
-The most comprehensive Python RD toolkit, providing:
+Regression-discontinuity tools exposed through the StatsPAI API:
 
 **Core estimation:**
 - Sharp, Fuzzy, and Kink RD estimation with robust bias-corrected inference (CCT 2014)
@@ -32,7 +32,7 @@ The most comprehensive Python RD toolkit, providing:
 - External validity diagnostics
 
 **Diagnostics & visualization:**
-- One-click diagnostic dashboard (rdsummary)
+- Diagnostic dashboard (rdsummary)
 - IMSE-optimal binned scatter with pointwise CI bands
 - Density manipulation testing (CJM 2020)
 - Bandwidth sensitivity, covariate balance, placebo cutoff tests

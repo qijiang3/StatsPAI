@@ -1,5 +1,5 @@
 """
-One-Click Comprehensive Synthetic Control Analysis Report.
+Synthetic Control Analysis Report.
 
 Generates a publication-ready SCM report combining main estimation,
 placebo inference, and sensitivity diagnostics into a single formatted

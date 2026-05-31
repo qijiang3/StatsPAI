@@ -8279,9 +8279,9 @@ Shipped in commit `be59260`:
 
 ## [0.9.2] - 2026-04-16
 
-### Decomposition Analysis — Most Comprehensive Decomposition Toolkit in Python
+### Decomposition Analysis — Broad Decomposition Toolkit in Python
 
-Release focus: `statspai.decomposition`. **18 first-class decomposition methods across 13 modules (~6,200 LOC, 54 tests)** — Python's first (and most complete) implementation of the full decomposition analysis toolkit spanning mean, distributional, inequality, demographic, and causal decomposition. Beats Stata `ddecompose` / `cdeco` / `oaxaca` / `rifhdreg` / `mvdcmp` / `fairlie` and R `Counterfactual` / `ddecompose` / `oaxaca` / `dineq` in scope; occupies the previously empty Python high-ground where only one unmaintained PyPI package existed.
+Release focus: `statspai.decomposition`. **18 first-class decomposition methods across 13 modules (~6,200 LOC, 54 tests)** spanning mean, distributional, inequality, demographic, and causal decomposition. The release consolidated a broad Python API surface for workflows that are often split across Stata commands and R packages; numerical claims remain tied to the method-level tests and validation metadata.
 
 #### What's in `sp.decompose` (18 methods, 30 aliases)
 
@@ -8354,9 +8354,9 @@ result.summary(); result.plot(); result.to_latex()
 
 ## [0.9.1] - 2026-04-16
 
-### Regression Discontinuity — Most Comprehensive RD Toolkit in Any Language
+### Regression Discontinuity — Broad RD Toolkit
 
-Release focus: `statspai.rd`. **18+ RD estimators, diagnostics, and inference methods across 14 modules (~10,300 LOC)** — now the most feature-complete RD package in Python, R, or Stata. The full machinery behind Calonico-Cattaneo-Titiunik (CCT), Cattaneo-Jansson-Ma density tests, Armstrong-Kolesar honest CIs, Cattaneo-Titiunik-Vazquez-Bare local randomization, Cattaneo-Titiunik-Yu boundary (2D) RD, and Angrist-Rokkanen external validity — all in one `import statspai as sp`.
+Release focus: `statspai.rd`. **18+ RD estimators, diagnostics, and inference methods across 14 modules (~10,300 LOC)**. The machinery behind Calonico-Cattaneo-Titiunik (CCT), Cattaneo-Jansson-Ma density tests, Armstrong-Kolesar honest CIs, Cattaneo-Titiunik-Vazquez-Bare local randomization, Cattaneo-Titiunik-Yu boundary (2D) RD, and Angrist-Rokkanen external validity is exposed through one `import statspai as sp`; validation status is method-specific.
 
 #### What's in `sp.rd` (14 modules)
 
@@ -8454,9 +8454,9 @@ A 5-sprint refactor (commit 44f7529) centralized shared low-level primitives tha
 
 ## [0.9.0] - 2026-04-16
 
-### Synthetic Control — Most Comprehensive SCM Toolkit in Any Language
+### Synthetic Control — Broad SCM Toolkit
 
-Release focus: `statspai.synth`. **20 SCM methods + 6 inference strategies + full research workflow (compare / power / sensitivity / one-click reports)**, all behind the unified `sp.synth(method=...)` dispatcher. No competing package in Python, R, or Stata offers this breadth.
+Release focus: `statspai.synth`. **20 SCM methods + 6 inference strategies + full research workflow (compare / power / sensitivity / reports)**, all behind the unified `sp.synth(method=...)` dispatcher. This is an API-breadth statement; exact validation evidence is recorded by each function's validation metadata and the parity artifacts.
 
 #### Seven new SCM estimators
 
@@ -8808,7 +8808,9 @@ release).
 - **Synth `rmspe` plot**: Post/pre RMSPE ratio histogram (`synthplot(result, type='rmspe')`) per Abadie et al. (2010)
 - **Synth placebo gap plot**: Full spaghetti placebo gap paths with `rmspe_threshold` filter (Abadie et al. 2010, Figure 4)
 - **Graddy (2006) replication**: Fulton Fish Market IV example added to `sp.replicate()` (Mixtape Ch. 7)
-- **Numerical validation tests**: Cross-validated against Stata/R reference values with humanized error messages
+- **Numerical validation tests**: early selected Stata/R reference checks
+  with humanized error messages; current package-wide evidence is reported
+  through `validation_status`, not a blanket validation claim
 
 ### Fixed
 

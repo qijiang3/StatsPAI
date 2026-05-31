@@ -1,6 +1,6 @@
 # StatsPAI
 
-**The agent-native Python toolkit for causal inference and applied
+**Validation-tiered Python workflows for causal inference and applied
 econometrics.** One `import statspai as sp` exposes **1,000+ registered
 functions** across 81 submodules (live count: `python
 scripts/registry_stats.py`) spanning classical regression, staggered
@@ -134,9 +134,9 @@ rec.summary()                # ranked estimators with verify_score
 rec.plot('verify_radar')     # visual stability check
 ```
 
-### Agent-native API
+### Agent-facing API
 
-Every function is discoverable programmatically:
+Registered functions are discoverable programmatically:
 
 ```python
 sp.list_functions(category='did')        # enumerate methods
@@ -164,8 +164,8 @@ reference — together with this package:
 ```bibtex
 @software{wang2026statspai,
   author  = {Wang, Biaoyue and Rozelle, Scott},
-  title   = {StatsPAI: A Unified, Agent-Native Python Toolkit for
-             Causal Inference and Applied Econometrics},
+  title   = {StatsPAI: Validation-Tiered Causal Inference and
+             Econometrics Workflows for Python},
   year    = {2026},
   version = {1.16.0},
   url     = {https://github.com/brycewang-stanford/StatsPAI}
