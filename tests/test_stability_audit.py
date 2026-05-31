@@ -49,6 +49,7 @@ def test_audit_json_is_well_formed() -> None:
         "totals",
         "parity_coverage",
         "lists",
+        "auto_unbacked_breakdown",
         "sources",
         "evidence_paths",
         "floor",
@@ -60,6 +61,15 @@ def test_audit_json_is_well_formed() -> None:
     # Counts must add up
     assert p["backed_handwritten"] + p["unbacked_handwritten"] == t["stable_handwritten"]
     assert p["backed_auto"] + p["unbacked_auto"] == t["stable_auto"]
+    breakdown = payload["auto_unbacked_breakdown"]
+    assert sum(breakdown["category_counts"].values()) == p["unbacked_auto"]
+    assert (
+        breakdown["classlike_symbol_count"]
+        + breakdown["functionlike_symbol_count"]
+        == p["unbacked_auto"]
+    )
+    assert breakdown["category_counts"]
+    assert set(breakdown["category_examples"]) <= set(breakdown["category_counts"])
     assert payload["evidence_paths"]["refs"] >= payload["evidence_paths"]["unique"] > 0
     assert payload["evidence_paths"]["missing"] == []
 

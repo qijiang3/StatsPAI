@@ -49,6 +49,7 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -143,6 +144,9 @@ def collect() -> dict:
     backed_auto: List[str] = []
     unbacked_handwritten: List[str] = []
     unbacked_auto: List[str] = []
+    unbacked_auto_categories: Counter[str] = Counter()
+    unbacked_auto_examples: Dict[str, List[str]] = {}
+    unbacked_auto_classlike = 0
     experimental: List[str] = []
     deprecated: List[str] = []
 
@@ -180,7 +184,16 @@ def collect() -> dict:
             (backed_handwritten if is_backed else unbacked_handwritten).append(name)
         else:
             stable_auto.append(name)
-            (backed_auto if is_backed else unbacked_auto).append(name)
+            if is_backed:
+                backed_auto.append(name)
+            else:
+                unbacked_auto.append(name)
+                category = getattr(spec, "category", "") or "uncategorized"
+                unbacked_auto_categories[category] += 1
+                if len(unbacked_auto_examples.setdefault(category, [])) < 8:
+                    unbacked_auto_examples[category].append(name)
+                if name[:1].isupper():
+                    unbacked_auto_classlike += 1
 
     return {
         "totals": {
@@ -212,6 +225,21 @@ def collect() -> dict:
             "unbacked_auto": sorted(unbacked_auto),
             "experimental": sorted(experimental),
             "deprecated": sorted(deprecated),
+        },
+        "auto_unbacked_breakdown": {
+            "category_counts": dict(sorted(
+                unbacked_auto_categories.items(),
+                key=lambda item: (-item[1], item[0]),
+            )),
+            "category_examples": {
+                category: sorted(values)
+                for category, values in sorted(
+                    unbacked_auto_examples.items(),
+                    key=lambda item: (-len(item[1]), item[0]),
+                )
+            },
+            "classlike_symbol_count": unbacked_auto_classlike,
+            "functionlike_symbol_count": len(unbacked_auto) - unbacked_auto_classlike,
         },
         "sources": {
             name: srcs for name, srcs in evidence_sources.items()
@@ -278,6 +306,19 @@ def render_report(stats: dict, *, show_unbacked: bool = False) -> str:
         f"  stable auto-registered, UNBACKED : "
         f"{p['unbacked_auto']}"
     )
+    auto_breakdown = stats.get("auto_unbacked_breakdown", {})
+    category_counts = auto_breakdown.get("category_counts", {})
+    if category_counts:
+        lines.append(
+            "    class/function split           : "
+            f"{auto_breakdown.get('classlike_symbol_count', 0)} class-like / "
+            f"{auto_breakdown.get('functionlike_symbol_count', 0)} function-like"
+        )
+        top_categories = list(category_counts.items())[:8]
+        lines.append(
+            "    top auto-unbacked categories   : "
+            + ", ".join(f"{name}={count}" for name, count in top_categories)
+        )
     e = stats["evidence_paths"]
     lines.append(
         f"  registry evidence path refs      : "
@@ -295,8 +336,10 @@ def render_report(stats: dict, *, show_unbacked: bool = False) -> str:
     )
     lines.append(
         "* UNBACKED auto-registered: classified as stable by default. "
-        "Most are API-compatible wrappers, but numerical evidence is "
-        "not yet machine-readable."
+        "Most are API-compatible wrappers or result/helper classes, but "
+        "numerical evidence is not yet machine-readable. The category "
+        "breakdown above keeps that denominator auditable instead of "
+        "letting it masquerade as validated evidence."
     )
     lines.append("")
     if show_unbacked:
