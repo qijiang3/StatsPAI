@@ -140,28 +140,42 @@ PyPI under the MIT license.
 
 # Research Impact Statement
 
-`StatsPAI` has a concrete validation and community-readiness dossier.
-The repository includes Python tests, a 51-module R-joined Track A
-parity table, 44 frozen Stata parity modules (43 R-joined rows plus
-one Py-Stata-only `xtabond` migration check), original-paper replay
-fixtures, and Monte Carlo coverage checks. Published-reference anchors include Card-style
-returns-to-schooling IV estimates, LaLonde/Dehejia-Wahba job-training benchmarks,
-Lee-style regression discontinuity estimates, Callaway-Sant'Anna
-difference-in-differences examples, and synthetic-control benchmarks.
-The validation suite also includes a 1000-replication coverage run for
-representative OLS, difference-in-differences, and strong-instrument IV
-designs, with empirical coverage close to the nominal 95 percent level.
-A reviewer-facing validation dossier and a short reviewer guide are
-included in the repository documentation.
+`StatsPAI` ships a concrete validation and community-readiness dossier
+built from two complementary tracks. The first is a cross-language
+parity harness that checks whether StatsPAI reproduces the numerical
+output of established R and Stata implementations on identical inputs:
+a 51-module R-joined Track A parity table in which StatsPAI, R, and
+Stata read the same input bytes, of which 43 modules also carry a
+frozen Stata sibling (plus one Python-Stata-only `xtabond` migration
+check, for 44 frozen Stata modules in total). On closed-form estimators
+the three languages agree to machine precision; iterative and
+machine-learning estimators agree within pre-registered, documented
+tolerances, and the few remaining convention gaps are disclosed rather
+than hidden. The second track calibrates the simulated teaching
+datasets bundled in `sp.datasets` so that the canonical estimator
+recovers values in the neighbourhood of well-known published results:
+returns-to-schooling IV (Card), job-training effects
+(LaLonde/Dehejia-Wahba), regression-discontinuity elections (Lee),
+multi-period difference-in-differences (Callaway-Sant'Anna), and
+synthetic control. Because these datasets are simulated rather than the
+original study data, exact numerical replication is deliberately not
+claimed. The validation suite also includes a 1000-replication coverage
+run for representative OLS, difference-in-differences, and
+strong-instrument IV designs, with empirical coverage close to the
+nominal 95 percent level. A reviewer-facing validation dossier and a
+short reviewer guide are included in the repository documentation.
 
 The near-term research impact is a more reproducible empirical workflow
 for applied policy evaluation. Because methods share one interface,
 researchers can compare estimators on the same data, export tables with
 the same metadata, and record the citations and assumptions attached to
-each analysis. StatsPAI is currently being used in working-paper
-workflows connected to the Rural Education Action Program at Stanford
-University; no peer-reviewed research article using the package has yet
-been published. The current impact claim is therefore based on active
+each analysis. StatsPAI is currently being used in an ongoing working
+paper connected to the Rural Education Action Program at Stanford
+University, *Family contagion of screen time? Within-person evidence
+from six waves in China* (Wang, Zhang, and Hou, in preparation), which
+relies on the package for its panel and within-person estimation; no
+peer-reviewed research article using the package has yet been
+published. The current impact claim is therefore based on active
 working-paper use, public distribution, reproducible validation
 materials, and reviewer-verifiable examples. The agent-native registry
 also supports AI-assisted replication and robustness analysis in which

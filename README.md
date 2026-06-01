@@ -24,13 +24,12 @@ It places Python-native implementations, selected R-style causal workflows, and 
 
 ## For Journal Reviewers
 
-StatsPAI currently has one active journal review path and one separate
-long-form manuscript workspace. Use the path that matches your role:
+StatsPAI is currently under review at JOSS. Use the path that matches
+your role:
 
 1. **Current JOSS review** — install and smoke-test the package with [`docs/joss_reviewer_guide.md`](docs/joss_reviewer_guide.md), then inspect validation evidence in [`docs/joss_validation_dossier.md`](docs/joss_validation_dossier.md).
-2. **JSS manuscript workspace, in preparation** — maintained separately from the package repository. Local manuscript work starts from `Paper-JSS/README.md`; the public source-audit summary is [`docs/jss_source_audit_dossier.md`](docs/jss_source_audit_dossier.md). This material is separate from the JOSS software-paper review.
-3. Run representative offline examples from [`examples/`](examples/).
-4. Check contribution and support pathways in [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SUPPORT.md`](SUPPORT.md), and the GitHub issue templates under [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
+2. Run representative offline examples from [`examples/`](examples/).
+3. Check contribution and support pathways in [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SUPPORT.md`](SUPPORT.md), and the GitHub issue templates under [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
 
 The examples use bundled teaching datasets and require no network access after installation.
 
