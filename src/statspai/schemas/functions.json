@@ -11309,15 +11309,15 @@
     "parameters": {
       "properties": {
         "data_info": {
-          "description": "data_info parameter (Optional).",
-          "type": "string"
+          "description": "data_info parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "diagnostics": {
-          "description": "diagnostics parameter (Optional).",
-          "type": "string"
+          "description": "diagnostics parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "model_info": {
-          "description": "model_info parameter (Dict).",
+          "description": "model_info parameter (Dict[str, Any]).",
           "type": "object"
         },
         "params": {
@@ -11379,7 +11379,7 @@
         },
         "model_info": {
           "description": "Model metadata and aggregated results.",
-          "type": "string"
+          "type": "object"
         },
         "n_obs": {
           "description": "Number of observations.",
@@ -11761,7 +11761,10 @@
         },
         "var_names": {
           "description": "Alternative to formula interface.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "y": {
           "description": "Alternative to formula interface.",
@@ -11799,7 +11802,7 @@
         },
         "m_grid": {
           "description": "Grid of M values (maximum violation magnitude) to evaluate.",
-          "type": "string"
+          "type": "number"
         },
         "method": {
           "default": "smoothness",
@@ -11914,7 +11917,10 @@
         },
         "controls": {
           "description": "Additional control covariates.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Panel data in long format.",
@@ -11930,7 +11936,7 @@
         },
         "horizon": {
           "description": "Relative time periods for event study estimates, e.g. ``list(range(-5, 6))``. If ``None``, reports only the overall ATT (no event study disaggregation).",
-          "type": "string"
+          "type": "integer"
         },
         "time": {
           "description": "Time period column.",
@@ -11967,7 +11973,10 @@
         },
         "controls": {
           "description": "Additional control covariates.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Panel data in long format.",
@@ -11983,7 +11992,7 @@
         },
         "horizon": {
           "description": "Relative time periods for event study estimates, e.g. ``list(range(-5, 6))``. If ``None``, reports only the overall ATT (no event study disaggregation).",
-          "type": "string"
+          "type": "integer"
         },
         "time": {
           "description": "Time period column.",
@@ -12819,7 +12828,10 @@
         },
         "controls": {
           "description": "Time-varying covariates passed to methods that support them.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Panel dataset (long format).",
@@ -12841,7 +12853,10 @@
         "methods": {
           "default": "auto",
           "description": "Methods to run. Valid keys: ``'cs'``, ``'sa'``, ``'bjs'``, ``'etwfe'``, ``'stacked'``, or ``'all'`` / ``'auto'`` for all.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "time": {
           "description": "Time / period variable (integer-valued).",
@@ -12955,7 +12970,10 @@
         },
         "controls": {
           "description": "Control-variable column names.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -12976,8 +12994,11 @@
         },
         "methods": {
           "default": "auto",
-          "description": "methods parameter (Union).",
-          "type": "string"
+          "description": "methods parameter (Union[str, List[str]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "plot_sort_by": {
           "default": "estimate",
@@ -13080,7 +13101,10 @@
         },
         "covs": {
           "description": "Covariates to partial out before binning and plotting.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -13104,7 +13128,7 @@
         },
         "h": {
           "description": "Bandwidth to display.",
-          "type": "string"
+          "type": "number"
         },
         "hide_ci": {
           "default": false,
@@ -13118,7 +13142,7 @@
         },
         "nbins": {
           "description": "Bins per side. If None, uses data-driven selection via binselect.",
-          "type": "string"
+          "type": "integer"
         },
         "p": {
           "default": 4,
@@ -13141,7 +13165,7 @@
           "type": "boolean"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         },
         "weights": {
@@ -13153,7 +13177,7 @@
           "type": "string"
         },
         "x_label": {
-          "description": "x_label parameter (Optional).",
+          "description": "x_label parameter (Optional[str]).",
           "type": "string"
         },
         "y": {
@@ -13161,7 +13185,7 @@
           "type": "string"
         },
         "y_label": {
-          "description": "y_label parameter (Optional).",
+          "description": "y_label parameter (Optional[str]).",
           "type": "string"
         }
       },
@@ -13209,7 +13233,7 @@
         },
         "h": {
           "description": "Bandwidth. If None, side-specific Silverman pilot.",
-          "type": "string"
+          "type": "number"
         },
         "hist": {
           "default": true,
@@ -13232,7 +13256,7 @@
           "type": "integer"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         },
         "x": {
@@ -13273,7 +13297,10 @@
         },
         "covs": {
           "description": "Covariate column names. When provided, the variance estimates used in bandwidth selection account for covariate adjustment, typically yielding narrower bandwidths.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input dataset.",
@@ -13300,7 +13327,7 @@
         },
         "q": {
           "description": "Polynomial order for bias correction. Default is p + 1.",
-          "type": "string"
+          "type": "integer"
         },
         "x": {
           "description": "Running variable column name.",
@@ -13335,7 +13362,7 @@
         },
         "bw_grid": {
           "description": "Explicit bandwidth values to evaluate. If None, auto-generates a grid as multiples of the MSE-optimal bandwidth.",
-          "type": "string"
+          "type": "number"
         },
         "bw_range": {
           "default": [
@@ -13421,7 +13448,10 @@
         },
         "covs": {
           "description": "Covariate names to test. If None, tests all numeric columns except x.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -13429,7 +13459,7 @@
         },
         "h": {
           "description": "Manual bandwidth. If None, uses MSE-optimal per covariate.",
-          "type": "string"
+          "type": "number"
         },
         "kernel": {
           "default": "triangular",
@@ -13508,7 +13538,7 @@
         },
         "placebo_cutoffs": {
           "description": "Explicit placebo cutoff values. If None, auto-generates from the data distribution.",
-          "type": "string"
+          "type": "number"
         },
         "side": {
           "default": "both",
@@ -13549,7 +13579,10 @@
         },
         "covs": {
           "description": "Pre-treatment covariates for balance test.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -13626,7 +13659,7 @@
         },
         "h": {
           "description": "Bandwidth. If None, an MSE-optimal bandwidth is selected automatically.",
-          "type": "string"
+          "type": "number"
         },
         "kernel": {
           "default": "triangular",
@@ -13739,7 +13772,10 @@
         },
         "covs": {
           "description": "Covariate names to partial out before testing.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input dataset.",
@@ -13776,11 +13812,11 @@
         },
         "wl": {
           "description": "Window left bound offset from cutoff (typically negative). The left edge of the window is ``c + wl``.",
-          "type": "string"
+          "type": "number"
         },
         "wr": {
           "description": "Window right bound offset from cutoff (typically positive). The right edge of the window is ``c + wr``.",
-          "type": "string"
+          "type": "number"
         },
         "x": {
           "description": "Running variable name.",
@@ -13816,7 +13852,10 @@
         },
         "covs": {
           "description": "Covariate names to test balance for. If None, uses quantiles of the running variable as pseudo-covariates.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input dataset.",
@@ -13844,11 +13883,11 @@
         },
         "wmin": {
           "description": "Minimum half-window width. Defaults to the smallest gap between adjacent observations near the cutoff.",
-          "type": "string"
+          "type": "number"
         },
         "wstep": {
           "description": "Window increment. Defaults to ``(max_range - wmin) / nwindows``.",
-          "type": "string"
+          "type": "number"
         },
         "x": {
           "description": "Running variable name.",
@@ -13908,7 +13947,7 @@
         },
         "wlist": {
           "description": "Symmetric half-window widths to evaluate. If None, an evenly-spaced grid is generated automatically.",
-          "type": "string"
+          "type": "number"
         },
         "x": {
           "description": "Running variable name.",
@@ -13943,7 +13982,7 @@
         },
         "gamma_list": {
           "description": "Odds ratios to evaluate. Defaults to [1, 1.5, 2, 2.5, 3, 4, 5]. gamma=1 is pure randomization; gamma>1 allows confounding.",
-          "type": "string"
+          "type": "number"
         },
         "n_perms": {
           "default": 1000,
@@ -13962,11 +14001,11 @@
         },
         "wl": {
           "description": "Window left bound offset (typically negative).",
-          "type": "string"
+          "type": "number"
         },
         "wr": {
           "description": "Window right bound offset (typically positive).",
-          "type": "string"
+          "type": "number"
         },
         "x": {
           "description": "Running variable name.",
@@ -13997,7 +14036,7 @@
         },
         "b": {
           "description": "Bandwidth for bias correction. Defaults to h.",
-          "type": "string"
+          "type": "number"
         },
         "bwselect": {
           "default": "mserd",
@@ -14023,7 +14062,7 @@
         },
         "h": {
           "description": "Bandwidth for estimation. If None, MSE-optimal bandwidth is selected.",
-          "type": "string"
+          "type": "number"
         },
         "kernel": {
           "default": "triangular",
@@ -14050,7 +14089,10 @@
         },
         "z": {
           "description": "Covariate(s) for treatment effect heterogeneity.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -14096,7 +14138,10 @@
         },
         "z": {
           "description": "Covariate(s) for treatment effect heterogeneity.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -14401,7 +14446,10 @@
         },
         "covs": {
           "description": "Covariate names for conditional independence. Required.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input dataset.",
@@ -14413,7 +14461,7 @@
         },
         "h_local": {
           "description": "Bandwidth for local RD estimate at the cutoff (for comparison). If None, the MSE-optimal bandwidth from ``rdrobust`` is used.",
-          "type": "string"
+          "type": "number"
         },
         "method": {
           "default": "ols",
@@ -14458,10 +14506,7 @@
         },
         "cutoffs": {
           "description": "Cutoff values. Must contain at least 2 cutoffs.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "number"
         },
         "data": {
           "description": "Input dataset.",
@@ -14511,7 +14556,10 @@
         },
         "covs": {
           "description": "Covariate names for overlap and CI testing.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input dataset.",
@@ -14519,7 +14567,10 @@
         },
         "target_x_range": {
           "description": "Running variable range ``(x_low, x_high)`` defining the target population. Defaults to the full data range.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "x": {
           "description": "Running variable name.",
@@ -14550,7 +14601,10 @@
         },
         "covariates": {
           "description": "Column names whose pre-treatment means are used as predictors for the V-weighted matching problem.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Long-format panel ``(unit, time, outcome, ...)``.",
@@ -14572,7 +14626,10 @@
         },
         "special_predictors": {
           "description": "R/Stata ``Synth``-style predictor specifications. Each entry is ``(column, period_spec, op)`` where ``period_spec`` is a scalar year, a list of years, or a ``slice(start, stop)`` (inclusive), and ``op`` is ``'mean'`` or ``'sum'``. When omitted together with ``covariates``, the pre-treatment outcome vector itself is used as the predictor (V has no identifying power and is fixed to the identity, following Kaul et al. 2015).",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "standardize_predictors": {
           "default": true,
@@ -15005,7 +15062,10 @@
         },
         "covariates": {
           "description": "Reserved for future covariate-adjusted extensions.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Balanced panel data in long format.",
@@ -15042,7 +15102,7 @@
         },
         "seed": {
           "description": "Random seed for reproducibility.",
-          "type": "string"
+          "type": "integer"
         },
         "time": {
           "description": "Time period column.",
@@ -15286,7 +15346,7 @@
           "type": "string"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         },
         "treated_color": {
@@ -15474,8 +15534,8 @@
           "type": "boolean"
         },
         "caliper": {
-          "description": "caliper parameter (Optional).",
-          "type": "string"
+          "description": "caliper parameter (Optional[float]).",
+          "type": "number"
         },
         "covariates": {
           "description": "Covariate matrix, DataFrame, or column names.",
@@ -15489,7 +15549,7 @@
           "type": "string"
         },
         "distance": {
-          "description": "distance parameter (Optional).",
+          "description": "distance parameter (Optional[str]).",
           "type": "string"
         },
         "estimand": {
@@ -15504,7 +15564,7 @@
         },
         "n_bins": {
           "description": "Number of bins.",
-          "type": "string"
+          "type": "integer"
         },
         "n_matches": {
           "default": 1,
@@ -15696,7 +15756,7 @@
         },
         "trim": {
           "description": "If set, draw vertical lines at (trim, 1-trim) to show the recommended trimming region.",
-          "type": "string"
+          "type": "number"
         }
       },
       "required": [
@@ -15776,10 +15836,7 @@
             4
           ],
           "description": "Figure size (width, height).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "number"
         },
         "method": {
           "default": "logit",
@@ -15881,10 +15938,7 @@
             null
           ],
           "description": "(width, height). Height defaults to 0.4 * n_covariates + 1.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "number"
         },
         "ps_method": {
           "default": "logit",
@@ -16035,11 +16089,11 @@
     "parameters": {
       "properties": {
         "ps": {
-          "description": "ps parameter (Optional).",
+          "description": "ps parameter (Optional[pandas.core.series.Series]).",
           "type": "string"
         },
         "summary": {
-          "description": "summary parameter (Dict).",
+          "description": "summary parameter (Dict[str, Any]).",
           "type": "object"
         },
         "table": {
@@ -16080,19 +16134,22 @@
           "type": "string"
         },
         "instrument": {
-          "description": "instrument parameter (Union).",
-          "type": "string"
+          "description": "instrument parameter (Union[str, List[str], NoneType]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "ml_g": {
-          "description": "ml_g parameter (Optional).",
+          "description": "ml_g parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_m": {
-          "description": "ml_m parameter (Optional).",
+          "description": "ml_m parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_r": {
-          "description": "ml_r parameter (Optional).",
+          "description": "ml_r parameter (Optional[Any]).",
           "type": "string"
         },
         "model": {
@@ -16116,7 +16173,7 @@
           "type": "integer"
         },
         "sample_weight": {
-          "description": "sample_weight parameter (Optional).",
+          "description": "sample_weight parameter (Optional[Any]).",
           "type": "string"
         },
         "treat": {
@@ -16159,19 +16216,22 @@
           "type": "string"
         },
         "instrument": {
-          "description": "instrument parameter (Union).",
-          "type": "string"
+          "description": "instrument parameter (Union[str, List[str], NoneType]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "ml_g": {
-          "description": "ml_g parameter (Optional).",
+          "description": "ml_g parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_m": {
-          "description": "ml_m parameter (Optional).",
+          "description": "ml_m parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_r": {
-          "description": "ml_r parameter (Optional).",
+          "description": "ml_r parameter (Optional[Any]).",
           "type": "string"
         },
         "n_folds": {
@@ -16190,7 +16250,7 @@
           "type": "integer"
         },
         "sample_weight": {
-          "description": "sample_weight parameter (Optional).",
+          "description": "sample_weight parameter (Optional[Any]).",
           "type": "string"
         },
         "treat": {
@@ -16233,19 +16293,22 @@
           "type": "string"
         },
         "instrument": {
-          "description": "instrument parameter (Union).",
-          "type": "string"
+          "description": "instrument parameter (Union[str, List[str], NoneType]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "ml_g": {
-          "description": "ml_g parameter (Optional).",
+          "description": "ml_g parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_m": {
-          "description": "ml_m parameter (Optional).",
+          "description": "ml_m parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_r": {
-          "description": "ml_r parameter (Optional).",
+          "description": "ml_r parameter (Optional[Any]).",
           "type": "string"
         },
         "n_folds": {
@@ -16264,7 +16327,7 @@
           "type": "integer"
         },
         "sample_weight": {
-          "description": "sample_weight parameter (Optional).",
+          "description": "sample_weight parameter (Optional[Any]).",
           "type": "string"
         },
         "treat": {
@@ -16307,19 +16370,22 @@
           "type": "string"
         },
         "instrument": {
-          "description": "instrument parameter (Union).",
-          "type": "string"
+          "description": "instrument parameter (Union[str, List[str], NoneType]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "ml_g": {
-          "description": "ml_g parameter (Optional).",
+          "description": "ml_g parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_m": {
-          "description": "ml_m parameter (Optional).",
+          "description": "ml_m parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_r": {
-          "description": "ml_r parameter (Optional).",
+          "description": "ml_r parameter (Optional[Any]).",
           "type": "string"
         },
         "n_folds": {
@@ -16338,7 +16404,7 @@
           "type": "integer"
         },
         "sample_weight": {
-          "description": "sample_weight parameter (Optional).",
+          "description": "sample_weight parameter (Optional[Any]).",
           "type": "string"
         },
         "treat": {
@@ -16381,19 +16447,22 @@
           "type": "string"
         },
         "instrument": {
-          "description": "instrument parameter (Union).",
-          "type": "string"
+          "description": "instrument parameter (Union[str, List[str], NoneType]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "ml_g": {
-          "description": "ml_g parameter (Optional).",
+          "description": "ml_g parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_m": {
-          "description": "ml_m parameter (Optional).",
+          "description": "ml_m parameter (Optional[Any]).",
           "type": "string"
         },
         "ml_r": {
-          "description": "ml_r parameter (Optional).",
+          "description": "ml_r parameter (Optional[Any]).",
           "type": "string"
         },
         "n_folds": {
@@ -16412,7 +16481,7 @@
           "type": "integer"
         },
         "sample_weight": {
-          "description": "sample_weight parameter (Optional).",
+          "description": "sample_weight parameter (Optional[Any]).",
           "type": "string"
         },
         "treat": {
@@ -16510,11 +16579,11 @@
     "parameters": {
       "properties": {
         "_citation_key": {
-          "description": "_citation_key parameter (Optional).",
+          "description": "_citation_key parameter (Optional[str]).",
           "type": "string"
         },
         "_influence_funcs": {
-          "description": "_influence_funcs parameter (Optional).",
+          "description": "_influence_funcs parameter (Optional[numpy.ndarray]).",
           "type": "string"
         },
         "alpha": {
@@ -16545,8 +16614,8 @@
           "type": "string"
         },
         "model_info": {
-          "description": "model_info parameter (Optional).",
-          "type": "string"
+          "description": "model_info parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "n_obs": {
           "description": "Number of obs.",
@@ -16941,10 +17010,7 @@
             64
           ],
           "description": "Hidden layer sizes for both networks.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "integer"
         },
         "instruments": {
           "description": "Excluded instrument variable names.",
@@ -17044,10 +17110,7 @@
             64
           ],
           "description": "Hidden layer sizes.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "integer"
         },
         "instruments": {
           "description": "Excluded instruments.",
@@ -17142,11 +17205,11 @@
     "parameters": {
       "properties": {
         "_dep_var": {
-          "description": "_dep_var parameter (Optional).",
+          "description": "_dep_var parameter (Optional[str]).",
           "type": "string"
         },
         "_entity": {
-          "description": "_entity parameter (Optional).",
+          "description": "_entity parameter (Optional[str]).",
           "type": "string"
         },
         "_formula": {
@@ -17154,35 +17217,38 @@
           "type": "string"
         },
         "_indep_vars": {
-          "description": "_indep_vars parameter (Optional).",
-          "type": "string"
+          "description": "_indep_vars parameter (Optional[List[str]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "_lm_result": {
-          "description": "_lm_result parameter (Optional).",
+          "description": "_lm_result parameter (Optional[Any]).",
           "type": "string"
         },
         "_method": {
-          "description": "_method parameter (Optional).",
+          "description": "_method parameter (Optional[str]).",
           "type": "string"
         },
         "_panel_data": {
-          "description": "_panel_data parameter (Optional).",
+          "description": "_panel_data parameter (Optional[pandas.core.frame.DataFrame]).",
           "type": "string"
         },
         "_time": {
-          "description": "_time parameter (Optional).",
+          "description": "_time parameter (Optional[str]).",
           "type": "string"
         },
         "data_info": {
-          "description": "data_info parameter (Optional).",
-          "type": "string"
+          "description": "data_info parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "diagnostics": {
-          "description": "diagnostics parameter (Optional).",
-          "type": "string"
+          "description": "diagnostics parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "model_info": {
-          "description": "model_info parameter (Dict).",
+          "description": "model_info parameter (Dict[str, Any]).",
           "type": "object"
         },
         "params": {
@@ -17244,7 +17310,10 @@
         },
         "covariates": {
           "description": "Covariate matrix, DataFrame, or column names.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -17256,7 +17325,7 @@
         },
         "n_seasons": {
           "description": "Number of seasons.",
-          "type": "string"
+          "type": "integer"
         },
         "time": {
           "description": "Time period column.",
@@ -17298,7 +17367,7 @@
         },
         "max_depth": {
           "description": "Maximum depth of trees",
-          "type": "string"
+          "type": "integer"
         },
         "max_samples": {
           "default": 0.5,
@@ -17330,7 +17399,7 @@
         },
         "random_state": {
           "description": "Random state for reproducibility",
-          "type": "string"
+          "type": "integer"
         },
         "verbose": {
           "default": 0,
@@ -18705,7 +18774,7 @@
         },
         "by_labels": {
           "description": "Group labels for ``by=`` panel headers, e.g. ``{0: 'Control', 1: 'Treated'}``. When ``by`` is binary 0/1 and no ``by_labels`` is supplied, ``Control``/``Treated`` is auto-applied so academic Table 1 reads correctly out of the box.",
-          "type": "string"
+          "type": "object"
         },
         "data": {
           "description": "Input data.",
@@ -18718,7 +18787,7 @@
         },
         "labels": {
           "description": "Variable labels: ``{'x1': 'Education (years)'}``.",
-          "type": "string"
+          "type": "object"
         },
         "output": {
           "default": "text",
@@ -18727,7 +18796,10 @@
         },
         "stats": {
           "description": "Statistics to compute. Default: ['n', 'mean', 'sd', 'min', 'p25', 'median', 'p75', 'max'].",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "title": {
           "default": "Summary Statistics",
@@ -18736,7 +18808,10 @@
         },
         "vars": {
           "description": "Variables to summarize. Defaults to all numeric columns.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -18768,7 +18843,7 @@
         },
         "labels": {
           "description": "Variable labels.",
-          "type": "string"
+          "type": "object"
         },
         "output": {
           "default": "text",
@@ -19652,7 +19727,10 @@
       "properties": {
         "absorb": {
           "description": "Fixed-effect variables to absorb (demeaned within groups) before binning. More efficient than including as dummies in ``controls``.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "ax": {
           "description": "Axes to draw on. Creates new figure if None.",
@@ -19674,11 +19752,17 @@
         },
         "colors": {
           "description": "Colors for each ``by`` group.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "controls": {
           "description": "Control variables to partial out from both Y and X before binning. Uses OLS residualization.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input data.",
@@ -19689,11 +19773,8 @@
             8,
             6
           ],
-          "description": "figsize parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "figsize parameter (Tuple[float, float]).",
+          "type": "number"
         },
         "fit": {
           "default": "linear",
@@ -19712,15 +19793,18 @@
         },
         "line_kw": {
           "description": "Extra kwargs for ``ax.plot()`` (the fit line).",
-          "type": "string"
+          "type": "object"
         },
         "markers": {
           "description": "Marker styles for each ``by`` group.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "n_bins": {
           "description": "Number of bins. Default: min(20, ceil(n^(1/3))) following the IMSE-optimal rate from Cattaneo et al. (2024).",
-          "type": "string"
+          "type": "integer"
         },
         "quantiles": {
           "default": true,
@@ -19729,10 +19813,10 @@
         },
         "scatter_kw": {
           "description": "Extra kwargs for ``ax.scatter()``.",
-          "type": "string"
+          "type": "object"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         },
         "weights": {
@@ -19744,7 +19828,7 @@
           "type": "string"
         },
         "x_label": {
-          "description": "x_label parameter (Optional).",
+          "description": "x_label parameter (Optional[str]).",
           "type": "string"
         },
         "y": {
@@ -19752,7 +19836,7 @@
           "type": "string"
         },
         "y_label": {
-          "description": "y_label parameter (Optional).",
+          "description": "y_label parameter (Optional[str]).",
           "type": "string"
         }
       },
@@ -19940,7 +20024,10 @@
       "properties": {
         "columns": {
           "description": "Subset of columns. Default: all.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "df": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -19984,7 +20071,10 @@
         },
         "vars": {
           "description": "Variables to correlate. Default: all numeric columns.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -20004,10 +20094,7 @@
             99
           ],
           "description": "Lower and upper percentile cutoffs.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "number"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -20025,7 +20112,10 @@
         },
         "vars": {
           "description": "Variables to winsorize. Default: all numeric columns.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -20044,7 +20134,7 @@
           "type": "string"
         },
         "vars": {
-          "description": "vars parameter (Sequence).",
+          "description": "vars parameter (Sequence[str]).",
           "items": {
             "type": "string"
           },
@@ -20068,7 +20158,7 @@
           "type": "string"
         },
         "vars": {
-          "description": "vars parameter (Sequence).",
+          "description": "vars parameter (Sequence[str]).",
           "items": {
             "type": "string"
           },
@@ -20092,7 +20182,7 @@
           "type": "string"
         },
         "vars": {
-          "description": "vars parameter (Sequence).",
+          "description": "vars parameter (Sequence[str]).",
           "items": {
             "type": "string"
           },
@@ -20116,7 +20206,7 @@
           "type": "string"
         },
         "vars": {
-          "description": "vars parameter (Sequence).",
+          "description": "vars parameter (Sequence[str]).",
           "items": {
             "type": "string"
           },
@@ -20140,7 +20230,7 @@
           "type": "string"
         },
         "vars": {
-          "description": "vars parameter (Sequence).",
+          "description": "vars parameter (Sequence[str]).",
           "items": {
             "type": "string"
           },
@@ -20164,7 +20254,7 @@
           "type": "string"
         },
         "vars": {
-          "description": "vars parameter (Sequence).",
+          "description": "vars parameter (Sequence[str]).",
           "items": {
             "type": "string"
           },
@@ -20190,7 +20280,10 @@
         },
         "by": {
           "description": "Group variables. If given, ranks are computed within each group.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -20287,7 +20380,10 @@
       "properties": {
         "covariates": {
           "description": "Exogenous controls to include in the first stage.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -20337,8 +20433,8 @@
           "type": "string"
         },
         "quantiles": {
-          "description": "quantiles parameter (Optional).",
-          "type": "string"
+          "description": "quantiles parameter (Optional[List[float]]).",
+          "type": "number"
         },
         "x": {
           "description": "Primary running variable, regressor, or feature input for this estimator.",
@@ -20662,7 +20758,10 @@
         },
         "var_names": {
           "description": "Variable names when using ``y``/``X`` directly.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "y": {
           "description": "Response array (alternative to formula).",
@@ -20830,7 +20929,7 @@
         },
         "at": {
           "description": "Fix covariates at specific values for conditional margins. E.g., ``{'age': 30, 'female': 1}``.",
-          "type": "string"
+          "type": "object"
         },
         "data": {
           "description": "Data to compute margins on. Defaults to the estimation sample.",
@@ -20852,7 +20951,10 @@
         },
         "variables": {
           "description": "Variables to compute dy/dx for. Default: all regressors.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -20872,8 +20974,8 @@
           "type": "number"
         },
         "at": {
-          "description": "at parameter (Optional).",
-          "type": "string"
+          "description": "at parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -20894,8 +20996,11 @@
           "type": "string"
         },
         "variables": {
-          "description": "variables parameter (Optional).",
-          "type": "string"
+          "description": "variables parameter (Optional[List[str]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -20964,7 +21069,7 @@
           "type": "string"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         }
       },
@@ -21035,10 +21140,13 @@
         },
         "palette": {
           "description": "Colours for each ``by`` group.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         },
         "x": {
@@ -21046,7 +21154,7 @@
           "type": "string"
         },
         "xlabel": {
-          "description": "xlabel parameter (Optional).",
+          "description": "xlabel parameter (Optional[str]).",
           "type": "string"
         },
         "ylabel": {
@@ -21246,7 +21354,10 @@
         },
         "covariates": {
           "description": "Covariate matrix, DataFrame, or column names.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -21301,7 +21412,10 @@
         },
         "covariates": {
           "description": "Covariate matrix, DataFrame, or column names.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -21317,7 +21431,7 @@
           "type": "boolean"
         },
         "regional_shocks": {
-          "description": "regional_shocks parameter (Optional).",
+          "description": "regional_shocks parameter (Optional[pandas.core.frame.DataFrame]).",
           "type": "string"
         },
         "robust": {
@@ -21364,7 +21478,10 @@
         },
         "controls": {
           "description": "Exogenous control variables.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Observation-level data (n rows).",
@@ -21577,7 +21694,7 @@
         },
         "h": {
           "description": "Bandwidth. A scalar applies the same bandwidth on both sides; a length-2 sequence is interpreted as ``(h_left, h_right)``.",
-          "type": "string"
+          "type": "number"
         },
         "p": {
           "default": 2,
@@ -21660,7 +21777,10 @@
         },
         "exog": {
           "description": "Included exogenous controls.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "h0": {
           "default": 0,
@@ -21713,7 +21833,10 @@
         },
         "exog": {
           "description": "Included exogenous controls (a constant is added automatically).",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "instruments": {
           "description": "Excluded instruments.",
@@ -21787,7 +21910,10 @@
         },
         "exog": {
           "description": "Included exogenous controls. An intercept is always added.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "grid_size": {
           "default": 401,
@@ -21818,7 +21944,7 @@
         },
         "random_state": {
           "description": "Random seed or RandomState for reproducible stochastic steps.",
-          "type": "string"
+          "type": "integer"
         },
         "vcov": {
           "default": "HC1",
@@ -21866,7 +21992,7 @@
           "type": "number"
         },
         "instruments": {
-          "description": "instruments parameter (List).",
+          "description": "instruments parameter (List[str]).",
           "items": {
             "type": "string"
           },
@@ -21900,7 +22026,7 @@
         },
         "ci": {
           "description": "Confidence interval (lower, upper). If not provided, computed from estimate +/- z * se.",
-          "type": "string"
+          "type": "number"
         },
         "estimate": {
           "description": "Point estimate of the treatment effect. - For measure='RR': risk ratio (must be > 0). - For measure='OR': odds ratio (must be > 0). - For measure='HR': hazard ratio (must be > 0). - For measure='diff': risk difference (between -1 and 1). - For measure='SMD': standardised mean difference. - For measure='RD': same as 'diff'.",
@@ -21918,7 +22044,7 @@
         },
         "se": {
           "description": "Standard error of the estimate (used to compute CI if ci is not provided).",
-          "type": "string"
+          "type": "number"
         }
       },
       "required": [
@@ -22019,7 +22145,7 @@
         },
         "seed": {
           "description": "Random seed for reproducibility.",
-          "type": "string"
+          "type": "integer"
         },
         "treatment": {
           "description": "Endogenous binary treatment variable (D).",
@@ -22110,7 +22236,7 @@
         },
         "seed": {
           "description": "Random seed.",
-          "type": "string"
+          "type": "integer"
         },
         "stat": {
           "default": "diff_means",
@@ -22314,7 +22440,7 @@
         },
         "seed": {
           "description": "Random seed for reproducibility.",
-          "type": "string"
+          "type": "integer"
         },
         "treatment": {
           "description": "Binary treatment indicator (only in data_experiment).",
@@ -22377,7 +22503,7 @@
         },
         "seed": {
           "description": "Random seed for reproducible stochastic steps.",
-          "type": "string"
+          "type": "integer"
         },
         "treatment": {
           "description": "Treatment indicator, treatment variable, or treatment array.",
@@ -22419,7 +22545,10 @@
         },
         "controls": {
           "description": "Control variables for covariate-adjusted inference. When provided, the test statistic is computed on residuals from regressing Y on controls.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input data.",
@@ -22432,7 +22561,7 @@
         },
         "seed": {
           "description": "Random seed for reproducibility.",
-          "type": "string"
+          "type": "integer"
         },
         "statistic": {
           "default": "ate",
@@ -22466,11 +22595,8 @@
     "parameters": {
       "properties": {
         "ci": {
-          "description": "ci parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "ci parameter (Tuple[float, float]).",
+          "type": "number"
         },
         "n_obs": {
           "description": "Number of obs.",
@@ -22610,7 +22736,7 @@
         },
         "seed": {
           "description": "Random seed for reproducibility.",
-          "type": "string"
+          "type": "integer"
         },
         "variable": {
           "description": "Name of the coefficient to test (H0: beta = 0).",
@@ -22647,7 +22773,10 @@
       "properties": {
         "baseline": {
           "description": "Baseline covariates.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Sorted long-format panel (one row per unit-time).",
@@ -22717,7 +22846,7 @@
           "type": "number"
         },
         "bounds": {
-          "description": "bounds parameter (Optional).",
+          "description": "bounds parameter (Optional[pandas.core.frame.DataFrame]).",
           "type": "string"
         },
         "effects": {
@@ -22729,7 +22858,7 @@
           "type": "string"
         },
         "model_info": {
-          "description": "model_info parameter (Dict).",
+          "description": "model_info parameter (Dict[str, Any]).",
           "type": "object"
         },
         "n_obs": {
@@ -22737,8 +22866,8 @@
           "type": "integer"
         },
         "strata_proportions": {
-          "description": "strata_proportions parameter (Dict).",
-          "type": "object"
+          "description": "strata_proportions parameter (Dict[str, float]).",
+          "type": "number"
         }
       },
       "required": [
@@ -22774,7 +22903,7 @@
         },
         "seed": {
           "description": "Random seed for reproducible stochastic steps.",
-          "type": "string"
+          "type": "integer"
         },
         "survival": {
           "description": "survival parameter (str).",
@@ -23384,7 +23513,7 @@
           "type": "string"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         }
       },
@@ -23424,7 +23553,7 @@
           "type": "string"
         },
         "title": {
-          "description": "title parameter (Optional).",
+          "description": "title parameter (Optional[str]).",
           "type": "string"
         }
       },
@@ -23473,7 +23602,10 @@
         },
         "learners": {
           "description": "Which learners to compare. Default: all five ('s','t','x','r','dr'). Additional arguments passed to ``metalearner()``.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "treat": {
           "description": "Binary treatment variable (0/1).",
@@ -24618,10 +24750,7 @@
             100
           ],
           "description": "Outcome head hidden layer sizes.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "integer"
         },
         "learning_rate": {
           "default": 0.001,
@@ -24654,10 +24783,7 @@
             200
           ],
           "description": "Representation network hidden layer sizes.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "integer"
         },
         "treat": {
           "description": "Binary treatment variable (0/1).",
@@ -24737,11 +24863,8 @@
           "default": [
             100
           ],
-          "description": "head_layers parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "head_layers parameter (Tuple[int, ...]).",
+          "type": "integer"
         },
         "ipm_weight": {
           "default": 1.0,
@@ -24778,11 +24901,8 @@
             200,
             200
           ],
-          "description": "repr_layers parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "repr_layers parameter (Tuple[int, ...]).",
+          "type": "integer"
         },
         "treat": {
           "description": "Binary treatment variable (0/1).",
@@ -24862,11 +24982,8 @@
           "default": [
             100
           ],
-          "description": "head_layers parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "head_layers parameter (Tuple[int, ...]).",
+          "type": "integer"
         },
         "learning_rate": {
           "default": 0.001,
@@ -24903,11 +25020,8 @@
             200,
             200
           ],
-          "description": "repr_layers parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "repr_layers parameter (Tuple[int, ...]).",
+          "type": "integer"
         },
         "targeted_reg_weight": {
           "default": 1.0,
@@ -25193,7 +25307,10 @@
         },
         "variables": {
           "description": "Column names to use. If None, uses all numeric columns.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "w_threshold": {
           "default": 0.3,
@@ -25242,8 +25359,11 @@
           "type": "number"
         },
         "variables": {
-          "description": "variables parameter (Optional).",
-          "type": "string"
+          "description": "variables parameter (Optional[List[str]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "w_threshold": {
           "default": 0.3,
@@ -25278,19 +25398,28 @@
         },
         "forbidden": {
           "description": "Background knowledge: edges that must NOT appear in the final graph (treated as undirected -- both ``(a, b)`` and ``(b, a)`` are forbidden when either is given). The skeleton phase keeps these absent regardless of CI test outcomes.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "max_cond_size": {
           "description": "Maximum conditioning set size. If None, goes up to d-2.",
-          "type": "string"
+          "type": "integer"
         },
         "required": {
           "description": "Background knowledge: directed edges ``a -> b`` that must appear in the CPDAG. The skeleton phase preserves them regardless of CI rejection, and the orientation phase pins their direction.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "variables": {
           "description": "Column names to use. If None, uses all numeric columns.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -25319,20 +25448,29 @@
           "type": "string"
         },
         "forbidden": {
-          "description": "forbidden parameter (Optional).",
-          "type": "string"
+          "description": "forbidden parameter (Optional[List[Tuple[str, str]]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "max_cond_size": {
-          "description": "max_cond_size parameter (Optional).",
-          "type": "string"
+          "description": "max_cond_size parameter (Optional[int]).",
+          "type": "integer"
         },
         "required": {
-          "description": "required parameter (Optional).",
-          "type": "string"
+          "description": "required parameter (Optional[List[Tuple[str, str]]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "variables": {
-          "description": "variables parameter (Optional).",
-          "type": "string"
+          "description": "variables parameter (Optional[List[str]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -25384,11 +25522,8 @@
             0.025,
             0.975
           ],
-          "description": "propensity_bounds parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "propensity_bounds parameter (Tuple[float, float]).",
+          "type": "number"
         },
         "propensity_library": {
           "description": "propensity_library parameter (Optional[List[BaseEstimator]]).",
@@ -25637,8 +25772,11 @@
           "type": "integer"
         },
         "policy_covariates": {
-          "description": "policy_covariates parameter (Optional).",
-          "type": "string"
+          "description": "policy_covariates parameter (Optional[List[str]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "random_state": {
           "default": 42,
@@ -25687,7 +25825,7 @@
         },
         "policy_covariates": {
           "default": [],
-          "description": "policy_covariates parameter (Tuple).",
+          "description": "policy_covariates parameter (Tuple[str, ...]).",
           "items": {
             "type": "string"
           },
@@ -25698,7 +25836,7 @@
           "type": "string"
         },
         "scores": {
-          "description": "scores parameter (Optional).",
+          "description": "scores parameter (Optional[numpy.ndarray]).",
           "type": "string"
         },
         "tree": {
@@ -25723,11 +25861,8 @@
             NaN,
             NaN
           ],
-          "description": "value_policy_ci parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "value_policy_ci parameter (Tuple[float, float]).",
+          "type": "number"
         },
         "value_policy_se": {
           "default": NaN,
@@ -26024,11 +26159,11 @@
         },
         "bin_width": {
           "description": "Width of bins. If None, computed from data range / n_bins.",
-          "type": "string"
+          "type": "number"
         },
         "bunch_region": {
           "description": "(lower, upper) bounds of the bunching region. If None, uses [threshold - 2*bin_width, threshold + 2*bin_width].",
-          "type": "string"
+          "type": "number"
         },
         "data": {
           "description": "Input data.",
@@ -26041,11 +26176,11 @@
         },
         "dt": {
           "description": "Change in marginal tax rate at the kink (for elasticity). E.g., 0.10 for a 10pp increase.",
-          "type": "string"
+          "type": "number"
         },
         "exclude_region": {
           "description": "Same as bunch_region unless otherwise specified.",
-          "type": "string"
+          "type": "number"
         },
         "n_bins": {
           "default": 50,
@@ -26095,12 +26230,12 @@
           "type": "number"
         },
         "bin_width": {
-          "description": "bin_width parameter (Optional).",
-          "type": "string"
+          "description": "bin_width parameter (Optional[float]).",
+          "type": "number"
         },
         "bunch_region": {
-          "description": "bunch_region parameter (Optional).",
-          "type": "string"
+          "description": "bunch_region parameter (Optional[Tuple[float, float]]).",
+          "type": "number"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -26112,12 +26247,12 @@
           "type": "string"
         },
         "dt": {
-          "description": "dt parameter (Optional).",
-          "type": "string"
+          "description": "dt parameter (Optional[float]).",
+          "type": "number"
         },
         "exclude_region": {
-          "description": "exclude_region parameter (Optional).",
-          "type": "string"
+          "description": "exclude_region parameter (Optional[Tuple[float, float]]).",
+          "type": "number"
         },
         "n_bins": {
           "default": 50,
@@ -26177,7 +26312,7 @@
         },
         "exclude_range": {
           "description": "Range around the notch to exclude from the counterfactual fit. If None, defaults to (notch_point - 3*bin_width, notch_point + 5*bin_width).",
-          "type": "string"
+          "type": "number"
         },
         "n_boot": {
           "default": 500,
@@ -26233,11 +26368,8 @@
           "type": "string"
         },
         "ci": {
-          "description": "ci parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "ci parameter (Tuple[float, float]).",
+          "type": "number"
         },
         "counterfactual": {
           "description": "counterfactual parameter (ndarray).",
@@ -26324,7 +26456,7 @@
         },
         "lambda_reg": {
           "description": "Nuclear norm regularisation parameter. If None, estimated via the universal threshold: lambda = sigma * sqrt(n).",
-          "type": "string"
+          "type": "number"
         },
         "max_iter": {
           "default": 1000,
@@ -26333,7 +26465,7 @@
         },
         "max_rank": {
           "description": "Maximum rank for the completed matrix. If None, no constraint.",
-          "type": "string"
+          "type": "integer"
         },
         "n_bootstrap": {
           "default": 200,
@@ -26392,8 +26524,8 @@
           "type": "string"
         },
         "lambda_reg": {
-          "description": "lambda_reg parameter (Optional).",
-          "type": "string"
+          "description": "lambda_reg parameter (Optional[float]).",
+          "type": "number"
         },
         "max_iter": {
           "default": 1000,
@@ -26401,8 +26533,8 @@
           "type": "integer"
         },
         "max_rank": {
-          "description": "max_rank parameter (Optional).",
-          "type": "string"
+          "description": "max_rank parameter (Optional[int]).",
+          "type": "integer"
         },
         "n_bootstrap": {
           "default": 200,
@@ -26468,8 +26600,8 @@
           "type": "string"
         },
         "dose_range": {
-          "description": "dose_range parameter (Optional).",
-          "type": "string"
+          "description": "dose_range parameter (Optional[Tuple[float, float]]).",
+          "type": "number"
         },
         "n_bootstrap": {
           "default": 200,
@@ -26524,7 +26656,10 @@
         },
         "covariates": {
           "description": "Not used in basic Lee bounds, reserved for conditional bounds.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "Input data (including units with missing outcomes).",
@@ -26601,11 +26736,11 @@
         },
         "y_lower": {
           "description": "Known lower bound of the outcome. If None, uses observed min.",
-          "type": "string"
+          "type": "number"
         },
         "y_upper": {
           "description": "Known upper bound of the outcome. If None, uses observed max.",
-          "type": "string"
+          "type": "number"
         }
       },
       "required": [
@@ -26627,18 +26762,12 @@
           "type": "number"
         },
         "ci_lower": {
-          "description": "ci_lower parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "ci_lower parameter (Tuple[float, float]).",
+          "type": "number"
         },
         "ci_upper": {
-          "description": "ci_upper parameter (Tuple).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "ci_upper parameter (Tuple[float, float]).",
+          "type": "number"
         },
         "lower": {
           "description": "lower parameter (float).",
@@ -26650,7 +26779,7 @@
         },
         "model_info": {
           "default": null,
-          "description": "model_info parameter (Dict).",
+          "description": "model_info parameter (Dict[str, Any]).",
           "type": "object"
         },
         "n_obs": {
@@ -26724,11 +26853,11 @@
         },
         "y_lower": {
           "description": "Known lower bound of Y. Defaults to observed min.",
-          "type": "string"
+          "type": "number"
         },
         "y_upper": {
           "description": "Known upper bound of Y. Defaults to observed max.",
-          "type": "string"
+          "type": "number"
         }
       },
       "required": [
@@ -26757,7 +26886,10 @@
         },
         "controls": {
           "description": "Control variables (residualized out via OLS).",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -26815,10 +26947,7 @@
             2.0
           ],
           "description": "Range of proportional selection parameter delta.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "number"
         },
         "n_boot": {
           "default": 500,
@@ -26880,7 +27009,10 @@
         },
         "covariates": {
           "description": "Covariates to condition on for tighter (conditional) bounds.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -26980,7 +27112,10 @@
         },
         "covariates": {
           "description": "Covariate matrix, DataFrame, or column names.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -27047,7 +27182,10 @@
         },
         "propensity_covariates": {
           "description": "Covariates for propensity model at each stage. If None, uses covariates_by_stage.",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "random_state": {
           "default": 42,
@@ -27086,7 +27224,7 @@
           "type": "number"
         },
         "covariates_by_stage": {
-          "description": "covariates_by_stage parameter (List).",
+          "description": "covariates_by_stage parameter (List[List[str]]).",
           "items": {
             "type": "string"
           },
@@ -27102,8 +27240,11 @@
           "type": "integer"
         },
         "propensity_covariates": {
-          "description": "propensity_covariates parameter (Optional).",
-          "type": "string"
+          "description": "propensity_covariates parameter (Optional[List[List[str]]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "random_state": {
           "default": 42,
@@ -27111,7 +27252,7 @@
           "type": "integer"
         },
         "treatments": {
-          "description": "treatments parameter (List).",
+          "description": "treatments parameter (List[str]).",
           "items": {
             "type": "string"
           },
@@ -27163,8 +27304,8 @@
           "type": "integer"
         },
         "reference": {
-          "description": "reference parameter (Optional).",
-          "type": "string"
+          "description": "reference parameter (Optional[int]).",
+          "type": "integer"
         },
         "treat": {
           "description": "Treatment indicator or first-treatment-period column.",
@@ -30106,14 +30247,14 @@
           "type": "string"
         },
         "x_endog": {
-          "description": "x_endog parameter (List).",
+          "description": "x_endog parameter (List[str]).",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "x_exog": {
-          "description": "x_exog parameter (List).",
+          "description": "x_exog parameter (List[str]).",
           "items": {
             "type": "string"
           },
@@ -30168,14 +30309,14 @@
           "type": "string"
         },
         "x_endog": {
-          "description": "x_endog parameter (List).",
+          "description": "x_endog parameter (List[str]).",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "x_exog": {
-          "description": "x_exog parameter (List).",
+          "description": "x_exog parameter (List[str]).",
           "items": {
             "type": "string"
           },
@@ -30235,7 +30376,7 @@
         },
         "vcov": {
           "description": "Variance-covariance estimator. - ``\"iid\"`` -- classical - ``\"HC1\"``, ``\"HC2\"``, ``\"HC3\"`` -- heteroskedasticity-robust - ``{\"CRV1\": \"firm\"}`` -- cluster-robust - ``{\"CRV1\": \"firm + year\"}`` -- two-way clustering",
-          "type": "string"
+          "type": "object"
         },
         "weights": {
           "description": "Column name for regression weights.",
@@ -30288,7 +30429,7 @@
         },
         "vcov": {
           "description": "Variance-covariance estimator.",
-          "type": "string"
+          "type": "object"
         },
         "weights": {
           "description": "Column name for regression weights.",
@@ -30322,7 +30463,7 @@
         },
         "vcov": {
           "description": "Variance-covariance estimator. Additional arguments passed to ``pyfixest.feglm()``.",
-          "type": "string"
+          "type": "object"
         }
       },
       "required": [
@@ -30570,7 +30711,7 @@
           "type": "number"
         },
         "tables": {
-          "description": "tables parameter (Dict).",
+          "description": "tables parameter (Dict[str, pandas.core.frame.DataFrame]).",
           "type": "object"
         }
       },
@@ -31162,10 +31303,7 @@
         },
         "prob": {
           "description": "Probability of each arm. Default: equal.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "number"
         },
         "rerand_threshold": {
           "default": 0.001,
@@ -31595,11 +31733,14 @@
         "method": {
           "default": "pmm",
           "description": "Imputation method per variable: 'pmm' (predictive mean matching), 'norm' (Bayesian linear), 'logreg' (logistic for binary), 'sample' (random sample). Dict maps variable names to methods.",
-          "type": "string"
+          "type": "object"
         },
         "predictors": {
           "description": "Dict mapping variable -> list of predictor variables. If None, uses all other variables.",
-          "type": "object"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "print_progress": {
           "default": false,
@@ -31919,10 +32060,7 @@
         },
         "cutoffs": {
           "description": "Cutoff values.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "type": "number"
         },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
@@ -33370,7 +33508,7 @@
         },
         "method_hints": {
           "description": "Per-method keyword overrides, merged with the shared kwargs when dispatching each estimator. Structure:: {'proximal': {'proxy_z': ['z'], 'proxy_w': ['w']}, 'msm': {'time_varying': ['L_lag']}, 'principal_strat': {'strata': 's'}} **Collision rule** (docs/ROADMAP.md Section 6): per-method hints take precedence over the shared kwargs for the method they name. If the top-level ``covariates=['age']`` disagrees with ``method_hints={'proximal': {'covariates': ['age', 'educ']}}``, proximal uses the hint and every other method uses the shared arg. A ``UserWarning`` fires on conflict so the override is visible in the log.",
-          "type": "string"
+          "type": "object"
         },
         "methods": {
           "description": "Estimators to compare. Default auto-selects based on data. Classical options: ``'ols'``, ``'matching'``, ``'ipw'``, ``'aipw'``, ``'dml'``, ``'g_computation'``, ``'causal_forest'``, ``'did'``, ``'panel_fe'``. Hint-driven Sprint-B options (require ``method_hints``): ``'proximal'``, ``'msm'``, ``'principal_strat'``, ``'mediate'``, ``'mediate_interventional'``, ``'front_door'``. Each needs method-specific kwargs the shared signature does not expose (proxy_z/proxy_w, time_varying, strata, mediator, etc.) -- pass them through ``method_hints``.",
@@ -34054,7 +34192,10 @@
         },
         "equations": {
           "description": "Mapping from equation name to (dep_var, list_of_regressors).",
-          "type": "object"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "maxiter": {
           "default": 100,
@@ -34145,8 +34286,11 @@
           "type": "string"
         },
         "equations": {
-          "description": "equations parameter (Dict).",
-          "type": "object"
+          "description": "equations parameter (Dict[str, Tuple[str, List[str], List[str]]]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "instruments": {
           "description": "Full set of instruments (all exogenous variables in the system).",
@@ -35394,15 +35538,15 @@
     "parameters": {
       "properties": {
         "data_info": {
-          "description": "data_info parameter (Optional).",
-          "type": "string"
+          "description": "data_info parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "diagnostics": {
-          "description": "diagnostics parameter (Optional).",
-          "type": "string"
+          "description": "diagnostics parameter (Optional[Dict[str, Any]]).",
+          "type": "object"
         },
         "model_info": {
-          "description": "model_info parameter (Dict).",
+          "description": "model_info parameter (Dict[str, Any]).",
           "type": "object"
         },
         "params": {
@@ -38356,7 +38500,7 @@
         },
         "h": {
           "description": "Manual bandwidth. If None, MSE-optimal bandwidth is selected.",
-          "type": "string"
+          "type": "number"
         },
         "kernel": {
           "default": "triangular",
