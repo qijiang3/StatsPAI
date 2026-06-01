@@ -183,6 +183,12 @@ STATA_HEADLINE_GAP_EXCEPTIONS: dict[str, str] = {
         "The R row now uses lpirfs' Cholesky/unit-shock convention; the "
         "frozen Stata row is the separate direct-OLS shock fixture."
     ),
+    "21_honest_relmags": (
+        "StatsPAI matches the R HonestDiD relative-magnitudes reference at "
+        "machine precision; Stata honestdid uses a different sensitivity-grid "
+        "and optimisation convention, so its CI bounds differ at the ~1e-3 "
+        "level on this fixture (the StatsPAI<->R row remains an exact pass)."
+    ),
 }
 
 

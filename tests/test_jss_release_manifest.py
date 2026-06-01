@@ -101,9 +101,12 @@ LEGACY_JOURNAL_REVIEW_PATHS = (
     REPO_ROOT / "docs" / ("jo" "ss_validation_dossier.md"),
     REPO_ROOT / "tests" / ("test_jo" "ss_reviewer_followups.py"),
 )
+ACTIVE_EXTERNAL_REVIEW_PATHS = {
+    "paper.md",
+    "docs/jo" "ss_reviewer_guide.md",
+    "docs/jo" "ss_validation_dossier.md",
+}
 LEGACY_REVIEW_PATH_REDACTIONS = {
-    "docs/jo" "ss_reviewer_guide.md": "docs/retired-external-reviewer-guide.md",
-    "docs/jo" "ss_validation_dossier.md": "docs/retired-external-validation-dossier.md",
     (
         "tests/test_jo" "ss_reviewer_followups.py"
     ): "tests/retired-external-reviewer-followups.py",
@@ -190,6 +193,16 @@ ROOT_RELEASE_PREFIXES = (
 
 
 def _run(script: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    # ``Paper-JSS/`` is a git-ignored, local-only submission working directory
+    # (see ``.gitignore``).  Its replication scripts are absent from fresh
+    # clones and CI checkouts, so a release-gate test that shells out to one of
+    # them is only meaningful when the local tree is present.  Tracked scripts
+    # (e.g. ``scripts/registry_stats.py``) still run normally.
+    if not Path(script).exists():
+        pytest.skip(
+            f"{Path(script).name} lives under the git-ignored Paper-JSS/ "
+            "submission working dir; absent in this checkout"
+        )
     env = os.environ.copy()
     env.setdefault("SOURCE_DATE_EPOCH", "1780185600")
     return subprocess.run(
@@ -201,6 +214,19 @@ def _run(script: Path, *args: str) -> subprocess.CompletedProcess[str]:
         stderr=subprocess.PIPE,
         check=False,
     )
+
+
+def _require_paper_jss() -> None:
+    """Skip when the git-ignored, local-only Paper-JSS/ tree is absent.
+
+    Tests that read Paper-JSS manuscript/PDF/script artifacts directly (rather
+    than via :func:`_run`) call this so they skip cleanly on fresh clones and
+    CI checkouts instead of raising ``FileNotFoundError``.
+    """
+    if not (REPO_ROOT / "Paper-JSS").exists():
+        pytest.skip(
+            "Paper-JSS/ submission working dir is git-ignored / local-only"
+        )
 
 
 def _claim_lint_module():
@@ -254,13 +280,16 @@ def test_registry_stats_docs_are_live() -> None:
     assert res.returncode == 0, res.stderr
 
 
-def test_legacy_journal_review_artifacts_are_not_current_docs() -> None:
-    """Old review docs must not be exposed as current JSS package guidance."""
+def test_active_joss_review_artifacts_are_protected_from_jss_docs() -> None:
+    """Active JOSS review docs stay in place but are not JSS guidance."""
     for path in LEGACY_JOURNAL_REVIEW_PATHS:
-        assert not path.exists(), f"retire stale reviewer artifact: {path}"
+        if path.name.startswith("test_joss_"):
+            assert not path.exists(), f"retired JOSS follow-up test should stay retired: {path}"
+        else:
+            assert path.exists(), f"active JOSS review artifact must remain: {path}"
     assert (REPO_ROOT / "docs" / "jss_source_audit_dossier.md").exists()
 
-    for rel in ("paper.md", "paper.bib"):
+    for rel in ("paper.md",):
         text = (REPO_ROOT / rel).read_text(encoding="utf-8")
         assert "JO" "SS" not in text
         assert "jo" "ss_" not in text
@@ -304,7 +333,8 @@ def test_source_snapshot_manifest_has_structured_release_gate() -> None:
         "Final publication checklist:",
         "Final-publication gate blocker breakdown:",
         "Display path redactions:",
-        "Retired external-review filenames are displayed under retired-external aliases",
+        "Active external-review filenames are omitted from the JSS source-snapshot gate",
+        "retired external-review filenames are displayed under retired-external aliases",
         "`clean_combined_worktree`",
         "`package_tag_at_head`",
         "`versions_consistent`",
@@ -329,6 +359,7 @@ def test_source_snapshot_manifest_watches_root_release_paths() -> None:
     status_paths = _git_status_paths()
     expected = {
         _source_snapshot_display_path(path) for path in status_paths
+        if path not in ACTIVE_EXTERNAL_REVIEW_PATHS
         if any(
             path == prefix.rstrip("/") or path.startswith(prefix)
             for prefix in ROOT_RELEASE_PREFIXES
@@ -336,6 +367,7 @@ def test_source_snapshot_manifest_watches_root_release_paths() -> None:
     }
 
     assert expected <= watched
+    assert not (ACTIVE_EXTERNAL_REVIEW_PATHS & watched)
     if "tests/test_jo" "ss_reviewer_followups.py" in status_paths:
         assert "tests/retired-external-reviewer-followups.py" in watched
     assert not (
@@ -365,11 +397,12 @@ def test_release_boundary_audit_requires_structured_release_gate() -> None:
     assert audit["status"] == "PASS"
     assert len(summary["release_gate_checks"]) == len(REQUIRED_RELEASE_CHECKS)
     assert set(summary["release_blocker_breakdown"])
-    assert "paper.md" in audit["checked_files"]
+    assert "docs/jss_source_audit_dossier.md" in audit["checked_files"]
+    assert "paper.md" not in audit["checked_files"]
 
     source = RELEASE_AUDIT.read_text()
-    assert "# Current Submission Boundary" in source
-    assert "not the authoritative JSS submission" in source
+    assert "active JOSS review" in source
+    assert "without requiring edits to `paper.md`" in source
 
 
 def test_validation_claim_lint_covers_release_notes() -> None:
@@ -385,12 +418,17 @@ def test_validation_claim_lint_covers_release_notes() -> None:
     assert "CHANGELOG.md" in payload["checked_files"]
     assert "CONTRIBUTING.md" in payload["checked_files"]
     assert "CONTRIBUTORS.md" in payload["checked_files"]
-    assert "StatsPAI_full_data_analysis_skill/SKILL.md" in payload["checked_files"]
     assert "papers/run_replication.py" in payload["checked_files"]
     assert "papers/run_experiments.py" in payload["checked_files"]
     assert "tools/audit_citations.py" in payload["checked_files"]
-    assert "CITATION.cff" in payload["checked_files"]
-    assert "paper.md" in payload["checked_files"]
+    assert "CITATION.cff" in payload["protected_joss_files"]
+    assert "paper.md" in payload["protected_joss_files"]
+    assert "README.md" in payload["protected_joss_files"]
+    assert "docs/joss_reviewer_guide.md" in payload["protected_joss_files"]
+    assert "docs/joss_validation_dossier.md" in payload["protected_joss_files"]
+    assert "StatsPAI_full_data_analysis_skill/SKILL.md" in payload[
+        "protected_joss_files"
+    ]
     assert "docs/agent_cards_spec.md" in payload["checked_files"]
     assert "docs/guides/agent_native_workflow.md" in payload["checked_files"]
     assert stale_forest_t4 in claim_lint.FORBIDDEN_SNIPPETS
@@ -440,9 +478,6 @@ def test_validation_claim_lint_covers_release_notes() -> None:
     assert len(payload["historical_drift_files"]) == 10
     assert stale_chinese_promotion in claim_lint.HISTORICAL_FORBIDDEN_SNIPPETS
     assert "paper2026jo" "ss" in claim_lint.HISTORICAL_FORBIDDEN_SNIPPETS
-    assert "JO" "SS" in claim_lint.FORBIDDEN_SNIPPETS
-    assert "For JO" "SS Reviewers" in claim_lint.FORBIDDEN_SNIPPETS
-    assert "docs/jo" "ss_validation_dossier.md" in claim_lint.FORBIDDEN_SNIPPETS
     assert payload["forbidden_snippet_count"] == len(claim_lint.FORBIDDEN_SNIPPETS)
     assert payload["historical_forbidden_snippet_count"] == len(
         claim_lint.HISTORICAL_FORBIDDEN_SNIPPETS
@@ -507,6 +542,7 @@ def test_validation_evidence_audit_separates_grade_from_supplemental_notes() -> 
 
 def test_coverage_findings_track_b1000_artifacts() -> None:
     """The coverage narrative must track the committed deep-audit JSON."""
+    _require_paper_jss()
     findings = COVERAGE_FINDINGS.read_text()
     parity_long = PARITY_SECTION.read_text()
     parity_compact = PARITY_COMPACT_SECTION.read_text()
@@ -588,6 +624,7 @@ def test_generated_pdf_figures_omit_creation_timestamp() -> None:
 
 def test_main_pdf_uses_fixed_source_date_epoch() -> None:
     """The active JSS PDF should not encode the local build clock."""
+    _require_paper_jss()
     data = MAIN_PDF.read_bytes()
     assert b"/CreationDate (" + FIXED_PDF_DATE + b")" in data
     assert b"/ModDate (" + FIXED_PDF_DATE + b")" in data
@@ -617,6 +654,7 @@ def test_submission_manifest_discloses_fixed_zip_timestamp() -> None:
 
 def test_jss_audit_scripts_honor_source_date_epoch() -> None:
     """Reviewer-facing audit artifacts should be reproducible under Make."""
+    _require_paper_jss()
     for script in AUDIT_SCRIPTS_WITH_FIXED_CLOCK:
         source = script.read_text()
         assert "SOURCE_DATE_EPOCH" in source, script
@@ -783,9 +821,9 @@ def test_submission_package_verifier_pins_page_and_claim_guards() -> None:
         "R/Stata dependency markers",
         "checked_files=8",
         "release_boundary_audit.json",
-        "release_boundary_audit.md does not report the root-paper",
+        "release_boundary_audit.md does not report the JSS/JOSS",
         "release_boundary_audit.json has unexpected checked file count",
-        "release_boundary_audit.json does not include root paper.md",
+        "release_boundary_audit.json does not include the JSS source dossier",
         "CITATION.cff lacks",
         "root and package CITATION.cff metadata differ",
         "CITATION.cff version does not match pyproject.toml",
@@ -832,8 +870,6 @@ def test_submission_package_verifier_pins_page_and_claim_guards() -> None:
         "Symbols With Scoped Limitations",
         "Validated-Tier Symbols",
         "classifies 'other' as",
-        '"JO" "SS"',
-        '"jo" "ss"',
         'docs/jo" "ss_reviewer_guide.md',
         'docs/jo" "ss_validation_dossier.md',
         'For JO" "SS Reviewers',
@@ -922,14 +958,14 @@ def test_submission_package_verifier_pins_page_and_claim_guards() -> None:
         "\\u6bcf\\u4e2a\\u51fd\\u6570\\u90fd\\u652f\\u6301 Word",
         "StatsPAI: An Agent-",
         "Native Python Toolkit",
-        "paper.md inside archive lacks current JSS boundary",
-        "not the authoritative JSS submission",
         "source_snapshot_manifest.md lacks display-path redaction note",
+        "source_snapshot_manifest.md does not explain active",
         "source_snapshot_manifest.md does not explain retired-path",
-        "source_snapshot_manifest.md makes the current external",
         "source_snapshot_manifest.md lacks the retired external-review",
-        "source_snapshot_manifest.json lacks retired-path redaction note",
+        "source_snapshot_manifest.json lacks active/retired external-review note",
         "source_snapshot_manifest.json marks the current external",
+        "ACTIVE_EXTERNAL_REVIEW_ARTIFACTS_FORBIDDEN_IN_ARCHIVE",
+        "archive includes active external-review artifacts",
         "_source_snapshot_archive_required",
         "blanket result-object claim",
         "Paper-JSS/colab_gpu_bench",
@@ -945,6 +981,9 @@ def test_submission_package_verifier_pins_page_and_claim_guards() -> None:
     with zipfile.ZipFile(SUBMISSION_ARCHIVE) as zf:
         names = set(zf.namelist())
     forbidden_members = (
+        "paper.md",
+        "docs/jo" "ss_reviewer_guide.md",
+        "docs/jo" "ss_validation_dossier.md",
         "Paper-JSS/DRAFT-NOTES.md",
         "Paper-JSS/JSS-research-plan.md",
         "Paper-JSS/NEXT-STEPS.md",

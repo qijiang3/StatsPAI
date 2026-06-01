@@ -265,8 +265,14 @@ def test_generated_parity_tables_are_in_sync_with_comparator():
 
 
 def test_parity_readmes_match_current_artifact_inventory():
+    # The StatsPAI<->R table only lists R-joined modules.  A py artifact with
+    # no ``{module}_R.json`` reference (the Py-Stata-only ``50_xtabond``
+    # migration fixture, documented in prose and the 3-way rollup) is
+    # intentionally omitted from the R table, so it must not be required here.
     py_numbers = {
-        module.split("_", 1)[0] for module in _module_stems(R_RESULTS, "_py")
+        module.split("_", 1)[0]
+        for module in _module_stems(R_RESULTS, "_py")
+        if (R_RESULTS / f"{module}_R.json").exists()
     }
     stata_numbers = {
         module.split("_", 1)[0] for module in _module_stems(STATA_RESULTS, "_Stata")

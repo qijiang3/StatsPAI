@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 AUDIT = (
@@ -18,6 +20,15 @@ AUDIT = (
     / "reproduction_environment_audit.py"
 )
 RESULTS = REPO_ROOT / "Paper-JSS" / "replication" / "results"
+
+# ``Paper-JSS/`` is a git-ignored, local-only submission working directory
+# (see ``.gitignore``); it is absent from fresh clones and CI checkouts. The
+# JSS source-snapshot audits only make sense against that local tree, so skip
+# the whole module when it is absent rather than erroring on missing scripts.
+pytestmark = pytest.mark.skipif(
+    not (REPO_ROOT / "Paper-JSS").exists(),
+    reason="Paper-JSS/ submission working dir is git-ignored / local-only",
+)
 
 
 def test_reproduction_environment_audit_guards_seeded_stochastic_outputs() -> None:

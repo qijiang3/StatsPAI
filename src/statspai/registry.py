@@ -11127,9 +11127,9 @@ _CERTIFIED_VARIANT_LIMITATIONS: Dict[str, Dict[str, List[str]]] = {
             "Certified native reference-parity evidence covers the default "
             "rddensity::rddensity unrestricted triangular-kernel selector and "
             "test path on the JSS Lee/RD Senate fixture. Manual side-specific "
-            "bandwidths are explicit user controls, not a reference-parity "
-            "guarantee; backend='r' remains available when direct R package "
-            "execution is required.",
+            "bandwidths follow an explicit user-control convention, not a "
+            "reference-parity guarantee; backend='r' remains available when "
+            "direct R package execution is required.",
         ],
         "validation_notes": [
             "Track A rddensity module 09 is native Python reference parity: "
