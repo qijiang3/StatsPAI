@@ -14,6 +14,15 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# ``Paper-JSS/`` is a git-ignored, local-only submission working directory, so
+# these source-snapshot release-gate contract tests can only run where it is
+# present (the maintainer's machine). On a clean checkout / CI they skip.
+pytestmark = pytest.mark.skipif(
+    not (REPO_ROOT / "Paper-JSS").exists(),
+    reason="Paper-JSS/ submission working dir is git-ignored / local-only",
+)
+
 SOURCE_MANIFEST = (
     REPO_ROOT / "Paper-JSS" / "replication" / "scripts" / "source_snapshot_manifest.py"
 )

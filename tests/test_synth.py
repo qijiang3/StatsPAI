@@ -106,10 +106,20 @@ class TestSyntheticControl:
         assert abs(weight_df['weight'].sum() - 1.0) < 0.01
 
     def test_weights_non_negative(self, panel_data):
-        """All donor weights should be non-negative."""
+        """Classic SCM donor weights must be non-negative (convex hull).
+
+        ``sp.synth`` defaults to ``method='augmented'`` (ASCM, Ben-Michael,
+        Feller & Rothstein 2021), whose ridge correction is *designed* to
+        allow negative weights / extrapolation outside the donor convex hull
+        (documented and flagged via
+        ``model_info['augmented_weights_can_be_negative']``).  The
+        non-negativity invariant is therefore a property of *classic* Abadie
+        SCM, which is the method this test pins.
+        """
         result = synth(
             panel_data, outcome='outcome', unit='unit', time='time',
             treated_unit='unit_0', treatment_time=11, placebo=False,
+            method='classic',
         )
 
         weights = result.model_info['weights']
