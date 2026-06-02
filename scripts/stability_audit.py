@@ -104,11 +104,18 @@ def _backed_functions() -> Tuple[Set[str], Dict[str, List[str]]]:
     for parity_dir in PARITY_DIRS:
         if not parity_dir.exists():
             continue
-        for path in sorted(parity_dir.rglob("test_*.py")):
+        # POSIX-keyed sort + as_posix() so the emitted evidence-source notes are
+        # byte-identical on Windows and POSIX (matches the registry's
+        # _scan_reference_tests fix and the other audit scripts which already
+        # use .as_posix()).
+        for path in sorted(
+            parity_dir.rglob("test_*.py"),
+            key=lambda p: p.relative_to(REPO_ROOT).as_posix(),
+        ):
             for name in _scan_parity_file(path):
                 backed.add(name)
                 sources.setdefault(name, []).append(
-                    str(path.relative_to(REPO_ROOT))
+                    path.relative_to(REPO_ROOT).as_posix()
                 )
     return backed, sources
 

@@ -134,7 +134,7 @@ class TestSerialisation:
             path = os.path.join(tmp, 'tables.tex')
             pt.to_latex(path)
             assert os.path.exists(path)
-            with open(path) as f:
+            with open(path, encoding="utf-8") as f:
                 assert r'\begin{table}' in f.read()
 
     def test_writes_markdown_via_filename(self, results_pair):
@@ -143,7 +143,7 @@ class TestSerialisation:
             paper_tables(main=[results_pair['r1']],
                          template='aer', filename=path)
             assert os.path.exists(path)
-            with open(path) as f:
+            with open(path, encoding="utf-8") as f:
                 assert '## Table:' in f.read()
 
 

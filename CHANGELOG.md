@@ -32,6 +32,18 @@ All notable changes to StatsPAI will be documented in this file.
   the evidence notes — and the exported bundle — are byte-identical on Windows
   and POSIX. Agent-facing metadata only — no numerical effect.
 
+- **CI hardening: swept the same OS-portability class across the codebase.** A
+  multi-agent audit surfaced the remaining latent siblings of the two bugs
+  above (none yet red, but each a Windows landmine of the identical class):
+  `validation._rel` (artifact paths in `sp.validation_report()`) and
+  `scripts/stability_audit.py` now build paths with `Path.as_posix()`;
+  `tests/test_causal_workflow.py` and `tests/test_paper_tables.py` now read the
+  UTF-8 HTML/LaTeX/markdown reports they generate with `encoding="utf-8"`
+  (cp1252 default would mojibake on Windows — CLAUDE.md §5). Two POSIX-runnable
+  schema-bundle invariants were added (no backslash separators; no internal
+  `pandas.core.` paths) so both classes are caught on any shard, not only the
+  one whose regeneration diverges.
+
 ## [1.16.1] — 2026-06-01
 
 ### ⚠️ Correctness fix — `sp.synth()` default restored to canonical classic SCM

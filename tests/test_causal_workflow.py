@@ -214,7 +214,10 @@ class TestReportGeneration:
             path = os.path.join(tmp, 'report.html')
             w.report(path, fmt='html')
             assert os.path.exists(path)
-            with open(path) as f:
+            # encoding="utf-8": the HTML report carries non-ASCII glyphs (en/em
+            # dashes, ->, >=); Windows' cp1252 default would mojibake or crash
+            # (CLAUDE.md S5 — always read package output as utf-8).
+            with open(path, encoding="utf-8") as f:
                 content = f.read()
             assert len(content) > 500
             assert 'Causal Analysis Report' in content

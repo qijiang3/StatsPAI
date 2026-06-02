@@ -1078,7 +1078,12 @@ def _file_status(path: Path, root: Path) -> Dict[str, Any]:
 
 
 def _rel(path: Path, root: Path) -> str:
+    # ``as_posix()`` (not ``str()``) so the artifact paths in the agent-facing
+    # ``sp.validation_report()`` payload are byte-identical on Windows and
+    # POSIX — the same OS-portability fix applied to the registry's
+    # validation-evidence notes. ``str(PurePath)`` would emit backslash
+    # separators on Windows, splitting the report value across shards.
     try:
-        return str(path.relative_to(root))
+        return path.relative_to(root).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()
