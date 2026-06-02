@@ -409,6 +409,8 @@ from .inference import (
     cr3_jackknife_vcov,
     g_computation,
     front_door,
+    meta_analysis,
+    MetaAnalysisResult,
 )
 
 # Eager: ``msm`` collides (function + subpackage of same name).
@@ -726,6 +728,9 @@ from .power import (
     power_cluster_rct,
     power_ols,
     mde,
+    power_two_proportions,
+    power_logrank,
+    power_case_control,
 )
 from .decomposition import (
     oaxaca,
@@ -1327,6 +1332,9 @@ __all__ = [
     # G-methods family (g-computation / front-door)
     "g_computation",
     "front_door",
+    # Meta-analysis (evidence synthesis)
+    "meta_analysis",
+    "MetaAnalysisResult",
     # Marginal Structural Models (time-varying treatment)
     "msm",
     "MarginalStructuralModel",
@@ -1480,6 +1488,9 @@ __all__ = [
     "power_cluster_rct",
     "power_ols",
     "mde",
+    "power_two_proportions",
+    "power_logrank",
+    "power_case_control",
     # Decomposition
     "oaxaca",
     "gelbach",
@@ -1562,6 +1573,10 @@ __all__ = [
     "CoxResult",
     "KMResult",
     "logrank_test",
+    "cuminc",
+    "finegray",
+    "CumIncResult",
+    "FineGrayResult",
     # Nonparametric
     "lpoly",
     "LPolyResult",
@@ -2644,6 +2659,10 @@ _register_lazy(
     "causal_survival_forest",
     "causal_survival",
     "CausalSurvivalForestResult",
+    "cuminc",
+    "finegray",
+    "CumIncResult",
+    "FineGrayResult",
 )
 _register_lazy(
     "nonparametric",

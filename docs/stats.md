@@ -12,8 +12,8 @@
 
 | Ecosystem / Project                  | Method     |  Files | Lines of code | Primary focus                      |
 | ------------------------------------ | ---------- | -----: | ------------: | ---------------------------------- |
-| **StatsPAI** `src/statspai/`         | measured   |    647 |   **269,043** | validation-tiered causal inference |
-| StatsPAI tests (`tests/`)            | measured   |    531 |        96,682 | —                                  |
+| **StatsPAI** `src/statspai/`         | measured   |    650 |   **270,375** | validation-tiered causal inference |
+| StatsPAI tests (`tests/`)            | measured   |    534 |        97,009 | —                                  |
 | statsmodels 0.14.x                   | measured   |    948 |   **381,981** | GLM / time series / general        |
 | linearmodels                         | measured   |    131 |        36,607 | panel / IV                         |
 | **Python causal-inference subtotal** |            |  1,079 |   **418,588** |                                    |
@@ -53,8 +53,8 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `plots` | 5,176 | 6 | 6 |
 | `spatial` | 5,136 | 29 | 35 |
 | `core` | 4,951 | 10 | 2 |
+| `inference` | 4,941 | 15 | 24 |
 | `panel` | 4,914 | 12 | 17 |
-| `inference` | 4,629 | 14 | 22 |
 | `matching` | 4,052 | 9 | 23 |
 | `frontier` | 4,008 | 8 | 12 |
 | `workflow` | 3,890 | 5 | 1 |
@@ -66,6 +66,7 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `dag` | 2,924 | 9 | 19 |
 | `metalearners` | 2,913 | 8 | 23 |
 | `structural` | 2,784 | 9 | 12 |
+| `survival` | 2,661 | 6 | 12 |
 | `neural_causal` | 2,651 | 6 | 16 |
 | `causal_llm` | 2,612 | 10 | 11 |
 | `timeseries` | 2,354 | 9 | 18 |
@@ -74,7 +75,6 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `robustness` | 2,243 | 6 | 11 |
 | `forest` | 2,168 | 5 | 8 |
 | `conformal_causal` | 2,002 | 9 | 19 |
-| `survival` | 1,964 | 5 | 8 |
 | `utils` | 1,906 | 8 | 32 |
 | `epi` | 1,860 | 6 | 20 |
 | `interference` | 1,837 | 10 | 18 |
@@ -89,6 +89,7 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `bunching` | 1,206 | 5 | 8 |
 | `target_trial` | 1,151 | 7 | 9 |
 | `mediation` | 1,133 | 4 | 4 |
+| `power` | 1,099 | 3 | 12 |
 | `policy_learning` | 981 | 3 | 3 |
 | `principal_strat` | 923 | 2 | 3 |
 | `gmm` | 876 | 3 | 2 |
@@ -96,7 +97,6 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `dtr` | 833 | 5 | 2 |
 | `fairness` | 833 | 3 | 6 |
 | `longitudinal` | 800 | 3 | 7 |
-| `power` | 795 | 2 | 9 |
 | `experimental` | 794 | 4 | 9 |
 | `survey` | 789 | 4 | 7 |
 | `causal_rl` | 782 | 5 | 9 |
@@ -120,7 +120,7 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `censoring` | 284 | 2 | 2 |
 | `causal` | 101 | 1 | 0 |
 | `schemas` | 0 | 0 | 0 |
-| **Total** | **269,043** | **647** | **1020** |
+| **Total** | **270,375** | **650** | **1029** |
 
 ## 3 · Causal-inference coverage matrix (full)
 
