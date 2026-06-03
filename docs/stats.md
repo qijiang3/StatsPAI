@@ -12,7 +12,7 @@
 
 | Ecosystem / Project                  | Method     |  Files | Lines of code | Primary focus                      |
 | ------------------------------------ | ---------- | -----: | ------------: | ---------------------------------- |
-| **StatsPAI** `src/statspai/`         | measured   |    647 |   **269,043** | validation-tiered causal inference |
+| **StatsPAI** `src/statspai/`         | measured   |    647 |   **269,074** | validation-tiered causal inference |
 | StatsPAI tests (`tests/`)            | measured   |    529 |        96,514 | —                                  |
 | statsmodels 0.14.x                   | measured   |    948 |   **381,981** | GLM / time series / general        |
 | linearmodels                         | measured   |    131 |        36,607 | panel / IV                         |
@@ -41,7 +41,7 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | ------------------- | -----: | ----: | ----------------------------: |
 | `synth` | 20,256 | 31 | 53 |
 | `did` | 17,073 | 33 | 59 |
-| `rd` | 13,695 | 25 | 53 |
+| `rd` | 13,696 | 25 | 53 |
 | `regression` | 11,553 | 19 | 37 |
 | `output` | 10,891 | 21 | 40 |
 | `agent` | 9,567 | 30 | 0 |
@@ -69,7 +69,7 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `neural_causal` | 2,651 | 6 | 16 |
 | `causal_llm` | 2,612 | 10 | 11 |
 | `timeseries` | 2,354 | 9 | 18 |
-| `tmle` | 2,350 | 6 | 9 |
+| `tmle` | 2,351 | 6 | 9 |
 | `bounds` | 2,268 | 5 | 9 |
 | `robustness` | 2,243 | 6 | 11 |
 | `forest` | 2,168 | 5 | 8 |
@@ -115,12 +115,12 @@ Sorted by LOC. This table is generated from the live source tree by `python scri
 | `nonparametric` | 447 | 3 | 4 |
 | `imputation` | 445 | 2 | 3 |
 | `matrix_completion` | 377 | 2 | 2 |
-| `compat` | 322 | 2 | 0 |
+| `compat` | 351 | 2 | 0 |
 | `multi_treatment` | 312 | 2 | 2 |
 | `censoring` | 284 | 2 | 2 |
 | `causal` | 101 | 1 | 0 |
 | `schemas` | 0 | 0 | 0 |
-| **Total** | **269,043** | **647** | **1020** |
+| **Total** | **269,074** | **647** | **1020** |
 
 ## 3 · Causal-inference coverage matrix (full)
 
