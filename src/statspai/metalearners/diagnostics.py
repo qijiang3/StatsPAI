@@ -519,10 +519,13 @@ def predict_cate(
     np.ndarray
         Predicted CATE for each row of new_data.
     """
-    if '_estimator' not in result.model_info:
+    model_info = getattr(result, "model_info", None)
+    if not isinstance(model_info, dict) or '_estimator' not in model_info:
         raise ValueError(
-            "Result does not contain a fitted estimator. "
-            "Use metalearner() to produce a result."
+            "Result does not contain a fitted estimator. predict_cate() "
+            "expects a metalearner() result; got "
+            f"{type(result).__name__}. Use sp.metalearner(...) (or another "
+            "CATE estimator that stores '_estimator' in model_info)."
         )
     covariates = result.model_info.get('covariates')
     if covariates is None:
