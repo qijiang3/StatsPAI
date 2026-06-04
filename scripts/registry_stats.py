@@ -14,9 +14,11 @@ Usage
     python scripts/registry_stats.py --check         # exit non-zero if docs are stale
 
 The ``--check`` mode lets CI flag drift between the live registry and
-the user-facing docs. README floors remain intentionally loose, but the
-``docs/stats.md`` measured table and README at-a-glance counts must match
-the live source tree.
+the user-facing docs. It gates the **registry/API surface** (per-module
+registered-function counts + the README floors) exactly, but treats
+**size metrics** (LOC) as a vanity metric (see ``docs/stats.md`` §5):
+LOC is only flagged once it drifts past ``LOC_DRIFT_TOLERANCE``, so
+routine source churn (a refactor, a dead-code removal) never reds CI.
 """
 from __future__ import annotations
 
@@ -170,6 +172,33 @@ def render_table(stats: dict) -> str:
 README_FLOOR = 1000         # README.md says "1,000+ functions"
 SUBMODULE_FLOOR = 80        # README.md says "80 submodules"
 DRIFT_TOLERANCE = 100       # bump the floor once we're > floor + tolerance
+# LOC is a vanity metric (docs/stats.md §5) that moves on every commit, so
+# we only flag it once the docs lag the live tree by more than this many
+# lines — a new module / large deletion trips it; a refactor does not.
+LOC_DRIFT_TOLERANCE = 3000
+
+
+def _module_fn_counts(table_text: str) -> Dict[str, int]:
+    """Extract ``{module: registered_fn_count}`` from a per-module md table.
+
+    Only the module name and the trailing registered-function count are
+    read; the LOC and file columns are intentionally ignored so that
+    source churn (which moves LOC every commit) never trips the gate —
+    only a real change in the ``sp.*`` surface does. The ``**Total**`` row
+    has no backtick-wrapped module name and is skipped by design (the
+    aggregate count is already guarded by ``README_FLOOR``).
+    """
+    out: Dict[str, int] = {}
+    for match in re.finditer(
+        r"\|\s*`(\w+)`\s*\|\s*[\d,]+\s*\|\s*\d+\s*\|\s*(\d+)\s*\|",
+        table_text,
+    ):
+        out[match.group(1)] = int(match.group(2))
+    return out
+
+
+def _loc_within_tolerance(written: str, live: int) -> bool:
+    return abs(int(written.replace(",", "")) - live) <= LOC_DRIFT_TOLERANCE
 
 
 def check_drift(stats: dict) -> int:
@@ -196,24 +225,50 @@ def check_drift(stats: dict) -> int:
     except OSError as exc:
         issues.append(f"Could not read {DOCS_STATS.relative_to(REPO_ROOT)}: {exc}")
     else:
-        expected_table = render_table(stats)
-        if expected_table not in stats_doc:
-            issues.append(
-                "docs/stats.md per-module table is stale; regenerate with "
-                "`python scripts/registry_stats.py --table`."
+        # API surface: every module's registered-function count must match
+        # the live registry exactly (LOC/file columns are ignored).
+        expected_fns = {
+            name: info["registered"]
+            for name, info in stats["per_module"].items()
+        }
+        actual_fns = _module_fn_counts(stats_doc)
+        if actual_fns != expected_fns:
+            drifted = sorted(
+                name for name in set(expected_fns) | set(actual_fns)
+                if expected_fns.get(name) != actual_fns.get(name)
             )
-        expected_src_row = re.compile(
-            rf"\| \*\*StatsPAI\*\* `src/statspai/`\s*\| measured\s*\|\s*"
-            rf"{stats['src_files']}\s*\|\s*\*\*{stats['src_loc']:,}\*\*\s*\|"
+            issues.append(
+                "docs/stats.md per-module registered-function counts are "
+                f"stale (modules: {', '.join(drifted) or '—'}); regenerate "
+                "with `python scripts/registry_stats.py --table`."
+            )
+        # Size metrics: tolerant — only flag gross LOC drift.
+        src_match = re.search(
+            r"\| \*\*StatsPAI\*\* `src/statspai/`\s*\| measured\s*\|\s*"
+            r"[\d,]+\s*\|\s*\*\*([\d,]+)\*\*\s*\|",
+            stats_doc,
         )
-        if not expected_src_row.search(stats_doc):
-            issues.append("docs/stats.md source LOC/file row is stale.")
-        expected_test_row = re.compile(
-            rf"\| StatsPAI tests \(`tests/`\)\s*\| measured\s*\|\s*"
-            rf"{stats['tests_files']}\s*\|\s*{stats['tests_loc']:,}\s*\|"
+        if src_match is None:
+            issues.append("docs/stats.md source LOC row is missing or malformed.")
+        elif not _loc_within_tolerance(src_match.group(1), stats["src_loc"]):
+            issues.append(
+                f"docs/stats.md source LOC ({src_match.group(1)}) drifts from "
+                f"live ({stats['src_loc']:,}) by > {LOC_DRIFT_TOLERANCE}; "
+                "regenerate with `python scripts/registry_stats.py --table`."
+            )
+        test_match = re.search(
+            r"\| StatsPAI tests \(`tests/`\)\s*\| measured\s*\|\s*"
+            r"[\d,]+\s*\|\s*([\d,]+)\s*\|",
+            stats_doc,
         )
-        if not expected_test_row.search(stats_doc):
-            issues.append("docs/stats.md test LOC/file row is stale.")
+        if test_match is None:
+            issues.append("docs/stats.md test LOC row is missing or malformed.")
+        elif not _loc_within_tolerance(test_match.group(1), stats["tests_loc"]):
+            issues.append(
+                f"docs/stats.md test LOC ({test_match.group(1)}) drifts from "
+                f"live ({stats['tests_loc']:,}) by > {LOC_DRIFT_TOLERANCE}; "
+                "regenerate with `python scripts/registry_stats.py --table`."
+            )
 
     fns_text = f"{fns:,}"
     src_k = (stats["src_loc"] + 500) // 1000
