@@ -608,17 +608,14 @@ def _fit_linearmodels(
     data, dep_var, indep_vars, entity, time, formula,
     method, robust, cluster, weights, alpha,
 ) -> PanelResults:
-    try:
-        from linearmodels.panel import (
-            PanelOLS, RandomEffects, BetweenOLS,
-            FirstDifferenceOLS, PooledOLS,
-        )
-        from statsmodels.tools import add_constant
-    except ImportError:
-        raise ImportError(
-            "linearmodels required for panel regression. "
-            "Install: pip install linearmodels"
-        )
+    # linearmodels is a core dependency (see pyproject.toml ``dependencies``);
+    # import lazily to keep module-import time low, but do not mask a broken
+    # install as if it were an optional extra.
+    from linearmodels.panel import (
+        PanelOLS, RandomEffects, BetweenOLS,
+        FirstDifferenceOLS, PooledOLS,
+    )
+    from statsmodels.tools import add_constant
 
     panel_data = data.set_index([entity, time])
     dep = panel_data[dep_var]
@@ -749,14 +746,10 @@ def _fit_cre(
     Chamberlain (1982): adds entity-level means separately for each
     time period (more flexible, uses more degrees of freedom).
     """
-    try:
-        from linearmodels.panel import RandomEffects
-        from statsmodels.tools import add_constant
-    except ImportError:
-        raise ImportError(
-            "linearmodels required for CRE estimation. "
-            "Install: pip install linearmodels"
-        )
+    # linearmodels is a core dependency (see pyproject.toml ``dependencies``);
+    # import lazily here without masking a broken install as optional.
+    from linearmodels.panel import RandomEffects
+    from statsmodels.tools import add_constant
 
     df = data.copy()
 
