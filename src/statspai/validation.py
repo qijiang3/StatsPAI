@@ -208,7 +208,7 @@ def validation_report(
         Run ``pytest --collect-only`` on the reference-parity,
         external-parity, and coverage Monte Carlo directories and record the
         authoritative collected-test counts (the integers the JSS manuscript
-        headlines, e.g. 114 / 50 / 12). Off by default because it spawns
+        headlines, e.g. 124 / 52 / 12). Off by default because it spawns
         pytest collection (seconds); the cheap metadata-only path reports
         test *file* counts instead.
     fmt : {"object", "dict", "markdown"}, default "object"
@@ -967,8 +967,8 @@ def _pytest_collected_count(
     """Return the authoritative ``pytest --collect-only`` test count for a
     directory, or ``None`` if pytest is unavailable / the dir is missing.
 
-    This is the count the JSS manuscript headlines (e.g. 114 reference-parity
-    and 50 external-parity tests): it expands ``@pytest.mark.parametrize``
+    This is the count the JSS manuscript headlines (e.g. 124 reference-parity
+    and 52 external-parity tests): it expands ``@pytest.mark.parametrize``
     cases, unlike a raw ``def test_`` grep, and includes deselected tests
     (``--collect-only`` lists them). Coverage instrumentation and the cache
     plugin are disabled (``-o addopts=`` clears the project's injected

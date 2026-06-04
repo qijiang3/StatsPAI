@@ -13,7 +13,7 @@ import statspai as sp
 # drift-guard test below.
 JSS_HEADLINE_TEST_COUNTS = {
     "reference_parity": 124,
-    "external_parity": 50,
+    "external_parity": 52,
     "coverage_monte_carlo": 12,
 }
 JSS_CERTIFIED_VALIDATED_SYMBOLS = 71
