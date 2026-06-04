@@ -65,4 +65,5 @@ Module & Method & Worst headline diff & Verdict \\
 \code{49\_oprobit} & Ordered probit & rel $\le 3.4e-07$ & \textbf{PASS} \\
 \code{51\_newey} & Newey-West HAC OLS & rel $\le 1.8e-15$ {\footnotesize (post HAC sandwich sqrt(n) scaling fix)} & \textbf{PASS} \\
 \code{52\_scm\_unique} & Classical SCM (unique solution) & rel $\le 0.0074$ {\footnotesize (identified convex SCM; sp recovers exact weights+gap)} & \textbf{PASS} \\
+\code{53\_cr2} & Cluster-robust CR2 / CR3 SE & abs $\le 1.59e-08$ {\footnotesize (CR2 machine-precision; exact CR3 jackknife vs analytic CR3 differs $\sim10^{-3}$)} & \textbf{PASS} \\
 \end{longtable}

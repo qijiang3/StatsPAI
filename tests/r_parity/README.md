@@ -34,11 +34,11 @@ tests/r_parity/
 Historical verification worklog (not the current source-snapshot audit):
 [`PARITY_TEST_WORKLOG_2026-05-29.md`](PARITY_TEST_WORKLOG_2026-05-29.md).
 
-## Modules (51 materialized StatsPAI--R rows)
+## Modules (52 materialized StatsPAI--R rows)
 
 Module `50_xtabond` is the separate Py--Stata-only migration fixture and
-is not part of this R-joined table; the 51 materialized R rows are
-modules 01--49, 51, and 52.
+is not part of this R-joined table; the 52 materialized R rows are
+modules 01--49 and 51--53.
 
 | # | Module | StatsPAI | R / reference side |
 | --- | --- | --- | --- |
@@ -93,6 +93,7 @@ modules 01--49, 51, and 52.
 | 49 | Ordered probit | `sp.oprobit` | `MASS::polr(method="probit")` |
 | 51 | Newey-West HAC OLS | `sp.regress(robust="hac")` | `sandwich::NeweyWest` |
 | 52 | Identified classical SCM DGP | `sp.synth(method="classic", backend="native")` | `Synth::synth` |
+| 53 | Cluster-robust CR2 SE (+ CR3 jackknife) | `sp.cr2_se` | `clubSandwich::vcovCR(type="CR2"/"CR3")` |
 
 ## Running
 

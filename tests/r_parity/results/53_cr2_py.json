@@ -1,0 +1,78 @@
+{
+  "module": "53_cr2",
+  "side": "py",
+  "rows": [
+    {
+      "module": "53_cr2",
+      "side": "py",
+      "statistic": "cr2_(Intercept)",
+      "estimate": -18.44895829404092,
+      "se": 5.069825075296079,
+      "ci_lo": null,
+      "ci_hi": null,
+      "n": 2500,
+      "extra": {}
+    },
+    {
+      "module": "53_cr2",
+      "side": "py",
+      "statistic": "cr3_(Intercept)",
+      "estimate": -18.44895829404092,
+      "se": 5.076287751431576,
+      "ci_lo": null,
+      "ci_hi": null,
+      "n": 2500,
+      "extra": {}
+    },
+    {
+      "module": "53_cr2",
+      "side": "py",
+      "statistic": "cr2_treat",
+      "estimate": -0.05594944143386111,
+      "se": 0.01223134020340872,
+      "ci_lo": null,
+      "ci_hi": null,
+      "n": 2500,
+      "extra": {}
+    },
+    {
+      "module": "53_cr2",
+      "side": "py",
+      "statistic": "cr3_treat",
+      "estimate": -0.05594944143386111,
+      "se": 0.012247233276847406,
+      "ci_lo": null,
+      "ci_hi": null,
+      "n": 2500,
+      "extra": {}
+    },
+    {
+      "module": "53_cr2",
+      "side": "py",
+      "statistic": "cr2_year",
+      "estimate": 0.01329986876775945,
+      "se": 0.0025308142399474106,
+      "ci_lo": null,
+      "ci_hi": null,
+      "n": 2500,
+      "extra": {}
+    },
+    {
+      "module": "53_cr2",
+      "side": "py",
+      "statistic": "cr3_year",
+      "estimate": 0.01329986876775945,
+      "se": 0.0025340408665806917,
+      "ci_lo": null,
+      "ci_hi": null,
+      "n": 2500,
+      "extra": {}
+    }
+  ],
+  "extra": {
+    "formula": "lemp ~ treat + year",
+    "vcov": "CR2 (Bell-McCaffrey) + CR3 cluster-jackknife",
+    "cluster_var": "countyreal",
+    "cr3_convention": "sp.cr3_jackknife_vcov = exact leave-one-cluster-out jackknife; clubSandwich type=CR3 = analytic (I-H)^-1 approximation (documented ~1e-3 gap)"
+  }
+}
