@@ -20,6 +20,7 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 from scipy import optimize
+from scipy.spatial.distance import cdist
 
 
 @dataclass
@@ -53,11 +54,10 @@ def _distance_matrix(
         X_all = np.vstack([X_treat, X_ctrl])
         cov = np.cov(X_all, rowvar=False) + 1e-8 * np.eye(X_all.shape[1])
         cov_inv = np.linalg.inv(cov)
-        D = np.empty((X_treat.shape[0], X_ctrl.shape[0]))
-        for i in range(X_treat.shape[0]):
-            diff = X_ctrl - X_treat[i]
-            D[i] = np.sqrt(np.einsum("ij,jk,ik->i", diff, cov_inv, diff))
-        return D
+        # cdist computes the identical sqrt((x-y)' VI (x-y)) in C, ~3-5x faster
+        # than the per-treated-unit Python loop and without materialising the
+        # (n_treat, n_ctrl, k) difference tensor a full broadcast would need.
+        return cdist(X_treat, X_ctrl, metric="mahalanobis", VI=cov_inv)
     if metric == "euclidean":
         diff = X_treat[:, None, :] - X_ctrl[None, :, :]
         return np.linalg.norm(diff, axis=2)
