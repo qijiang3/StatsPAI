@@ -5,6 +5,39 @@ Internal version-to-version migrations are at the top; the long-form
 
 ---
 
+<a id="multiway-cluster-intersection"></a>
+
+## Unreleased — ⚠️ `sp.multiway_cluster_vcov` multiway-cluster SE correctness fix
+
+**What changed.** `sp.multiway_cluster_vcov` forms the Cameron-Gelbach-Miller
+(2011) variance by inclusion-exclusion over the clustering dimensions, which
+requires an *intersection* cluster: the unique combinations of the dimensions'
+levels (e.g. the distinct `(firm, year)` pairs). The intersection key was built
+by joining the dimensions into one string with a `"\0"` separator, but NumPy
+fixed-width unicode strips the embedded NUL byte, so `(1, 23)` and `(12, 3)`
+both collapsed to `"123"`. On a 40×50 crossed-cluster DGP this merged 1733 true
+intersection clusters into 1639, which inflated the `G/(G-1)` finite-sample
+factor on the subtracted intersection term and biased the multiway SE by ~0.2%
+(two-way) to ~0.5% (three-way) away from the canonical estimator. The
+intersection key is now built collision-free via `np.unique(axis=0)` on
+per-dimension integer codes. `sp.multiway_cluster_vcov` now reproduces
+`sandwich::vcovCL(cluster = ~ g1 + g2 + ...)` and `sp.twoway_cluster` to machine
+precision (two-way exact; three-way relative error ~4e-7).
+
+**Who is affected.** Callers of `sp.multiway_cluster_vcov` with **two or more**
+clustering dimensions, and the multiway-clustered standard errors of
+`did.harvest` and `panel.feols`. One-way clustering is unaffected.
+`sp.twoway_cluster` is **not** affected — it used a separate, collision-free
+intersection key and already matched `sandwich::vcovCL` to machine precision.
+Point estimates are unchanged; only multiway-cluster SEs/CIs/p-values move
+(typically by tenths of a percent, always toward the canonical value).
+
+**Action.** Re-run any analysis that reported `sp.multiway_cluster_vcov`-based
+multiway-cluster SEs with ≥2 dimensions; the corrected SEs now agree with
+`sandwich::vcovCL` (R) and Stata multiway-cluster conventions.
+
+---
+
 <a id="structural-break-supf-null"></a>
 
 ## Unreleased — ⚠️ `sp.structural_break` sup-F p-value null distribution correctness fix

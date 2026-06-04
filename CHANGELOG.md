@@ -32,6 +32,23 @@ All notable changes to StatsPAI will be documented in this file.
 
 ### Fixed
 
+- **⚠️ Correctness: `sp.multiway_cluster_vcov` undercounted intersection
+  clusters, biasing multiway-cluster-robust standard errors.** The
+  Cameron-Gelbach-Miller inclusion-exclusion builds an *intersection* cluster
+  (the unique combinations of the clustering dimensions); its key was formed by
+  joining the dimensions into a single string with a `"\0"` separator, but
+  NumPy fixed-width unicode strips the embedded NUL, so e.g. `(1, 23)` and
+  `(12, 3)` both collapsed to `"123"`. On a 40×50 crossed-cluster DGP this
+  merged 1733 true intersection clusters into 1639, biasing the two-way SE by
+  ~0.2% (~0.5% at three-way) versus the canonical estimator. The intersection
+  key is now built collision-free via `np.unique(axis=0)` on per-dimension
+  integer codes. `sp.multiway_cluster_vcov` now reproduces `sandwich::vcovCL`
+  and `sp.twoway_cluster` to machine precision (two-way exact; three-way rel
+  ~4e-7), pinned by the new `tests/r_parity` module 56 and a direct
+  twoway-vs-multiway regression test. Propagates to `did.harvest` and
+  `panel.feols` multiway-clustered SEs. `sp.twoway_cluster` itself was already
+  correct (distinct collision-free key) and is unchanged. See MIGRATION.md.
+
 - **`.glance()` crashed (`OverflowError: cannot convert float infinity to
   integer`) on Cox and parametric-survival (`survreg`) results.** Those
   estimators deliberately store `df_resid = inf` to signal a large-sample

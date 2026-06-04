@@ -12278,7 +12278,7 @@
     "name": "multi_treatment"
   },
   {
-    "description": "Compute N-way cluster-robust variance of an OLS coefficient vector.",
+    "description": "Compute N-way cluster-robust variance of an OLS coefficient vector. Validation: certified parity evidence.",
     "input_schema": {
       "properties": {
         "X": {

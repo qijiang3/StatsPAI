@@ -53,17 +53,27 @@ def _factorize(arr) -> Tuple[np.ndarray, int]:
 
 def _intersection_codes(cluster_list: List[np.ndarray], idx_subset: Sequence[int]) -> np.ndarray:
     """Build integer codes for the intersection cluster of the selected
-    dimensions. Uses a hash-joined string to avoid tuple overhead.
+    dimensions: one code per unique combination of the dimensions' levels.
+
+    Each dimension is factorized to dense integer codes, then the per-row
+    code tuples are relabelled via ``np.unique(..., axis=0)``. This is
+    collision-free for any cluster dtype.
+
+    Correctness fix (v1.16.1): the previous implementation joined the
+    dimensions into a single string with a ``"\\0"`` separator, but NumPy
+    fixed-width unicode strips the embedded NUL, so e.g. ``(1, 23)`` and
+    ``(12, 3)`` both collapsed to ``"123"``. That undercounted the
+    intersection clusters and biased the multiway-cluster VCOV (it no longer
+    matched the canonical ``sandwich::vcovCL`` / ``sp.twoway_cluster``
+    two-way result). See MIGRATION.md and tests/r_parity module 56.
     """
     if len(idx_subset) == 1:
         codes, _ = _factorize(cluster_list[idx_subset[0]])
         return codes
-    # Combine dims via a pair-hash (Cantor pairing-like) for speed
-    combined = cluster_list[idx_subset[0]].astype(str)
-    for i in idx_subset[1:]:
-        combined = combined + "\0" + cluster_list[i].astype(str)
-    codes, _ = _factorize(combined)
-    return codes
+    cols = [_factorize(cluster_list[i])[0] for i in idx_subset]
+    stacked = np.column_stack(cols)
+    _, inv = np.unique(stacked, axis=0, return_inverse=True)
+    return np.asarray(inv, dtype=np.int64).ravel()
 
 
 def _one_way_sandwich(

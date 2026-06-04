@@ -36,9 +36,9 @@ does not mean every registered helper is numerically validated.
 
 ## Validation Boundary
 
-Current JSS source-snapshot audit counts: 51 `certified`, 21 `validated`, 945
+Current JSS source-snapshot audit counts: 52 `certified`, 21 `validated`, 944
 `api_stable`, and 3 `experimental` registry symbols. The certified/validated
-surface is therefore 72 symbols, while 756 stable auto-registered symbols
+surface is therefore 73 symbols, while 755 stable auto-registered symbols
 remain API-stable but not parity-backed.
 
 The `validated` tier requires known-truth, reference-parity, external-parity,

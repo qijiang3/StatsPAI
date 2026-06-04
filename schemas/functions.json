@@ -18555,7 +18555,7 @@
     }
   },
   {
-    "description": "Compute N-way cluster-robust variance of an OLS coefficient vector.",
+    "description": "Compute N-way cluster-robust variance of an OLS coefficient vector. Validation: certified parity evidence.",
     "name": "multiway_cluster_vcov",
     "parameters": {
       "properties": {

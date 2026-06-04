@@ -42,6 +42,16 @@ def test_multiway_cluster_vcov_two_way_matches_existing_twoway_cluster():
     assert (eigvals >= -1e-10).all()
     assert (np.diag(V_new) > 0).all()
 
+    # Regression guard for the intersection-key collision fix: at two-way the
+    # n-way core must equal sp.twoway_cluster (which matches sandwich::vcovCL to
+    # machine precision) to float precision. Before the fix a "\0"-joined
+    # intersection key undercounted the (firm, year) cells and biased these SEs.
+    df = pd.DataFrame({"y": y, "x": X[:, 1], "firm": firm, "year": year})
+    fit = sp.regress("y ~ x", data=df)
+    tw = sp.twoway_cluster(fit, df, "firm", "year")
+    se_new = np.sqrt(np.diag(V_new))
+    np.testing.assert_allclose(se_new, tw.std_errors.values, rtol=1e-9)
+
 
 def test_multiway_cluster_three_way_runs():
     rng = np.random.default_rng(11)

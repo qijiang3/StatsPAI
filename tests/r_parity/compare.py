@@ -55,6 +55,7 @@ STATA_SKIP_REASON: dict[str, str] = {
     "53_cr2":           "Stata native vce(cluster)=CR1; CR2/CR3 need community summclust",
     "54_twoway_cluster": "Stata native vce(cluster) is one-way; two-way needs community vcemway / reghdfe",
     "55_hc2_hc3":        "Stata regress vce(hc2)/vce(hc3) is native but not yet materialized in the Stata harness",
+    "56_multiway_cluster": "Stata native vce(cluster) is one-way; multiway needs community vcemway / reghdfe",
 }
 
 TRACK_A_SNAPSHOT_ROWS: list[dict[str, Any]] = [
@@ -268,6 +269,10 @@ TOLERANCES: dict[str, dict[str, float]] = {
     # robust="hc2"/"hc3" matches sandwich::vcovHC(type="HC2"/"HC3") to
     # machine precision (module 01 covers HC1).
     "55_hc2_hc3":       {"rel_est": 1e-6, "rel_se": 1e-6},
+    # Three-way cluster-robust SE (Cameron-Gelbach-Miller). sp.multiway_cluster_vcov
+    # matches sandwich::vcovCL(~g1+g2+g3, HC1, cadjust) to machine precision after
+    # the v1.16.1 intersection-key fix.
+    "56_multiway_cluster": {"rel_est": 1e-6, "rel_se": 1e-6},
 }
 
 
@@ -967,6 +972,16 @@ HEADLINE: dict[str, dict[str, Any]] = {
         # Both the HC2 and HC3 SE rows match sandwich::vcovHC at machine
         # precision (MacKinnon-White small-sample heteroskedasticity-robust).
         "headline_filter": lambda d: d.statistic.startswith("hc"),
+        "metric": "rel_se",
+        "verdict": "\\textbf{PASS}",
+        "gap_note": "",
+    },
+    "56_multiway_cluster": {
+        "name": "Three-way cluster-robust SE",
+        # Three-way SE vs sandwich::vcovCL -- machine-precision match; exercises
+        # the full inclusion-exclusion (triple-intersection term) of the fixed
+        # multiway_cluster_vcov.
+        "headline_filter": lambda d: d.statistic.startswith("beta_"),
         "metric": "rel_se",
         "verdict": "\\textbf{PASS}",
         "gap_note": "",
