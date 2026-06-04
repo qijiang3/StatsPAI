@@ -103,3 +103,19 @@ def test_fci_returns_structured_pag():
     assert res.n_obs == n
     # A PAG is reported as an edge list / adjacency we can enumerate.
     assert isinstance(res.edges, (list, tuple, np.ndarray, pd.DataFrame))
+
+
+def test_shift_share_se_no_divide_by_zero_on_strong_first_stage(bartik):
+    # Regression: a (near-)perfect first stage made the AKM first-stage F
+    # divide by a ~zero residual sum of squares, raising a RuntimeWarning and
+    # producing a non-finite statistic. The corrected code reports F = inf.
+    import warnings
+
+    base = sp.ssaggregate(
+        data=bartik["data"], y="y", x="bartik",
+        shares=bartik["shares"], shocks=bartik["shocks"],
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        akm = sp.shift_share_se(base, shares=bartik["shares"])
+    assert np.all(np.isfinite(akm.std_errors.values))

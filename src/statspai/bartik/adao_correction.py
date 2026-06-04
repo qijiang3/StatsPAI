@@ -195,8 +195,16 @@ def ssaggregate(
         rss_restricted = np.dot(X_tilde, X_tilde)  # restricted = no instrument
         rss_full = np.dot(resid_fs, resid_fs)
         df_denom = n - W.shape[1] - 1
-        f_stat = ((rss_restricted - rss_full) / 1) / (rss_full / max(df_denom, 1))
-        f_pvalue = 1 - stats.f.cdf(f_stat, 1, max(df_denom, 1))
+        if rss_full <= 1e-12 * max(rss_restricted, 1e-300):
+            # Instrument predicts the regressor (almost) perfectly: the
+            # first-stage F is effectively infinite. Report it as such instead
+            # of dividing by a ~zero residual sum of squares, which raised a
+            # RuntimeWarning and produced a non-finite statistic.
+            f_stat = np.inf
+            f_pvalue = 0.0
+        else:
+            f_stat = ((rss_restricted - rss_full) / 1) / (rss_full / max(df_denom, 1))
+            f_pvalue = 1 - stats.f.cdf(f_stat, 1, max(df_denom, 1))
     else:
         # OLS on residualised data
         beta_2sls = np.dot(X_tilde, Y_tilde) / np.dot(X_tilde, X_tilde)
