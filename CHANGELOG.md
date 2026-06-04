@@ -32,6 +32,20 @@ All notable changes to StatsPAI will be documented in this file.
 
 ### Fixed
 
+- **`sp.pretrends_power` crashed (`LinAlgError: Singular matrix`) on every
+  standard `sp.event_study` result.** Roth's (2022) pre-trend power calculation
+  inverts the pre-period variance–covariance matrix, but the omitted reference
+  period (relative time −1) is reported with a standard error of exactly zero,
+  so the diagonal VCV was singular and `np.linalg.inv` raised on the *exact*
+  workflow shown in the function's own docstring. The reference period (and any
+  other mechanically-normalised, zero-SE period) is now dropped before
+  inversion — it is the baseline, not an estimated coefficient — so the joint
+  pre-trend test runs on the estimated pre-periods only. A full-rank
+  `model_info['vcv_pre']` and a full-length `delta` are aligned to the retained
+  periods, and a still-singular VCV now raises a clear `ValueError` (collinear
+  pre-periods) instead of an opaque NumPy error. No output changes for any call
+  that previously succeeded. Covered by `tests/test_pretrends_power.py`.
+
 - **⚠️ Correctness — `sp.structural_break` sup-F p-value used the wrong null
   distribution.** The Chow/sup-F statistic is a *supremum* of the F statistic
   over candidate break points, so under H0 it follows the Andrews (1993)

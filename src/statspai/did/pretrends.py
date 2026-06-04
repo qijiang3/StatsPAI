@@ -267,7 +267,25 @@ def pretrends_power(
     if len(pre) == 0:
         raise ValueError("No pre-treatment periods found (relative_time < 0).")
 
-    se_pre = pre[se_col].values.astype(float)
+    se_pre_all = pre[se_col].values.astype(float)
+    K_all = len(se_pre_all)
+
+    # The omitted reference period (and any mechanically-normalised period)
+    # carries a standard error of exactly zero: it is the baseline, not an
+    # estimated coefficient. It contributes nothing to the joint pre-trend
+    # test and would make the diagonal VCV singular, so drop it before
+    # inverting. Without this guard `pretrends_power` raised an opaque
+    # LinAlgError on every standard `event_study` result (which always
+    # includes the SE = 0 reference period).
+    estimated = se_pre_all > 0
+    if not estimated.any():
+        raise ValueError(
+            "All pre-treatment periods have zero standard error (only the "
+            "reference period is present); the pre-trend test is undefined."
+        )
+
+    pre = pre.loc[estimated]
+    se_pre = se_pre_all[estimated]
     K = len(se_pre)
 
     # Build VCV (diagonal if full VCV unavailable)
@@ -278,8 +296,20 @@ def pretrends_power(
         vcv = np.diag(se_pre ** 2)
     else:
         vcv = np.asarray(vcv, dtype=float)
+        # Align a full VCV (one row per pre-period, reference included) to the
+        # estimated periods retained above.
+        if vcv.shape[0] == K_all:
+            vcv = vcv[np.ix_(estimated, estimated)]
 
-    vcv_inv = np.linalg.inv(vcv)
+    try:
+        vcv_inv = np.linalg.inv(vcv)
+    except np.linalg.LinAlgError as exc:
+        raise ValueError(
+            "Pre-period variance-covariance matrix is singular even after "
+            "dropping the reference period: the pre-treatment coefficients are "
+            "collinear, so the pre-trend power is undefined. Supply a full-rank "
+            "'vcv_pre' via model_info or narrow the event window."
+        ) from exc
 
     # Default delta: linear trend scaled by minimum SE
     if delta is None:
@@ -289,9 +319,13 @@ def pretrends_power(
         delta = np.array([(i + 1) / K * min_se for i in range(K)])
     else:
         delta = np.asarray(delta, dtype=float)
-        if len(delta) != K:
+        if len(delta) == K_all:
+            # One entry per pre-period including the reference: align it.
+            delta = delta[estimated]
+        elif len(delta) != K:
             raise ValueError(
-                f"delta has length {len(delta)} but there are {K} pre-periods."
+                f"delta has length {len(delta)} but there are {K} estimated "
+                "pre-periods (the reference period is excluded)."
             )
 
     # Non-centrality parameter
