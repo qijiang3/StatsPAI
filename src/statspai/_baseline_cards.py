@@ -961,7 +961,7 @@ BASELINE_CARDS: Dict[str, Dict[str, Any]] = {
         'tags': ['decomposition'],
     },
     'citation': {
-        'example': 'sp.citation()) # BibTeX (default)',
+        'example': 'sp.citation()  # BibTeX (default)',
         'tags': ['output'],
     },
     'citations_to_bib_entries': {
@@ -1295,7 +1295,7 @@ BASELINE_CARDS: Dict[str, Dict[str, Any]] = {
         'tags': ['causal', 'sensitivity'],
     },
     'event_study_table': {
-        'example': 'sp.event_study_table(r), title="Event study")',
+        'example': 'sp.event_study_table(r, include_reference=True)',
         'tags': ['postestimation', 'event_study'],
     },
     'examples': {
@@ -1416,7 +1416,7 @@ BASELINE_CARDS: Dict[str, Dict[str, Any]] = {
         'tags': ['regression'],
     },
     'gmm': {
-        'example': 'sp.gmm(moment_fn, theta0=np.zeros(2)',
+        'example': 'sp.gmm(moment_fn, theta0=np.zeros(2))',
         'tags': ['panel'],
     },
     'granger_causality': {
@@ -2036,7 +2036,7 @@ BASELINE_CARDS: Dict[str, Dict[str, Any]] = {
         'tags': ['postestimation'],
     },
     'pwcorr': {
-        'example': "sp.pwcorr(df, vars=['wage', 'education', 'experience']))",
+        'example': "sp.pwcorr(df, vars=['wage', 'education', 'experience'])",
         'tags': ['utils'],
     },
     'qqsynth': {
@@ -2471,7 +2471,7 @@ BASELINE_CARDS: Dict[str, Dict[str, Any]] = {
         'tags': ['causal', 'synth'],
     },
     'synth_to_latex': {
-        'example': 'sp.synth_to_latex(result, show_weights=True))',
+        'example': 'sp.synth_to_latex(result, show_weights=True)',
         'tags': ['causal', 'synth'],
     },
     'synth_to_markdown': {

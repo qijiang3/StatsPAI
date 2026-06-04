@@ -6,6 +6,15 @@ All notable changes to StatsPAI will be documented in this file.
 
 ### Added
 
+- **Registry-example bind guard (`tests/test_registry_examples_bind.py`).**
+  A parametrized test now statically parses every registered `example` string
+  and binds the keyword arguments of its `sp.<name>(...)` call against the real
+  signature, failing if an example references a keyword the function does not
+  accept or does not parse. This locks down the agent copy-paste path — an
+  agent reads `sp.describe_function(name)` and runs the example verbatim — so
+  the registry/example drift fixed below cannot silently return. 373 examples
+  bind green.
+
 - **`parity` optional extra — opt-in DoubleML reference pin for `sp.dml`.**
   `pip install -e ".[dev,parity]"` now installs `doubleml-for-py` (the Python
   DoubleML reference of Bach, Chernozhukov, Kurz & Spindler, JMLR 23(53),
@@ -23,6 +32,24 @@ All notable changes to StatsPAI will be documented in this file.
 
 ### Fixed
 
+- **33 registered `example` strings were statically broken (agent-UX).** Six
+  failed to parse (stray/`unmatched` parens, a positional-after-keyword
+  `...` placeholder, an unclosed call) and 27 passed a keyword the function
+  does not accept — a deterministic `TypeError`/`SyntaxError` on the exact
+  agent copy-paste path. Root causes were two long-standing parameter-name
+  drifts: the Mendelian-randomization family (`mr_egger`/`mr_ivw`/`mr_raps`/
+  `mr_presso`) used the short `b_exp`/`b_out`/`se_exp`/`se_out` names instead
+  of the implemented `beta_exposure`/`beta_outcome`/`se_exposure`/`se_outcome`,
+  and the Bayesian family (`bayes_rd`/`bayes_fuzzy_rd`/`bayes_mte`/`bayes_did`/
+  `bayes_iv`) plus `metalearner`/`tmle`/`causal_impact`/`sensemakr`/
+  `spec_curve`/`qreg`/`tobit`/`heckman`/`cluster_cross_interference`/
+  `causal_dqn`/`pci_mtp`/`bartik`/`ffl_decompose` drifted from their
+  signatures. `qreg`/`tobit`/`heckman`/`spec_curve` additionally had wrong
+  call *shapes* (formula passed positionally into `data`; flat `controls`
+  where a list-of-lists was required) and were rebuilt to runnable form and
+  executed to confirm. Fixed across `registry.py` and `_baseline_cards.py`;
+  the regenerated `schemas/` bundle stays in sync. Guarded by the new
+  bind test above.
 - **⚠️ Correctness — `sp.stabilized_weights` / `sp.msm` silently dropped all
   IPTW adjustment on single-period panels.** On a single-period (point-
   treatment) panel the within-unit lagged-treatment column is all-zero, which
