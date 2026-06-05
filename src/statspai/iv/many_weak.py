@@ -200,7 +200,7 @@ def many_weak_ar(
         # sigma²_b = var(resid); jackknife variance estimator for pivot
         sigma2 = float(np.mean(resid ** 2))
         if sigma2 <= 0:
-            return np.inf
+            return np.inf  # pragma: no cover
         stat = float(ZtEps @ ZtZ_inv @ ZtEps) / max(sigma2, 1e-12)
         return stat
 

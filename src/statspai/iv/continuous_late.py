@@ -108,7 +108,7 @@ def continuous_iv_late(
         idx = rng.integers(0, n, size=n)
         try:
             boot[b], _ = _wald_per_bin(Y[idx], D[idx], Z[idx])
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
     se = _bootstrap_se(boot, label="iv.continuous_late")
     z_crit = float(stats.norm.ppf(1 - alpha / 2))

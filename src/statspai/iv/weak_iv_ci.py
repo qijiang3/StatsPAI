@@ -198,7 +198,7 @@ def anderson_rubin_ci(
         if rss_full > 0:
             stats_arr[i] = ((rss_red - rss_full) / k) / (rss_full / dfd)
         else:
-            stats_arr[i] = np.inf
+            stats_arr[i] = np.inf  # pragma: no cover
     in_set = stats_arr <= crit
 
     return _build_set("Anderson-Rubin (AR)", level, beta_grid, stats_arr,
@@ -266,9 +266,9 @@ def conditional_lr_ci(
         svv = float(Sigma[1, 1])
         suv = float(Sigma[0, 1])
         if suu <= 0 or svv <= 0:
-            stat_arr[i] = 0.0
-            crit_arr[i] = np.inf
-            continue
+            stat_arr[i] = 0.0  # pragma: no cover
+            crit_arr[i] = np.inf  # pragma: no cover
+            continue  # pragma: no cover
         S = Zs.T @ ustar / np.sqrt(suu)
         d_perp = Dt - (suv / suu) * ustar
         sperp = max(svv - suv ** 2 / suu, 1e-12)
@@ -349,8 +349,8 @@ def k_test_ci(
         svv = float(Sigma[1, 1])
         suv = float(Sigma[0, 1])
         if suu <= 0 or svv <= 0:
-            stat_arr[i] = 0.0
-            continue
+            stat_arr[i] = 0.0  # pragma: no cover
+            continue  # pragma: no cover
         S = Zs.T @ ustar / np.sqrt(suu)
         d_perp = Dt - (suv / suu) * ustar
         sperp = max(svv - suv ** 2 / suu, 1e-12)

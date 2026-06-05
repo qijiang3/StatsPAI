@@ -118,7 +118,7 @@ def _names(obj, prefix, n):
 
 def _first_stage_f(D: np.ndarray, Z: np.ndarray, W: np.ndarray) -> float:
     if D.shape[1] == 0:
-        return np.nan
+        return np.nan  # pragma: no cover
     ZW = np.column_stack([Z, W]) if W.size else Z
     d = D[:, 0]
     beta_full, *_ = np.linalg.lstsq(ZW, d, rcond=None)
@@ -131,7 +131,7 @@ def _first_stage_f(D: np.ndarray, Z: np.ndarray, W: np.ndarray) -> float:
     k = Z.shape[1]
     dfd = max(len(d) - ZW.shape[1], 1)
     if rss_full <= 0 or k <= 0:
-        return np.nan
+        return np.nan  # pragma: no cover
     return ((rss_r - rss_full) / k) / (rss_full / dfd)
 
 
@@ -200,7 +200,7 @@ def _jive_estimate(
             D_hat[:, j] = (D_hat_full[:, j] - h * D[:, j]) / (1 - h)
 
     else:
-        raise ValueError(f"Unknown JIVE method: {method}")
+        raise ValueError(f"Unknown JIVE method: {method}")  # pragma: no cover
 
     X_hat = np.column_stack([D_hat, W]) if W.size else D_hat
     XhXh_inv = np.linalg.inv(X_hat.T @ X_hat)

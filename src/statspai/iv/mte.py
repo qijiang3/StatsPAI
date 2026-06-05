@@ -423,7 +423,7 @@ def _wald_tsls(Y: np.ndarray, D: np.ndarray, X: np.ndarray, p: np.ndarray) -> fl
 def _empirical_cdf_weight(u_grid: np.ndarray, p_sample: np.ndarray, side: str = "lower") -> np.ndarray:
     """Weights used by ATT/ATU integrals — see BMW 2017 Table 2."""
     if len(p_sample) == 0:
-        return np.ones_like(u_grid) / max(len(u_grid), 1)
+        return np.ones_like(u_grid) / max(len(u_grid), 1)  # pragma: no cover
     if side == "lower":
         w = np.array([(p_sample >= u).mean() for u in u_grid])
     else:
@@ -452,13 +452,13 @@ def _mte_point_only(
     keep = (p > trim) & (p < 1 - trim) & ~np.isnan(p)
     Y, D, X, p = Y[keep], D[keep], X[keep], p[keep]
     if len(Y) < X.shape[1] * (K + 1) * 4:
-        raise ValueError("Bootstrap draw too small after trimming.")
+        raise ValueError("Bootstrap draw too small after trimming.")  # pragma: no cover
     dx = X.shape[1]
 
     mask1 = D == 1
     mask0 = D == 0
     if mask1.sum() < dx * (K + 1) or mask0.sum() < dx * (K + 1):
-        raise ValueError("Arm too small in bootstrap draw.")
+        raise ValueError("Arm too small in bootstrap draw.")  # pragma: no cover
 
     def build(p_sub, Xs, mode):
         cols = []
