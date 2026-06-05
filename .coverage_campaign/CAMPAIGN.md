@@ -98,6 +98,21 @@ Sequencing (cheapest first, big three last): **iv → dml → panel → did → 
   call. Proven loop: gap-map → targeted tests → green.
 - **Pending decision from maintainer:** commit/push cadence (see report).
 
+### 2026-06-05 — handoff from parallel JOSS-prep agent
+
+- A second agent working the JOSS-prep track contributed one **synth**
+  coverage file before withdrawing from the coverage campaign (maintainer
+  decision: campaign owns all of W3.2). Handed over, renamed to the campaign
+  convention: `tests/test_synth_cov_plots.py` (12 tests, green) — covers the
+  `sp.synthplot` dispatcher's plotting layer (`synth/plots.py`): types
+  `trajectory, gap, both, weights, placebo, placebo_gap, rmspe, conformal,
+  compare`, the `pre_band` overlay, and the unknown-type `ValueError`. These
+  are rendering smoke tests (assert a Matplotlib `Figure` is returned), so
+  they lift `synth/plots.py` (1,237 lines, 23% baseline) without pinning
+  pixels. Remaining synth plot renderers needing specialised fits
+  (`staggered, factors, distributional, multi_outcome, prediction_interval,
+  sensitivity`) are still open for the campaign's synth module.
+
 ---
 
 ## Acceptance checklist (for the maintainer to verify all results)
