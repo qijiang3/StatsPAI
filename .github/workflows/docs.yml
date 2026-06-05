@@ -1,0 +1,89 @@
+name: Docs (MkDocs)
+
+# Build the MkDocs Material site and publish it to GitHub Pages.
+#
+#   - pull_request : build with ``--strict`` only (no deploy). This is a
+#     documentation quality gate — a broken intra-doc link, a missing nav
+#     page, or a mkdocstrings failure reds the PR instead of silently
+#     shipping a broken site.
+#   - push to main : build ``--strict`` and deploy to Pages.
+#
+# Deployment uses the official GitHub Pages actions (artifact upload +
+# deploy-pages), so no ``gh-pages`` branch is created or force-pushed. The
+# repository must have Pages enabled with the source set to "GitHub Actions"
+# (Settings -> Pages -> Build and deployment -> Source: GitHub Actions); the
+# build job runs regardless, so the strict-build check works even before
+# Pages is switched on.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'src/statspai/**'      # API reference is generated from docstrings
+      - 'scripts/gen_api_ref.py'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'scripts/gen_api_ref.py'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+# Opt JavaScript actions into the Node 24 runtime ahead of GitHub's hard
+# cutover — same posture as ci-cd.yml.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+# Allow only one concurrent deployment; let in-progress runs finish so a
+# half-published site is never left live.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install docs toolchain
+        # mkdocstrings renders the API reference from the package docstrings,
+        # so the package itself must be importable; ``.[docs]`` pulls the
+        # MkDocs Material + mkdocstrings + gen-files + literate-nav stack.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[docs]"
+
+      - name: Build site (strict)
+        run: mkdocs build --strict --site-dir _site
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    # Publish only from main; PRs stop at the strict-build check above.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
