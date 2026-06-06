@@ -8489,18 +8489,39 @@
     "description": "Heckman two-step selection model correcting for sample selection bias. Validation: certified parity evidence.",
     "input_schema": {
       "properties": {
-        "formula": {
-          "description": "Outcome equation formula",
+        "alpha": {
+          "default": 0.05,
+          "description": "Significance level for confidence intervals",
+          "type": "number"
+        },
+        "select": {
+          "description": "Binary selection indicator (1 = observed, 0 = not)",
           "type": "string"
         },
-        "select_formula": {
-          "description": "Selection equation formula",
+        "x": {
+          "description": "Regressors in the outcome equation",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "y": {
+          "description": "Outcome variable (observed only when select=1)",
           "type": "string"
+        },
+        "z": {
+          "description": "Selection-equation variables (include exclusion restrictions in z but not x)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
-        "formula",
-        "select_formula"
+        "select",
+        "x",
+        "y",
+        "z"
       ],
       "type": "object"
     },
@@ -20916,22 +20937,35 @@
     "description": "Tobit model for censored dependent variables. Validation: certified parity evidence. Assumptions: Latent outcome is linear in covariates with normally distributed errors; Censoring threshold is known and exogenous. Pre-conditions: Outcome censoring point and censoring direction are known; Covariates are numeric or properly encoded. Failure modes: MLE fails to converge or sigma is near zero -> Rescale covariates, simplify the model, or compare with censored quantile alternatives. Alternatives: sp.qreg, sp.regress. Typical minimum N: 100.",
     "input_schema": {
       "properties": {
-        "formula": {
-          "description": "Model formula using patsy/R-style syntax.",
-          "type": "string"
+        "alpha": {
+          "default": 0.05,
+          "description": "Significance level for confidence intervals",
+          "type": "number"
         },
-        "lower": {
+        "ll": {
           "default": 0.0,
-          "description": "Lower censoring point",
+          "description": "Lower censoring limit (set -inf for none)",
           "type": "number"
         },
-        "upper": {
-          "description": "Upper censoring point",
+        "ul": {
+          "description": "Upper censoring limit (default: none)",
           "type": "number"
+        },
+        "x": {
+          "description": "Regressors",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "y": {
+          "description": "Censored outcome variable",
+          "type": "string"
         }
       },
       "required": [
-        "formula"
+        "x",
+        "y"
       ],
       "type": "object"
     },

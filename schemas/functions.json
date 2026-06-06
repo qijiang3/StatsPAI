@@ -148,23 +148,44 @@
     "name": "heckman",
     "parameters": {
       "properties": {
+        "alpha": {
+          "default": 0.05,
+          "description": "Significance level for confidence intervals",
+          "type": "number"
+        },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
           "type": "string"
         },
-        "formula": {
-          "description": "Outcome equation formula",
+        "select": {
+          "description": "Binary selection indicator (1 = observed, 0 = not)",
           "type": "string"
         },
-        "select_formula": {
-          "description": "Selection equation formula",
+        "x": {
+          "description": "Regressors in the outcome equation",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "y": {
+          "description": "Outcome variable (observed only when select=1)",
           "type": "string"
+        },
+        "z": {
+          "description": "Selection-equation variables (include exclusion restrictions in z but not x)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
-        "formula",
-        "select_formula",
-        "data"
+        "data",
+        "y",
+        "x",
+        "select",
+        "z"
       ],
       "type": "object"
     }
@@ -174,27 +195,40 @@
     "name": "tobit",
     "parameters": {
       "properties": {
+        "alpha": {
+          "default": 0.05,
+          "description": "Significance level for confidence intervals",
+          "type": "number"
+        },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
           "type": "string"
         },
-        "formula": {
-          "description": "Model formula using patsy/R-style syntax.",
-          "type": "string"
-        },
-        "lower": {
+        "ll": {
           "default": 0.0,
-          "description": "Lower censoring point",
+          "description": "Lower censoring limit (set -inf for none)",
           "type": "number"
         },
-        "upper": {
-          "description": "Upper censoring point",
+        "ul": {
+          "description": "Upper censoring limit (default: none)",
           "type": "number"
+        },
+        "x": {
+          "description": "Regressors",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "y": {
+          "description": "Censored outcome variable",
+          "type": "string"
         }
       },
       "required": [
-        "formula",
-        "data"
+        "data",
+        "y",
+        "x"
       ],
       "type": "object"
     }

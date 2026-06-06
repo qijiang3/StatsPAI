@@ -399,27 +399,40 @@
       "name": "tobit",
       "parameters": {
         "properties": {
+          "alpha": {
+            "default": 0.05,
+            "description": "Significance level for confidence intervals",
+            "type": "number"
+          },
           "data": {
             "description": "pandas DataFrame containing the variables used by the estimator.",
             "type": "string"
           },
-          "formula": {
-            "description": "Model formula using patsy/R-style syntax.",
-            "type": "string"
-          },
-          "lower": {
+          "ll": {
             "default": 0.0,
-            "description": "Lower censoring point",
+            "description": "Lower censoring limit (set -inf for none)",
             "type": "number"
           },
-          "upper": {
-            "description": "Upper censoring point",
+          "ul": {
+            "description": "Upper censoring limit (default: none)",
             "type": "number"
+          },
+          "x": {
+            "description": "Regressors",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "y": {
+            "description": "Censored outcome variable",
+            "type": "string"
           }
         },
         "required": [
-          "formula",
-          "data"
+          "data",
+          "y",
+          "x"
         ],
         "type": "object"
       }
