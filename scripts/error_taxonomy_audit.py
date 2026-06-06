@@ -50,8 +50,11 @@ GENERIC_EXCEPTIONS = {
 # not migratable to the domain taxonomy.  The native sdid/augsynth/gsynth/
 # rddensity ports added such validation, so the ceiling is bumped to the
 # current count to keep catching unjustified future growth (taxonomy raises
-# rose in tandem, so the migration trend is intact).
-GENERIC_RAISE_MAX = 1842
+# rose in tandem, so the migration trend is intact).  The recent correctness
+# fixes (diagnostics/did/bartik/results clean-error guards) added a further 5
+# idiomatic arg-validation / defensive raises, so the ceiling moves 1842 -> 1847
+# while taxonomy raises held at 62 (>> the 42 floor) — migration trend intact.
+GENERIC_RAISE_MAX = 1847
 BROAD_EXCEPT_MAX = 588
 TAXONOMY_RAISE_MIN = 42
 
