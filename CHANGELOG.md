@@ -153,6 +153,22 @@ All notable changes to StatsPAI will be documented in this file.
   executed to confirm. Fixed across `registry.py` and `_baseline_cards.py`;
   the regenerated `schemas/` bundle stays in sync. Guarded by the new
   bind test above.
+- **`sp.heckman` / `sp.tobit` MCP tool schemas advertised parameters the
+  functions reject (agent-native path).** The prior `example`-string fix above
+  repaired the copy-paste path, but the *other* drifted field — the
+  `FunctionSpec.params` that generate each tool's MCP `input_schema` — was left
+  pointing at a never-implemented formula API: `heckman` exposed required
+  `formula`/`select_formula` and `tobit` exposed `formula`/`lower`/`upper`,
+  while the implementations take `data, y, x, select, z` and `data, y, x, ll,
+  ul`. An agent calling either tool exactly as the manifest instructed hit a
+  deterministic `TypeError: ... got an unexpected keyword argument 'formula'`.
+  The `example`-bind guard above does not cover this because it validates the
+  `example` field, not `params`. Re-pointed both `params` blocks at the real
+  signatures in `registry.py`; the regenerated `schemas/` bundle is back in
+  sync and both tools now dispatch (`sp.heckman` recovers the known-truth
+  β=2.05 fixture through the MCP dispatch layer). The estimator numerics were
+  never affected — Python-direct `sp.heckman(...)` / `sp.tobit(...)` always
+  worked; only the MCP schema was wrong.
 - **⚠️ Correctness — `sp.stabilized_weights` / `sp.msm` silently dropped all
   IPTW adjustment on single-period panels.** On a single-period (point-
   treatment) panel the within-unit lagged-treatment column is all-zero, which
