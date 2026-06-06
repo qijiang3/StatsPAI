@@ -75,7 +75,7 @@ Sequencing (cheapest first, big three last): **iv → dml → panel → did → 
 |---|---|---|---|---|
 | iv | 86.7 | **95.5** | 95 | ✅ **DONE** (12 test files, 162 tests; 46 defensive lines pragma'd) |
 | dml | 75.7 | **95.6** | 95 | ✅ **DONE** (5 test files, 44 tests; 64 defensive lines pragma'd) |
-| panel | 54.0 | — | 95 | ⬜ queued |
+| panel | 54.0 | **95.1** | 95 | ✅ **DONE** (8 test files, 114 tests; biggest climb) |
 | did | 74.6 | — | 95 | ⬜ queued |
 | rd | 66.3 | — | 95 | ⬜ queued |
 | synth | 66.0 | 🟡 | 95 | 🟡 plots layer started (handoff) |
@@ -168,6 +168,27 @@ sentinels). Zero numeric change.
 
 Progress: **iv ✅ 95.5%, dml ✅ 95.6%** (2/6). Next: **panel** (54.0%, the lowest
 start — largest single climb).
+
+### 2026-06-05 — session 5: panel ✅ reaches 95.1% (biggest climb)
+
+**panel DONE at 95.1%** (54.0→95.1%, union method) — third core module, and the
+largest single climb (+41pp). 8 new test files (114 tests, green):
+`test_panel_cov_plots / _estimators / _feols / _diagnostics / _misc / _hdfe /
+_compare.py`. Covered the plotting layer (6 renderers), estimator methods
+(fe/re/pooled/fd/be/mundlak/twoway/chamberlain/ab-gmm), result diagnostics
+(BP-LM/F-effects/Pesaran-CD/Hausman), unit roots (ips/llc/fisher/hadri), FGLS,
+binary panels (logit/probit fe/re/cre), native HDFE OLS (sp.hdfe_ols) with
+cluster/wild/weights, two-way clustering, and PanelResults.compare(). ~95
+defensive/compiled lines pragma'd (numba kernels, Rust shim, except-fallbacks,
+plot 'data unavailable' guards). Zero numeric change.
+
+Progress: **iv ✅ 95.5%, dml ✅ 95.6%, panel ✅ 95.1%** (3/6). Remaining: did
+(74.6%), rd (66.3%), synth (66.0% — plots layer already started).
+
+**Coordination note:** a parallel agent is contributing did coverage
+(`tests/test_cov95_did_*.py`, untracked locally). To avoid collision the
+campaign will take **rd next**, then synth, and pick up did only if that agent
+stops. Re-check `git log -- src/statspai/did` before starting did.
 
 ## Acceptance checklist (for the maintainer to verify all results)
 
