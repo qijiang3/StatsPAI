@@ -32,6 +32,21 @@ All notable changes to StatsPAI will be documented in this file.
 
 ### Fixed
 
+- **⚠️ Correctness: `sp.drdid(method='trad')` returned ~half the true ATT.**
+  The traditional doubly-robust DiD branch of `sp.drdid` (Sant'Anna & Zhao
+  2020) normalised each of its four cell terms (treated/control × post/pre) by
+  the **full sample size** `n` instead of by that cell's weight mass. This
+  multiplied every term by the cell's sample share (~0.25 each on a balanced
+  2×2), biasing the ATT toward zero by ~50%: on a 2×2 with a true ATT of 2.0
+  (raw DiD 1.96) the traditional estimator returned ≈1.04. Each term is now
+  normalised by its own weight total, so `method='trad'` reduces exactly to the
+  raw 2×2 DiD when no covariates are supplied and recovers the true ATT with
+  covariates. The improved (locally efficient) `method='imp'` — the **default**
+  — already normalised correctly and is **unchanged**, so no default-path or
+  parity/dossier numbers move. `sp.drdid` now also raises `ValueError` on an
+  unknown `method` instead of silently treating it as traditional (previously
+  e.g. `method='ipw'` ran the traditional branch). See MIGRATION.md.
+
 - **⚠️ Correctness: `sp.multiway_cluster_vcov` undercounted intersection
   clusters, biasing multiway-cluster-robust standard errors.** The
   Cameron-Gelbach-Miller inclusion-exclusion builds an *intersection* cluster

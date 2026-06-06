@@ -5,6 +5,40 @@ Internal version-to-version migrations are at the top; the long-form
 
 ---
 
+<a id="drdid-traditional-normalisation"></a>
+
+## Unreleased — ⚠️ `sp.drdid(method='trad')` ATT correctness fix
+
+**What changed.** The traditional doubly-robust DiD branch of `sp.drdid`
+(Sant'Anna & Zhao 2020) divided each of its four cell terms — treated/control ×
+post/pre, each a weighted average of the outcome-regression residual — by the
+**full sample size** `n` rather than by that cell's weight mass. On a balanced
+2×2 each cell holds ~¼ of the sample, so every term was scaled down by its
+sample share and the ATT was biased toward zero by ~50%. Concretely, on a 2×2
+with true ATT 2.0 (raw DiD 1.96) `method='trad'` returned ≈1.04. Each term is
+now normalised by its own weight total. The traditional estimator therefore now
+reduces **exactly** to the raw 2×2 DiD when no covariates are supplied, and
+recovers the true ATT with covariates.
+
+Separately, `sp.drdid` now **raises `ValueError`** when `method` is neither
+`'imp'` nor `'trad'`. Previously any other string (e.g. `'ipw'`, `'reg'`,
+`'dr'`) fell through silently to the traditional branch; such calls were never
+distinct estimators and now fail loudly.
+
+**Who is affected.** Callers of `sp.drdid(..., method='trad')` (or any non-`imp`
+string, which silently ran the traditional branch). The **default**
+`method='imp'` (improved, locally efficient) already normalised correctly and
+is **unchanged** — its point estimates, standard errors, the
+`docs/joss_validation_dossier.md` / R-`DRDID` parity numbers (which pin
+`drdid_imp_panel`), and every other default-path result are **not** affected.
+
+**Action.** If you relied on `method='trad'` output, re-run; the corrected ATT
+is ~2× the previously reported (downward-biased) value and now matches the raw
+DiD / `method='imp'`. Replace any `method` value other than `'imp'`/`'trad'`
+with one of those two.
+
+---
+
 <a id="multiway-cluster-intersection"></a>
 
 ## Unreleased — ⚠️ `sp.multiway_cluster_vcov` multiway-cluster SE correctness fix
