@@ -119,6 +119,31 @@ score-construction difference noted above (≈ 0.10–0.13 SE). All four
 DoubleML model classes are pinned numerically against `doubleml-for-py`
 in `tests/external_parity/test_dml_python_parity.py`.
 
+## Estimation procedure and nuisance learners
+
+**DML2, not DML1.** `sp.dml` solves the *pooled* moment equation across
+all cross-fitting folds at once — i.e. the **DML2** estimator of
+Chernozhukov et al. (2018, Def. 3.2), which is also DoubleML's default
+`dml_procedure`. For the partially-linear models this is the closed-form
+`theta = sum(d_tilde * y_tilde) / sum(d_tilde**2)` over *all* out-of-fold
+residuals (not a per-fold DML1 average). This pooled identity, the
+solved Neyman moment, and the sandwich-variance formula are checked
+directly in `tests/test_dml_orthogonality_invariants.py`. The per-fold
+DML1 procedure is not currently exposed; for well-sized folds the two
+agree closely and DML2 is the recommended default.
+
+**Nuisance learners.** Any scikit-learn-compatible estimator can be
+passed to `ml_g` / `ml_m` / `ml_r`, exactly as in DoubleML; string
+aliases (`'lasso'`, `'rf'`, `'gbm'`, …) are convenience shortcuts for
+common configurations. `sp.dml` does **not** ship a theory-driven
+"rigorous"/plug-in lasso (the `hdm` `rlasso` of Belloni–Chernozhukov–
+Hansen): that estimator is specific to the R `hdm` package, and
+`doubleml-for-py` likewise relies on scikit-learn learners rather than
+bundling it. The scikit-learn cross-validated `LassoCV` is the
+Python-ecosystem analogue for a sparse linear nuisance, and a user who
+wants plug-in penalty selection can pass any custom estimator that
+implements the scikit-learn `fit`/`predict` API.
+
 ## Running the parity tests yourself
 
 ```bash

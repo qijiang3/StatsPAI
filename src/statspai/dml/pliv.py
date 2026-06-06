@@ -6,7 +6,7 @@ Model: ``Y = theta * D + g(X) + eps``, ``E[eps | Z, X] = 0``.
 Neyman-orthogonal score:
     psi = (Y - g(X) - theta*(D - m(X))) * (Z - r(X))
 
-DML1 ratio estimator:
+DML2 (pooled-moment) ratio estimator:
     theta = sum(y_tilde * z_tilde) / sum(d_tilde * z_tilde)
 
 Weighted variant (with sample_weight w_i):

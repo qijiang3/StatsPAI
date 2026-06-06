@@ -6,7 +6,7 @@ Model: ``Y = theta * D + g(X) + eps``, ``D = m(X) + v``.
 Neyman-orthogonal score:
     psi(W; theta, g, m) = (Y - g(X) - theta*(D - m(X))) * (D - m(X))
 
-Closed-form DML1 estimator (unweighted):
+Closed-form DML2 (pooled-moment) estimator (unweighted):
     theta = sum( y_tilde * d_tilde ) / sum( d_tilde * d_tilde )
     y_tilde = Y - g_hat(X),  d_tilde = D - m_hat(X).
 
