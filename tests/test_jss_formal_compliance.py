@@ -49,6 +49,17 @@ def test_jss_formal_compliance_audit_maps_official_requirements() -> None:
     )
     assert res.returncode == 0, res.stderr
 
+    # The install/import probe reports whatever version the current source tree
+    # declares; the audit itself compares it against pyproject (version-agnostic).
+    # Assert against that same dynamic version so a release bump (e.g. 1.16.0 →
+    # 1.17.0) does not falsely fail this contract.
+    import re
+
+    _pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    _m = re.search(r'^version\s*=\s*"([^"]+)"', _pyproject_text, re.MULTILINE)
+    assert _m is not None, "could not read version from pyproject.toml"
+    expected_version = _m.group(1)
+
     payload = json.loads(
         (RESULTS / "jss_formal_compliance_audit.json").read_text()
     )
@@ -64,13 +75,12 @@ def test_jss_formal_compliance_audit_maps_official_requirements() -> None:
     assert payload["tier1_transcript"]["within_one_hour"] is True
     install_probe = payload["install_probe"]
     assert install_probe["ok"] is True
-    assert install_probe["version"] == "1.16.0"
+    assert install_probe["version"] == expected_version
     assert install_probe["function_count"] >= 1000
     assert {"statspai", "statspai-mcp"} <= set(install_probe["scripts"])
     assert any(name.endswith(".dist-info") for name in install_probe["dist_infos"])
-    pyproject = (REPO_ROOT / "pyproject.toml").read_text()
-    assert "Development Status :: 4 - Beta" in pyproject
-    assert "Development Status :: 3 - Alpha" not in pyproject
+    assert "Development Status :: 4 - Beta" in _pyproject_text
+    assert "Development Status :: 3 - Alpha" not in _pyproject_text
     assert {
         "JSS submissions checklist",
         "JSS information for authors",
@@ -156,7 +166,7 @@ def test_jss_formal_compliance_audit_maps_official_requirements() -> None:
     for snippet in (
         "development classifier is Beta rather than Alpha",
         "pip --no-deps --target install/import probe ok=True",
-        "version=1.16.0",
+        f"version={expected_version}",
         "functions=1020",
         "statspai-mcp",
     ):
