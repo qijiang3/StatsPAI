@@ -27,6 +27,16 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# Drain the queue backlog: the full matrix is 13 shards × ~1.5h, so back-to-back
+# pushes to main pile up faster than the runner pool can clear them. Group runs
+# per (workflow, ref) and cancel any superseded in-progress/queued run on a new
+# push — only the latest commit on a branch matters for CI feedback.
+# Guard: never cancel a `release` run (tag ref, isolated group) so an in-flight
+# publish to PyPI is never interrupted mid-upload.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
+
 jobs:
   # Decide the test matrix based on trigger:
   #   - pull_request: 1 combo (ubuntu-latest × 3.10) — fast PR feedback, keeps Codecov upload

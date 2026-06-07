@@ -14,6 +14,8 @@ with the parallel agent's ``test_cov95_rd_*`` files.
 
 from __future__ import annotations
 
+import importlib.util
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -34,7 +36,23 @@ def sharp():
     return pd.DataFrame({"y": y, "x": x, "w": rng.uniform(0.5, 1.5, n)})
 
 
-@pytest.mark.parametrize("bwselect", ["cct", "mserd", "msetwo", "cerrd", "certwo"])
+# ``bwselect='cct'`` delegates to the official rdrobust package, an *optional*
+# dependency (the ``rd-cct`` extra). When rdrobust is not installed,
+# ``sp.rdrobust(..., bwselect='cct')`` deliberately raises ImportError, so the
+# parametrization skips that case rather than hard-failing — keeping the suite
+# green on minimal installs. The other selectors are native StatsPAI code and
+# always run.
+_HAS_RDROBUST = importlib.util.find_spec("rdrobust") is not None
+_cct = pytest.param(
+    "cct",
+    marks=pytest.mark.skipif(
+        not _HAS_RDROBUST,
+        reason="optional dependency 'rdrobust' (rd-cct extra) not installed",
+    ),
+)
+
+
+@pytest.mark.parametrize("bwselect", [_cct, "mserd", "msetwo", "cerrd", "certwo"])
 def test_rdrobust_bwselect_variants(sharp, bwselect):
     res = sp.rdrobust(sharp, y="y", x="x", c=0.0, bwselect=bwselect)
     assert res is not None
