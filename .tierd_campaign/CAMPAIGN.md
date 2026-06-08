@@ -122,10 +122,33 @@ to notebook-ify (one `.ipynb` each):
 | `05_abadie_prop99.ipynb` | Abadie et al. (2010) Prop 99 | California-99 | per-capita gap |
 | `06_mpdta_csdid.ipynb` | Callaway–Sant'Anna `mpdta` | mpdta | aggregated ATT |
 
-Deliverables:
-- `Paper-JSS/replication/notebooks/*.ipynb` (or `docs/notebooks/`) — decision pending.
-- Headless runner: `jupyter nbconvert --execute` (or papermill) in CI; a test
-  asserts each notebook's computed headline matches the pinned published value.
+**Maintainer decision (2026-06-08):** notebooks go in
+`Paper-JSS/replication/notebooks/` (recommended option). NB this tree is a
+*separate private repo* gitignored by the public main repo (CLAUDE.md §9.1), so
+the notebooks are tracked by the Paper-JSS repo and must be committed from
+there, not the main repo.
+
+**Tier B DONE (2026-06-08):**
+- `scripts/build_replication_notebooks.py` — single-source-of-truth nbformat
+  generator (committed in main repo, not gitignored).
+- 5 executable notebooks (Card / ADH-Prop99 / LaLonde-NSW / Lee-RD / Graddy):
+  load real data → classic estimator → comparison-vs-paper table → figure →
+  **drift-guard assert**. All execute headless (Card 7.6s, rest ~2s).
+- `tests/test_replication_notebooks.py` — headless CI runner (nbclient); skips
+  cleanly when the private Paper-JSS tree is absent, runs full when present.
+- `notebooks` extra in `pyproject.toml` (nbformat/nbclient/nbconvert/ipykernel,
+  all BSD); `make -C Paper-JSS notebooks` / `notebooks-execute`; README in dir.
+- Excluded: `angrist_pischke_mhe` (no bundled data); `graddy_2006` is a
+  *simulated* known-truth IV demo (labelled as such).
+
+**⚠️ FINDING for maintainer (CLAUDE.md §12):** the `sp.replicate('lalonde_1986')`
+registry pins 1:1 NN PSM ATT at **$2012.5** (tol $5), but current deterministic
+`sp.match(method='nearest')` returns **$1963.4** — a $49 (2.5%) drift from a
+tie-handling change (binary covariates) since the May-7 pin. *Not* a numeric
+change I made; the teaching pin is stale and unguarded by any test. Notebook 03
+guards the robust scientific claim instead. **Recommend** refreshing the
+registry golden number 2012.5 → 1963.4 (documentation correction) — pending your
+approval since it touches a pinned value.
 
 ---
 
