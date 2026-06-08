@@ -86,7 +86,7 @@ def ols_fit(
     ``cond(X)`` rather than ``cond(X)**2``.  On the NIST StRD certification
     suite this lifts the worst case (Filippelli, a degree-10 polynomial fit)
     from 0 correct digits to ~7, while leaving well-conditioned fits unchanged
-    to ~1e-12.  See ``tests/reference_parity/test_nist_strd_ols.py``.
+    to ~1e-12.  See ``tests/numerical_accuracy/test_nist_strd_ols.py``.
 
     Returns
     -------

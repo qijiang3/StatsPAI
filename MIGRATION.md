@@ -19,7 +19,7 @@ ill-conditioned designs roughly half of the available digits are lost — and on
 the worst cases the result is meaningless.
 
 **Why.** The new NIST StRD certification suite
-(`tests/reference_parity/test_nist_strd_ols.py`) showed the normal-equations
+(`tests/numerical_accuracy/test_nist_strd_ols.py`) showed the normal-equations
 path produced **0 correct digits** on the NIST Filippelli dataset (a degree-10
 polynomial fit, `cond(X) ≈ 1e10`) and only ~6 digits on several Wampler
 polynomials. The QR path tracks `cond(X)` rather than `cond(X)²` and lifts

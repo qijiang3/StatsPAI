@@ -7,15 +7,16 @@ All notable changes to StatsPAI will be documented in this file.
 ### Added
 
 - **NIST StRD Linear Least Squares certification for the OLS kernel
-  (`tests/reference_parity/test_nist_strd_ols.py`).** All 11 NIST Statistical
+  (`tests/numerical_accuracy/test_nist_strd_ols.py`).** All 11 NIST Statistical
   Reference Datasets for linear regression (Norris, Pontius, NoInt1/2, Filip,
   Longley, Wampler1–5) are bundled verbatim under
-  `tests/reference_parity/_fixtures/nist_strd/` and checked against their
-  embedded certified values using NIST's log-relative-error (correct-digits)
-  metric. Both the low-level `OLSEstimator.estimate` kernel and the public
-  `sp.regress` formula path are certified. The thresholds sit above what the
-  retired normal-equations path could reach, so the suite also guards against
-  any regression to `inv(X'X)`.
+  `tests/numerical_accuracy/_fixtures/nist_strd/` and checked against their
+  embedded certified values. Both the low-level `ols_fit`/`OLSEstimator`
+  kernel and the certified standard errors are verified, plus a
+  QR-beats-normal-equations guard on the ill-conditioned designs. Lives in a
+  dedicated `tests/numerical_accuracy/` suite (separate from the R/Stata
+  `reference_parity/` fixtures) since it certifies certified-value accuracy
+  rather than cross-language parity.
 
 ### Changed (⚠️ Correctness)
 
