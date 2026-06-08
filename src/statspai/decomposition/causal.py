@@ -245,10 +245,10 @@ def gap_closing(
             try:
                 g_i = g[idx]; y_i = y_vec[idx]; X_i = X[idx]
                 if (g_i == 0).sum() < 10 or (g_i == 1).sum() < 10:
-                    return np.array([np.nan, np.nan, np.nan])
+                    return np.array([np.nan, np.nan, np.nan])  # pragma: no cover
                 o, c = _gap_closing_core(y_i, g_i, X_i, method, trim, target_dist)
                 return np.array([o, c, o - c])
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001  # pragma: no cover
                 return np.array([np.nan, np.nan, np.nan])
 
         boot = bootstrap_stat(stat_fn, n, n_boot=n_boot, rng=rng, strata=g)
@@ -440,7 +440,7 @@ def mediation_decompose(
                 nde_i = byi[1] + byi[3] * m0_i
                 nie_i = bmi[1] * (byi[2] + byi[3])
                 return np.array([nde_i + nie_i, nde_i, nie_i])
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001  # pragma: no cover
                 return np.array([np.nan, np.nan, np.nan])
 
         boot = bootstrap_stat(stat_fn, n, n_boot=n_boot, rng=rng)

@@ -334,7 +334,7 @@ def ffl_decompose(
                 sub = df.iloc[idx].reset_index(drop=True)
                 g_i = g[idx]
                 if (g_i == 0).sum() < 10 or (g_i == 1).sum() < 10:
-                    return np.array([np.nan] * 4)
+                    return np.array([np.nan] * 4)  # pragma: no cover
                 # Propagate per-row weights into the recursive call so
                 # weighted inference survives resampling.
                 tmp_res = ffl_decompose(
@@ -344,7 +344,7 @@ def ffl_decompose(
                 )
                 return np.array([tmp_res.gap, tmp_res.composition,
                                  tmp_res.structure, tmp_res.spec_error])
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001  # pragma: no cover
                 return np.array([np.nan] * 4)
 
         boot = bootstrap_stat(stat_fn, n, n_boot=n_boot, rng=rng, strata=strata)

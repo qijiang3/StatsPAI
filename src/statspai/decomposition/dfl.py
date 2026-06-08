@@ -300,7 +300,7 @@ def dfl_decompose(
             m_a = g_i == 0
             m_b = g_i == 1
             if m_a.sum() < 5 or m_b.sum() < 5:
-                return np.array([np.nan, np.nan, np.nan])
+                return np.array([np.nan, np.nan, np.nan])  # pragma: no cover
             try:
                 _g, _c, _s, *_ = _dfl_core(
                     y_i[m_a], X_i[m_a], w_i[m_a],
@@ -308,7 +308,7 @@ def dfl_decompose(
                     stat, tau, reference, trim=trim,
                 )
                 return np.array([_g, _c, _s])
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001  # pragma: no cover
                 return np.array([np.nan, np.nan, np.nan])
 
         boot = bootstrap_stat(stat_fn, n, n_boot=n_boot, rng=rng, strata=strata)

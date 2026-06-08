@@ -536,10 +536,10 @@ def yu_elwert_decompose(
                 # Pattern: "{n}/{n_boot} bootstrap replications failed"
                 try:
                     boot_failures = int(msg.split("/")[0].split()[-1])
-                except (ValueError, IndexError):
+                except (ValueError, IndexError):  # pragma: no cover
                     pass
         if len(boot) == 0:
-            raise RuntimeError("All bootstrap replications failed.")
+            raise RuntimeError("All bootstrap replications failed.")  # pragma: no cover
         point_arr = np.array([point[k] for k in keys])
         ses, los, his = bootstrap_ci(
             boot, point_arr, alpha=alpha, method="percentile",

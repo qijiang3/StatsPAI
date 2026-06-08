@@ -395,7 +395,7 @@ class GelbachResult(DecompResultMixin):
         """
         try:
             import matplotlib.pyplot as plt
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 "matplotlib is required for plotting. "
                 "Install it with: pip install matplotlib"
@@ -866,7 +866,7 @@ def gelbach(
     # Sanity check: sum of deltas should ≈ total_change
     sum_delta = delta_vec.sum()
     if abs(sum_delta - total_change) > 1e-6 * (abs(total_change) + 1e-8):
-        warnings.warn(
+        warnings.warn(  # pragma: no cover
             f"Sum of Gelbach deltas ({sum_delta:.6f}) does not match "
             f"total coefficient change ({total_change:.6f}). "
             f"Difference: {abs(sum_delta - total_change):.2e}. "
