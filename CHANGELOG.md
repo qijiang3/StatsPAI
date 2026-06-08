@@ -20,6 +20,14 @@ All notable changes to StatsPAI will be documented in this file.
   No existing numerics move: the native `lasso_iv` path is unchanged; this only
   turns a previously-erroring route into a working one.
 
+- **`decomposition/_kernel_density_at` NumPy 1.25 `DeprecationWarning`.** The
+  legacy RIF kernel-density helper called `float()` on the length-1 array
+  returned by `scipy.stats.gaussian_kde(...)(point)`, which NumPy 1.25
+  deprecates (and a future NumPy will turn into an error). It now indexes the
+  single element first (`float(np.asarray(kde(point)).ravel()[0])`). The
+  returned value is **identical** — it is the same element `float()` already
+  extracted — so no decomposition output changes; the warning is simply gone.
+
 ## [1.17.0] — 2026-06-06
 
 ### Added
