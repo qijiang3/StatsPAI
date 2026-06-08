@@ -144,6 +144,35 @@ dispatch and `raise`/`warn` on a zero-variance column, mirroring the existing
 `AbsorbingEffectError` path. The Tier G test pins both acceptable outcomes so a
 future guard is test-visible.
 
+## Full-suite result (2026-06-08)
+
+`pytest tests/ -n 8 --no-cov` (default `-m 'not slow'`): **8644 passed, 2 failed,
+89 skipped, 1 xfailed** in 10m40s.
+
+The **2 failures are pre-existing count-drift guards, NOT caused by this work** —
+proven by re-running them with the entire `tests/tier_eg/` package removed + the
+`pyproject` dev-extra reverted: they fail identically.
+
+1. `test_jss_validation_api.py::test_validation_report_collected_counts_match_jss_headline`
+   — `reference_parity: collected 149 but headline 124`. The 25-test drift comes
+   from earlier parity commits (HC2/HC3, two-way cluster, CR2/CR3 modules) added
+   after the JSS headline was last synced. `tests/tier_eg/` adds **0**
+   reference_parity tests.
+2. `test_jss_release_manifest.py::test_coverage_findings_track_b1000_artifacts`
+   — `len(canonical) == 7` but the B=1000 coverage-MC artifact now has 9
+   scenarios.
+
+Both require updating `JSS_HEADLINE_TEST_COUNTS` / `len(canonical)` **and** the
+manuscript's `tab:internal-parity` in lockstep — which touches JOSS/JSS files in
+flight. Per Hard Rule #3 this is **out of scope** for the test-only campaign and
+left for the maintainer to sync (deliberately NOT fixed here).
+
+> ⚠️ Concurrency note: a second window/agent was active in this repo during the
+> session (HEAD advanced 7ffd71e→91af3e9; a `other-window-P1-WIP-do-not-touch`
+> stash is on the stack). That window committed this campaign as
+> `0f7ef2f test(validation): add Tier E/G core estimator suite`. Both stashes are
+> preserved untouched.
+
 ## Acceptance checklist (maintainer ticks)
 
 - [x] All six modules have a Tier E + a Tier G file, each with the *defined*
