@@ -35,6 +35,14 @@ relative difference. A non-zero exit means a module drifted and the
 maintainer must explain it (package upgrade, RNG, BLAS) before the
 golden value is refreshed.
 
+The committed fixture surface is additionally protected by
+[`TIER_A_FIXTURE_LOCK.json`](TIER_A_FIXTURE_LOCK.json). This lock is a
+hash-level contract over the R/Stata parity scripts, input CSVs, golden
+JSONs, rendered tables, and reference-environment files. Verify it with
+`python scripts/tier_a_fixture_lock.py`; refresh it only after reviewing
+an intentional fixture change with
+`python scripts/tier_a_fixture_lock.py --write`.
+
 ## R
 
 | Field | Value |

@@ -128,6 +128,23 @@ The same critical Stata smoke path is available through pytest:
 pytest tests/test_parity_runtime.py -m external_parity_runtime --no-cov
 ```
 
+## Tier A fixture lock
+
+The Stata-side `.do` files, shared helper, golden `_Stata.json` outputs,
+environment notes, and reproduction report are included in
+[`../r_parity/TIER_A_FIXTURE_LOCK.json`](../r_parity/TIER_A_FIXTURE_LOCK.json).
+The fast contract suite verifies the lock without requiring a local
+Stata license:
+
+```bash
+python scripts/tier_a_fixture_lock.py
+pytest -o addopts='' tests/test_parity_harness_contract.py
+```
+
+After an intentional Stata fixture refresh, review the JSON/table diff
+and then run `python scripts/tier_a_fixture_lock.py --write` so the
+hash-level fixture contract moves with the audited evidence.
+
 ## Stata environment
 
 - **Edition tested**: Stata 18 BE (Basic Edition; matrix max = 800).

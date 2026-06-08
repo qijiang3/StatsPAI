@@ -132,6 +132,31 @@ with R/Stata installed, run:
 pytest tests/test_parity_runtime.py -m external_parity_runtime --no-cov
 ```
 
+## Tier A fixture lock
+
+The committed Tier A fixture set is hash-locked in
+[`TIER_A_FIXTURE_LOCK.json`](TIER_A_FIXTURE_LOCK.json). The lock covers
+the parity scripts, shared helpers, input CSVs, golden JSONs, rendered
+Appendix B tables, `renv.lock`, and the R/Stata reference-environment
+files. It is checked by the fast pytest contract suite, so a fixture can
+no longer drift merely because `compare.py` was re-run.
+
+Verify the lock without external R/Stata software:
+
+```bash
+python scripts/tier_a_fixture_lock.py
+```
+
+After intentionally changing a Tier A fixture, first regenerate the
+materialized evidence (`NN_*.py` / `NN_*.R` / Stata `.do` as needed,
+then `python tests/r_parity/compare.py`). Review the resulting diff,
+then refresh the lock explicitly:
+
+```bash
+python scripts/tier_a_fixture_lock.py --write
+pytest -o addopts='' tests/test_parity_harness_contract.py
+```
+
 ## Tolerance budget (pre-registered)
 
 Lives in [`compare.py::TOLERANCES`](compare.py); single source of
