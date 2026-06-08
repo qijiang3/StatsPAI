@@ -185,6 +185,9 @@ tools/.citation_cache/
 audit_report.md
 audit_report.json
 
+# Local generated report scratch
+/report.md
+
 # Ad-hoc citation-audit scratch (not from the tool)
 .citation_audit/
 
@@ -207,3 +210,7 @@ MORNING_REPORT_2026-04-29.md
 # Core-coverage campaign working dir (heavy XML/logs ignored; tracker kept)
 .coverage_campaign/*
 !.coverage_campaign/CAMPAIGN.md
+
+# Decomposition coverage campaign working dir (private coverage files ignored; tracker kept)
+.cov_decomp/*
+!.cov_decomp/DECOMP_CAMPAIGN.md
