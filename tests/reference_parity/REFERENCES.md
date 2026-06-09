@@ -36,6 +36,23 @@ errors.
 > against multiple-precision certified values rather than recover a DGP or align
 > with R/Stata, and are deliberately kept out of the JSS reference-parity count.
 
+## Frozen R-value fixtures (true cross-package parity)
+
+Some estimators are pinned to *exact* R numbers (not just DGP recovery).
+Each ships a deterministic data CSV, a `_generate_*.R` script that
+produces the reference JSON, and a frozen `*_R.json` with the R output.
+The test asserts coefficient/SE equality to a tight tolerance.
+
+| Fixture | sp entry point | R reference | Tolerance |
+| --- | --- | --- | --- |
+| `hdfe_*` | `sp.hdfe_ols` | `fixest::feols` two-way FE + cluster | coef 1e-4, cluster SE 5% |
+| `panel_*` | `sp.panel(method='fe'/'re'/'between')` | `plm` within / Swamy-Arora RE / between (Croissant & Millo 2008, *JSS* 27(2), doi:10.18637/jss.v027.i02) | coef 1e-5, classical SE 1e-5, cluster SE 2e-4 |
+
+For `panel_*`, the cluster-robust convention is `plm::vcovHC(type="HC1",
+cluster="group")`, which `sp.panel(method='fe', cluster=<entity>)`
+reproduces. Regenerate with
+`Rscript tests/reference_parity/_fixtures/_generate_panel.R`.
+
 ## What the tests verify
 
 ### Recovery tests
