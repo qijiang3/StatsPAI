@@ -30,7 +30,7 @@ they do not change a single estimated number.
 | 1 | Full schema↔signature drift CI guard (+ fix existing drift) | none (metadata + tests) | **done** |
 | 2 | `EconometricResults.to_dict(detail=)` + `.cite()` (additive) | ~none (additive, default=current) | **done** |
 | 3 | Workflow-tool dispatch contract guard (MCP layer, not registry) | none (test-only) | **done** |
-| 4 | MCP result-cache TTL + structured invalidation | none (runtime only) | pending |
+| 4 | MCP result-cache TTL + structured invalidation | none (runtime only) | **done** |
 | 5 | Docstring parsing multi-format (lazy/extras only) | none (metadata extraction) | pending |
 
 ## Item #1 — schema↔signature drift
@@ -110,3 +110,28 @@ plus locks `WORKFLOW_TOOL_NAMES == specs` and validates each spec's JSON-object
 `input_schema` (type/properties/required⊆properties). Adding a spec without
 wiring the dispatcher now fails CI. No production code changed; no registry count
 moved → `registry_stats` untouched.
+
+## Item #4 — result-cache TTL + reason-aware misses
+
+**Gaps.** The MCP result cache (`agent/_result_cache.py`) was LRU-only: a handle
+lived until pushed out by newer fits, so on a long-running server a `result_id`
+could silently resolve to a *stale* fit after the underlying data changed. And a
+miss returned bare `None` — `_need_result` couldn't tell an agent *why* (expired
+vs evicted vs never-existed).
+
+**Fix (runtime only; default behaviour unchanged).**
+
+- **Opt-in TTL** via `STATSPAI_MCP_RESULT_CACHE_TTL` (seconds) or
+  `ResultCache(ttl_seconds=)`. Default `None` = no expiry → byte-identical to the
+  old behaviour. Expired entries (aged from creation = fit time) are swept lazily
+  on access and eagerly on insert. Malformed / non-positive env → `None` (a bad
+  var can never shrink retention to zero).
+- **Reason-aware misses**: a bounded ledger (256 ids) records why a handle left
+  (`ttl` / `lru` / `explicit`); `miss_reason(rid)` returns that or `unknown`.
+- **New API**: `evict(rid)`, `purge_expired()`, `stats()`, plus `keys()/__len__/
+  __contains__` now honour expiry.
+- `_need_result` (workflow tools) now emits a *tailored* re-fit hint keyed on the
+  miss reason instead of a single generic LRU message.
+
+All additive; the default singleton `RESULT_CACHE` behaves exactly as before
+unless a TTL is configured.
