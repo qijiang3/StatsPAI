@@ -175,7 +175,16 @@ All notable changes to StatsPAI will be documented in this file.
   returned value is **identical** — it is the same element `float()` already
   extracted — so no decomposition output changes; the warning is simply gone.
 
-## [1.17.0] — 2026-06-06
+- **`sp.event_study` crashed on string/extension-dtype time columns under
+  pandas ≥ 3.0.** The non-numeric-time branch guarded on
+  `np.issubdtype(col.dtype, np.number)`, which raises
+  `TypeError: Cannot interpret '<StringDtype...>'` when pandas ≥ 3.0 infers a
+  string column as `StringDtype` (rather than `object`). Switched both checks
+  to `pd.api.types.is_numeric_dtype(col)`, whose truth value is **identical**
+  for every numpy numeric dtype — so numeric-time results are byte-for-byte
+  unchanged (verified against the full event-study suite and the `did`
+  reference-parity set); it only repairs the previously-crashing string-time
+  path. Surfaced by the Windows/macOS CI matrix on pandas 3.0 / numpy 2.4.
 
 ### Added
 
