@@ -6524,12 +6524,13 @@
           "type": "string"
         },
         "weight_rule": {
-          "default": "inverse_risk",
+          "default": "short_stacking",
           "description": "Weighting of candidate estimators",
           "enum": [
+            "short_stacking",
+            "single_best",
             "inverse_risk",
-            "equal",
-            "single_best"
+            "equal"
           ],
           "type": "string"
         },
@@ -6693,7 +6694,9 @@
           "type": "number"
         },
         "boot_methods": {
-          "default": "('pairs',)",
+          "default": [
+            "pairs"
+          ],
           "description": "Subset of {'pairs','wild'}",
           "items": {
             "type": "string"
@@ -6801,7 +6804,12 @@
           "type": "string"
         },
         "methods": {
-          "default": "('2sls','liml','fuller','jive')",
+          "default": [
+            "2sls",
+            "liml",
+            "fuller",
+            "jive"
+          ],
           "description": "methods parameter (tuple[str]).",
           "items": {
             "type": "string"
@@ -7505,13 +7513,9 @@
           "type": "string"
         },
         "reference": {
-          "default": "pre",
-          "description": "Reference period convention",
-          "enum": [
-            "pre",
-            "first_treat"
-          ],
-          "type": "string"
+          "default": -1,
+          "description": "Pre-treatment reference horizon relative to each cohort",
+          "type": "integer"
         },
         "time": {
           "description": "Time period column.",
@@ -9132,14 +9136,11 @@
           "type": "string"
         },
         "method": {
-          "default": "dr",
-          "description": "Estimation method",
+          "default": "imp",
+          "description": "Estimation method: 'imp' (improved, locally efficient) or 'trad'",
           "enum": [
-            "dr",
-            "or",
-            "ipw",
-            "reg",
-            "stdipw"
+            "imp",
+            "trad"
           ],
           "type": "string"
         },
@@ -9486,7 +9487,7 @@
           "type": "integer"
         },
         "n_grid": {
-          "default": 100,
+          "default": 200,
           "description": "Grid size for inverse-CDF mapping",
           "type": "integer"
         },
@@ -9553,7 +9554,7 @@
           "type": "string"
         },
         "never_treated_only": {
-          "default": false,
+          "default": true,
           "description": "Use only never-treated as controls (drops late-treated)",
           "type": "boolean"
         },
@@ -9610,12 +9611,12 @@
           "type": "string"
         },
         "lags": {
-          "default": 5,
+          "default": 4,
           "description": "lags parameter (int).",
           "type": "integer"
         },
         "leads": {
-          "default": 3,
+          "default": 4,
           "description": "leads parameter (int).",
           "type": "integer"
         },
@@ -9665,12 +9666,12 @@
           "type": "string"
         },
         "lags": {
-          "default": 5,
+          "default": 4,
           "description": "lags parameter (int).",
           "type": "integer"
         },
         "leads": {
-          "default": 3,
+          "default": 4,
           "description": "leads parameter (int).",
           "type": "integer"
         },
@@ -10056,7 +10057,7 @@
           "type": "string"
         },
         "n_trees": {
-          "default": 200,
+          "default": 50,
           "description": "Number of trees.",
           "type": "integer"
         },
