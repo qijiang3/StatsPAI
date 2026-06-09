@@ -13,25 +13,26 @@ deliberately constructed with large constant leading digits so that a
 naively implemented (cancellation-prone) sum of squares loses precision;
 ``SmLs03/06/09`` carry that to n = 18009 observations.
 
-Known limitation
-----------------
+Accuracy by difficulty (post mean-centring fix)
+-----------------------------------------------
+``sp.regress`` fits in mean-centred (Frisch-Waugh-Lovell) coordinates, so a
+large constant offset in ``y`` no longer destroys the slope coefficients via
+catastrophic cancellation. The lower / average-difficulty families reproduce
+the certified F to machine precision at every sample size (≈1e-16 to ≈1e-10,
+including ``SmLs03/06`` at n=18009).
+
 The *higher-difficulty* ``SmLs0{7,8,9}`` family (9 constant leading digits)
-is marked ``xfail``: ``sp.regress``'s F / R² path loses accuracy through
-catastrophic cancellation under extreme constant offsets, and the loss
-grows with sample size —
-
-    SmLs07 (n=189)    relative F error ≈ 4.8e-4
-    SmLs08 (n=1809)   relative F error ≈ 9.9e-3
-    SmLs09 (n=18009)  relative F error ≈ 2.3e-2  (F≈1955 vs certified 2001)
-
-The lower / average-difficulty families reproduce the certified F to
-machine precision at every sample size — including ``SmLs03/06`` at the
-same n=18009 (≈1e-16 and ≈6e-11) — so the boundary is the *offset
-magnitude*, not n.  These xfails pin that boundary; a future
-numerically-stabler (mean-centred) OLS sum-of-squares will surface them as
-``xpass``.  Fixing the kernel is intentionally out of scope here (it would
-change a core estimator's numerical output); this suite only documents the
-limit.
+reaches the irreducible IEEE-754 floor of ≈3-7e-5 — not an algorithm defect
+but the limit of representing ``y`` values like ``1.0000000004e12`` in
+float64 at all (only ~3 significant digits of the O(1) signal survive once
+the value is stored as a double; the certified values come from NIST's
+multiple-precision arithmetic on the exact decimal data). Before the
+centring fix these designs were off by 5e-4 to 2.3e-2; centring recovered
+~2-3 orders of magnitude, down to that float64 floor. Their tolerance is
+therefore set to 1e-3 (a safe margin over the ~7e-5 floor) and labelled
+accordingly — reaching certified precision here would require
+extended-precision *input parsing*, which is out of scope for a float64
+estimator.
 
 Fixtures are static, public-domain NIST files (see ``PROVENANCE.md``); they
 run without R, Stata, or network access.
@@ -61,8 +62,12 @@ _R2_RE = re.compile(rf"Certified R-Squared\s+({_NUM})")
 _RESID_RE = re.compile(rf"Standard Deviation\s+({_NUM})")
 
 # Per-dataset relative tolerance for the certified F-statistic / R-squared.
-# A uniform 1e-9 clears every design except SmLs09 (handled via xfail).
+# Lower / average-difficulty designs reach machine precision; the
+# higher-difficulty SmLs0{7,8,9} family is bounded below by the IEEE-754
+# float64 representation floor (~7e-5) of its 9-constant-leading-digit data,
+# so it is checked at 1e-3 (see module docstring).
 DEFAULT_RTOL = 1e-9
+_FLOAT64_FLOOR = {"SmLs07": 1e-3, "SmLs08": 1e-3, "SmLs09": 1e-3}
 
 # All eleven NIST one-way ANOVA datasets, in ascending difficulty.
 CASES = [
@@ -78,14 +83,10 @@ CASES = [
     "SmLs09",
     "AtmWtAg",
 ]
-# The higher-difficulty SmLs0{7,8,9} family (9 constant leading digits) is
-# beyond sp.regress's current F/R^2 numerical accuracy (see module docstring).
-_HARD_REASON = (
-    "sp.regress F/R^2 loses 3-4+ significant digits under 9 "
-    "constant leading digits (catastrophic cancellation; error "
-    "grows with n)"
-)
-XFAIL = {name: _HARD_REASON for name in ("SmLs07", "SmLs08", "SmLs09")}
+
+
+def _rtol(name: str) -> float:
+    return _FLOAT64_FLOOR.get(name, DEFAULT_RTOL)
 
 
 def _f(value: str) -> float:
@@ -147,24 +148,20 @@ def _load(name: str) -> NistAnovaCase:
 
 @pytest.mark.parametrize("name", CASES)
 def test_nist_anova_f_statistic(name):
-    if name in XFAIL:
-        pytest.xfail(XFAIL[name])
     case = _load(name)
     res = sp.regress("y ~ C(g)", data=case.data)
     glance = res.glance()
     f_sp = float(glance["f_statistic"].iloc[0])
     assert f_sp == pytest.approx(
-        case.f_stat, rel=DEFAULT_RTOL
+        case.f_stat, rel=_rtol(name)
     ), f"{name}: sp F={f_sp:.12g} vs NIST certified {case.f_stat:.12g}"
 
 
 @pytest.mark.parametrize("name", CASES)
 def test_nist_anova_r_squared(name):
-    if name in XFAIL:
-        pytest.xfail(XFAIL[name])
     case = _load(name)
     res = sp.regress("y ~ C(g)", data=case.data)
     r2_sp = float(res.glance()["r_squared"].iloc[0])
     assert r2_sp == pytest.approx(
-        case.r_squared, rel=DEFAULT_RTOL
+        case.r_squared, rel=_rtol(name)
     ), f"{name}: sp R^2={r2_sp:.12g} vs NIST certified {case.r_squared:.12g}"

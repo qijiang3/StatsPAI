@@ -26,8 +26,9 @@ here to keep that headline count meaningful and stable.
   datasets (SiRstv, SmLs01–09, AtmWtAg) are bundled verbatim under
   `_fixtures/nist_strd_anova/` (see its `PROVENANCE.md`). A one-way ANOVA is OLS
   of `y ~ C(group)`, so these certify the F-statistic / R² / sum-of-squares
-  numerical accuracy of `sp.regress`. `sp.regress` matches the certified F to
-  machine precision through the average-difficulty family (incl. n=18009), and
-  the three highest-difficulty designs (`SmLs07/08/09`, 9 constant leading
-  digits) are recorded as documented `xfail`s — a precision boundary, not a
-  silent gap.
+  numerical accuracy of `sp.regress`. Backed by the mean-centred
+  (Frisch-Waugh-Lovell) OLS fit, `sp.regress` matches the certified F to
+  machine precision through the average-difficulty family (incl. n=18009); the
+  three highest-difficulty designs (`SmLs07/08/09`, 9 constant leading digits)
+  reach the irreducible IEEE-754 float64 floor (~7e-5) of their data and are
+  checked at a documented 1e-3 tolerance — not a silent gap.

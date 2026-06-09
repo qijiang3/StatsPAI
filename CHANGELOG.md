@@ -25,11 +25,12 @@ All notable changes to StatsPAI will be documented in this file.
   (`tests/numerical_accuracy/test_nist_strd_anova.py`).** All 11 NIST ANOVA
   datasets (SiRstv, SmLs01–09, AtmWtAg) bundled verbatim; a one-way ANOVA is
   OLS of `y ~ C(group)`, so these certify the F-statistic / R² / sum-of-squares
-  numerical accuracy. `sp.regress` reproduces the certified F to machine
-  precision through the average-difficulty family (incl. n=18009). The three
-  highest-difficulty designs (`SmLs07/08/09`, 9 constant leading digits) are
-  recorded as **documented `xfail`s** — a known precision boundary, not a silent
-  gap (see Known issues). All reference R DOIs verified via Crossref.
+  numerical accuracy. Backed by the new mean-centred OLS fit (see ⚠️
+  Correctness below), `sp.regress` reproduces the certified F to machine
+  precision through the average-difficulty family (incl. n=18009); the three
+  highest-difficulty designs (`SmLs07/08/09`, 9 constant leading digits) reach
+  the irreducible IEEE-754 float64 floor (~7e-5) of their data and are checked
+  at a documented 1e-3 tolerance. All reference R DOIs verified via Crossref.
 - **Tier D analytic special-case test campaign — 24 reference-less estimators
   now carry known-truth tests (77 tests across 9 `tests/test_tierD_*.py`
   files).** Estimators that had *no* numerical-assertion test (only smoke calls
@@ -46,7 +47,7 @@ All notable changes to StatsPAI will be documented in this file.
   remainder, `blp`, is blocked by a reported bug — see Known issues). Purely
   additive: no estimator numerics changed.
 - **Tier B executable replication notebooks
-  (`Paper-JSS/replication/notebooks/*.ipynb`).** One-click, self-contained
+  (`Paper-JSS/replication/notebooks/*.ipynb`).** Self-contained
   Jupyter notebooks reproduce the headline numbers of Card (1995), ADH (2010)
   Prop 99, LaLonde/DW NSW, Lee (2008) RD, and Graddy (2006) from the bundled
   *real* data; each ends with a drift-guard cell, and
@@ -84,20 +85,24 @@ All notable changes to StatsPAI will be documented in this file.
   `reference_parity/` fixtures) since it certifies certified-value accuracy
   rather than cross-language parity.
 
-- **`sp.regress` F-statistic / R² lose precision under extreme constant
-  offsets.** The new NIST StRD ANOVA certification (above) shows
-  `sp.regress("y ~ C(group)")` reproduces the certified F to machine precision
-  through the average-difficulty family, but the highest-difficulty
-  `SmLs07/08/09` designs (9 constant leading digits) lose 3–4+ significant
-  digits via catastrophic cancellation in the sum-of-squares, worsening with n
-  (relative F error ≈ 4.8e-4 → 9.9e-3 → 2.3e-2). `SmLs03` at the same n=18009
-  but fewer leading digits still hits ~1e-16, so the boundary is offset
-  magnitude, not sample size — a mean-centred SS accumulation would fix it.
-  Recorded as documented `xfail`s (not auto-fixed: changing the kernel would
-  alter a core estimator's numerical output); the xfails will surface as
-  `xpass` once the kernel is stabilised.
-
 ### Changed (⚠️ Correctness)
+
+- **`sp.regress` now fits in mean-centred (Frisch-Waugh-Lovell) coordinates,
+  fixing coefficient/F/R² loss under large constant offsets.** When an
+  intercept is present, `OLSEstimator.estimate` demeans `y` and the
+  non-intercept regressors before the least-squares solve and reconstructs the
+  intercept, so a large constant offset in `y` (or a regressor) no longer
+  destroys the slope coefficients through catastrophic cancellation. FWL makes
+  this **algebraically identical** to the previous fit, so well-conditioned
+  designs are unchanged to machine precision (verified: coefficients match
+  `numpy.linalg.lstsq` to ~1e-15; the NIST StRD Linear LS certification and all
+  R/Stata parity suites are unchanged). The effect is only visible on
+  pathological designs: on the NIST StRD ANOVA datasets `SmLs07/08/09` (9
+  constant leading digits, e.g. `y ≈ 1.0000000004e12`) the certified-F relative
+  error drops from ≈4.8e-4 / 9.9e-3 / 2.3e-2 to the irreducible IEEE-754 float64
+  floor (~3–7e-5). Previously these were the lone failing NIST ANOVA cases;
+  they now pass at a documented float64-floor tolerance. No user-facing numbers
+  on real data change.
 
 - **OLS kernel now solves via QR factorisation instead of the normal
   equations.** `ols_fit` (coefficients) and `OLSEstimator.estimate`

@@ -45,6 +45,15 @@ Separately, exact-fit OLS (`R² == 1`) now reports the F-statistic as `inf`
 (matching NIST's certified "Infinity") instead of emitting a divide-by-zero
 `RuntimeWarning`; non-exact fits are unaffected.
 
+Separately, `sp.regress` now fits intercept models in mean-centred
+(Frisch-Waugh-Lovell) coordinates and reconstructs the intercept afterward.
+This is algebraically identical to the raw fit in exact arithmetic, but it
+avoids catastrophic cancellation when `y` or a regressor has a very large
+constant offset. Well-conditioned fits remain unchanged to machine precision;
+the visible effect is on pathological offset designs such as the NIST StRD
+ANOVA `SmLs07/08/09` cases, where F/R² accuracy improves down to the float64
+input-representation floor.
+
 ---
 
 <a id="regress-collinearity-guard"></a>

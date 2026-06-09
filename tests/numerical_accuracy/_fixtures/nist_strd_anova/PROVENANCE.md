@@ -38,7 +38,9 @@ numerical accuracy of `sp.regress`'s sum-of-squares / F-statistic path.
 
 The `SmLs0{1..9}` family is built so naive (cancellation-prone) sums of squares
 lose precision: difficulty rises with the number of constant leading digits
-(01–03 = ~3, 04–06 = ~6, 07–09 = ~9). `sp.regress` reproduces the certified F
-to machine precision through the average-difficulty family (including SmLs06 at
-n=18009) but loses 3–4+ significant digits on the higher-difficulty `SmLs07/08/09`
-— those three are recorded as `xfail` in the test (see its module docstring).
+(01–03 = ~3, 04–06 = ~6, 07–09 = ~9). With `sp.regress`'s mean-centred
+(Frisch-Waugh-Lovell) fit, the certified F is reproduced to machine precision
+through the average-difficulty family (including SmLs06 at n=18009); the
+higher-difficulty `SmLs07/08/09` reach the irreducible IEEE-754 float64 floor
+(~7e-5) of their 9-constant-leading-digit data and are checked at a documented
+1e-3 tolerance (see the test's module docstring).

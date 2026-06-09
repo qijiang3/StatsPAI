@@ -14,6 +14,21 @@ from ..core.utils import parse_formula, create_design_matrices, prepare_data
 from ..exceptions import NumericalInstability
 
 
+def _detect_constant_column(X: np.ndarray) -> Optional[int]:
+    """Index of the intercept column (exactly constant and non-zero), or None.
+
+    Used to enable the mean-centered (Frisch-Waugh-Lovell) fit. Detection is
+    by exact equality (``ptp == 0``): a patsy / design-matrix intercept is
+    exactly ``1.0`` in every row, so this never misfires on a merely
+    near-constant real regressor.
+    """
+    for j in range(X.shape[1]):
+        col = X[:, j]
+        if np.ptp(col) == 0 and col[0] != 0:
+            return j
+    return None
+
+
 def _detect_perfect_collinearity(X: np.ndarray, var_names: List[str]) -> None:
     """Raise :class:`NumericalInstability` on an exactly rank-deficient design.
 
@@ -133,7 +148,33 @@ class OLSEstimator(BaseEstimator):
             _fast_cluster_meat,
             _fast_hac_meat,
         ) = _numba_kernels()
-        params, fitted_values, residuals = _fast_ols(X, y)
+
+        # Mean-centered (Frisch-Waugh-Lovell) fit when an intercept is present.
+        # Fitting the raw design when y (or a regressor) carries a large
+        # constant offset destroys the slope coefficients through catastrophic
+        # cancellation: the kernel projects y ~ 1e12 onto contrast directions
+        # and only ~3 significant digits of the O(1) signal survive (NIST StRD
+        # SmLs07-09). Centering first makes the slope regression operate on
+        # O(1) deviations; FWL guarantees identical coefficients to the raw fit
+        # in exact arithmetic, so well-conditioned designs are unchanged to
+        # machine precision while offset designs recover to the float64 floor.
+        const_col = _detect_constant_column(X)
+        if const_col is not None and k > 1:
+            other = [j for j in range(k) if j != const_col]
+            X_other = X[:, other]
+            x_mean = X_other.mean(axis=0)
+            y_mean = y.mean()
+            slopes, _, resid_c = _fast_ols(X_other - x_mean, y - y_mean)
+            params = np.empty(k, dtype=float)
+            for pos, j in enumerate(other):
+                params[j] = slopes[pos]
+            params[const_col] = y_mean - x_mean @ slopes
+            # resid_c = (y - ȳ) - (X_other - x̄) @ slopes is the exact residual
+            # of the full model and is O(1) (no cancellation); fitted follows.
+            residuals = resid_c
+            fitted_values = y - residuals
+        else:
+            params, fitted_values, residuals = _fast_ols(X, y)
 
         # (X'X)^{-1} via the QR factor R (X = QR  =>  X'X = R'R), which keeps
         # the covariance accuracy tracking cond(X) rather than cond(X)**2.
