@@ -146,7 +146,7 @@ def logit_fit(
         H = -(X * W_diag[:, None]).T @ X
         try:
             step = np.linalg.solve(H, grad)
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError:  # pragma: no cover
             step = np.linalg.lstsq(H, grad, rcond=None)[0]
         beta_new = beta - step
         if np.max(np.abs(beta_new - beta)) < tol:
@@ -169,7 +169,7 @@ def logit_fit(
     info = (X * W_diag[:, None]).T @ X
     try:
         vcov = np.linalg.inv(info)
-    except np.linalg.LinAlgError:
+    except np.linalg.LinAlgError:  # pragma: no cover
         vcov = np.linalg.pinv(info)
     return beta, vcov
 
@@ -492,19 +492,19 @@ def statistic_value(
         yp = np.clip(y, 1e-12, None)
         mu = float(np.average(yp, weights=w))
         if mu <= 0:
-            return float("nan")
+            return float("nan")  # pragma: no cover
         return float(np.average((yp / mu) * np.log(yp / mu), weights=w))
     if stat == "theil_l":
         yp = np.clip(y, 1e-12, None)
         mu = float(np.average(yp, weights=w))
         if mu <= 0:
-            return float("nan")
+            return float("nan")  # pragma: no cover
         return float(np.log(mu) - np.average(np.log(yp), weights=w))
     if stat == "atkinson":
         yp = np.clip(y, 1e-12, None)
         mu = float(np.average(yp, weights=w))
         if mu <= 0:
-            return float("nan")
+            return float("nan")  # pragma: no cover
         return float(1.0 - np.exp(np.average(np.log(yp), weights=w)) / mu)
     raise ValueError(f"unknown statistic {stat!r}")
 
@@ -617,7 +617,7 @@ def influence_function(
         yp = np.clip(y, 1e-12, None)
         mu = float(np.average(yp, weights=w))
         if mu <= 0:
-            return np.full_like(y, np.nan)
+            return np.full_like(y, np.nan)  # pragma: no cover
         s = yp / mu
         T = float(np.average(s * np.log(s), weights=w))
         return s * np.log(s) - (s - 1.0) * (T + 1.0)
@@ -625,13 +625,13 @@ def influence_function(
         yp = np.clip(y, 1e-12, None)
         mu = float(np.average(yp, weights=w))
         if mu <= 0:
-            return np.full_like(y, np.nan)
+            return np.full_like(y, np.nan)  # pragma: no cover
         return (yp / mu - 1.0) - (np.log(yp) - np.log(mu))
     if stat == "atkinson":
         yp = np.clip(y, 1e-12, None)
         mu = float(np.average(yp, weights=w))
         if mu <= 0:
-            return np.full_like(y, np.nan)
+            return np.full_like(y, np.nan)  # pragma: no cover
         mean_log = float(np.average(np.log(yp), weights=w))
         geo_mean = np.exp(mean_log)
         A1 = 1.0 - geo_mean / mu

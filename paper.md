@@ -32,27 +32,31 @@ bibliography: paper.bib
 applied econometrics. It gives empirical researchers a single interface
 for estimating, diagnosing, comparing, and reporting models that are
 usually spread across many specialized packages or proprietary
-statistical environments. The package currently exposes more than 1,000
-registered functions across 81 submodules, covering classical
-regression, instrumental variable analysis, panel data, difference-in-differences,
-regression discontinuity, synthetic control, matching,
-stochastic frontier analysis, mixed-effects models, decomposition
-methods, sensitivity analysis, and modern machine-learning estimators
-for heterogeneous treatment effects.
+statistical environments. A single `import statspai as sp` reaches estimators for the main
+families of applied work — regression and panel models, instrumental
+variables, the modern difference-in-differences and
+regression-discontinuity toolkits, synthetic control and matching, and
+machine-learning estimators of heterogeneous treatment effects —
+together with the diagnostics, robustness checks, and reporting that
+surround them. The full catalogue of more than 1,000 registered
+functions across 81 submodules is enumerated in the package
+documentation rather than here.
 
 The package is designed for policy evaluation, social science and
 public health research, and other empirical workflows where researchers
 must move between research design, estimation, diagnostics, robustness
-checks, and publication tables. Mature estimator results expose common
-reporting hooks such as `.summary()`, `.plot()`, `.to_latex()`,
-`.to_docx()`, and `.cite()` where those capabilities are implemented;
-auxiliary helpers advertise narrower capabilities through registry
-metadata. `StatsPAI` is also agent-native: registered functions
-expose machine-readable schemas (structured descriptions of each
-function's arguments and outputs that programs can parse directly) and
-structured failure metadata so that LLM-driven research assistants can
-discover estimators, choose among alternatives, and surface assumptions
-without parsing free-form prose.
+checks, and publication tables. Results from the mature estimators
+share a common reporting surface, so the same calls produce a summary, a
+figure, a LaTeX or Word table, or a citation across the estimators that
+support them.
+
+`StatsPAI` is also agent-native: every registered function exposes a
+machine-readable schema — a structured description of its arguments and
+outputs that a program can parse directly — together with structured
+failure metadata. This lets LLM-driven research assistants discover
+estimators, choose among alternatives, and surface the assumptions
+behind a method without parsing free-form prose, the capability that
+most distinguishes `StatsPAI` from a conventional estimator library.
 The source code is available at
 [https://github.com/brycewang-stanford/StatsPAI](https://github.com/brycewang-stanford/StatsPAI)
 and archived on Zenodo [@wang2026statspai].
@@ -96,6 +100,20 @@ are complementary to `StatsPAI`, and several ideas in `StatsPAI` follow
 the same methodological literature, including double/debiased machine
 learning [@chernozhukov2018double], causal forests
 [@wager2018estimation], and meta-learners [@kunzel2019metalearners].
+These comparisons are with packages that, like `StatsPAI`, operate at
+the causal-inference and machine-learning layer. The general-purpose
+regression toolkits applied economists already rely on — `statsmodels`
+and `linearmodels` in Python, or `fixest` in R — sit at a different
+layer: they supply core regression machinery, not the integrated
+workflow spanning design, estimation, diagnostics, and reporting that
+`StatsPAI` targets. `StatsPAI` depends on that stack — `statsmodels` and
+`linearmodels` are part of its own foundation — while implementing the
+causal-inference estimators it specializes in and, where an established
+reference implementation exists, validating them for numerical
+agreement against the corresponding R and Stata packages. A direct
+head-to-head is therefore not the relevant test; the question is whether
+the integration layer `StatsPAI` adds is worth maintaining as a separate
+package.
 
 The build-versus-contribute case for `StatsPAI` is therefore about
 scope and interface rather than a single estimator. Contributing one
@@ -106,6 +124,13 @@ layer with substantive statistical content: broad method coverage,
 shared reporting, explicit estimator citations, stable/experimental API
 metadata, cross-language parity checks, and an LLM-oriented registry
 that can expose statistical tools safely to automated workflows.
+`StatsPAI` therefore earns a standalone existence not by contributing a
+better single estimator, but by being the layer that makes a
+heterogeneous collection of estimators — classical and
+machine-learning, Python-native and R/Stata-aligned — behave as one
+coherent, agent-addressable workspace. Folding that layer into any one
+upstream project would not serve the researchers who must move across
+all of them.
 
 # Software Design
 
@@ -116,7 +141,10 @@ among variants within a design family. The registry records function
 names, parameters, examples, stability tiers, limitations, citations,
 and schema information. This makes the package usable both from a
 notebook and from external systems such as a Model Context Protocol
-server.
+server. In practice this lets an assistant query the registry for the
+estimators valid for a detected design, invoke one, read back structured
+diagnostics and assumption violations, and decide the next step — all
+through typed schemas rather than free-form prompts.
 
 The central design choice is a shared result interface. Estimators
 return structured objects that store coefficients, uncertainty
@@ -138,16 +166,36 @@ keeps the default package inspectable while allowing heavy workloads to
 use specialized backends when available. The package is distributed via
 PyPI under the MIT license.
 
+These choices carry costs worth stating plainly. A shared result
+interface means that adding or upgrading an estimator is never purely
+local: each estimator must be mapped onto the common fields, and the
+reporting and export hooks are guaranteed only for the mature
+estimators, which is why auxiliary helpers advertise narrower
+capabilities through the registry rather than claiming a uniformity they
+do not have. Favouring breadth across method families also trades
+against depth: for any single design, a dedicated package may expose
+more edge-case options or finer tuning than `StatsPAI` does today.
+Finally, performance is deliberately not the first priority of the
+default install — the package runs on a pure-Python NumPy/SciPy stack
+and reaches for PyTorch, JAX, or a Rust kernel only when they are
+present, falling back transparently otherwise — which keeps the default
+small and inspectable at the cost of leaving peak performance to an
+optional, environment-dependent layer whose accelerated paths are held
+to the same documented numerical tolerances as the fallbacks. We accept
+these costs deliberately: for researchers who must compare estimators,
+switch designs, and produce reproducible output within one project, a
+single coherent, agent-addressable interface outweighs the loss of
+per-method specialization.
+
 # Research Impact Statement
 
 `StatsPAI` ships a concrete validation and community-readiness dossier
 built from two complementary tracks. The first is a cross-language
-parity harness that checks whether `StatsPAI` reproduces the numerical
-output of established R and Stata implementations on identical inputs:
-a 51-module R-joined Track A parity table in which `StatsPAI`, R, and
-Stata read the same input bytes, of which 43 modules also carry a
-frozen Stata sibling (plus one Python-Stata-only `xtabond` migration
-check, for 44 frozen Stata modules in total). On closed-form estimators
+parity harness: `StatsPAI`, R, and Stata are run on the same input data
+and their numerical output is compared directly. The harness checks 51
+modules against a reference R implementation on identical input bytes;
+43 of these are also checked against Stata, and one further module
+(`xtabond`) against Stata only, for 44 Stata comparisons in total. On closed-form estimators
 the three languages agree to machine precision; iterative and
 machine-learning estimators agree within pre-registered, documented
 tolerances, and the few remaining convention gaps are disclosed rather
@@ -175,9 +223,10 @@ University, *Family contagion of screen time? Within-person evidence
 from six waves in China* (Wang, Zhang, and Hou, in preparation), which
 relies on the package for its panel and within-person estimation; no
 peer-reviewed research article using the package has yet been
-published. The current impact claim is therefore based on active
-working-paper use, public distribution, reproducible validation
-materials, and reviewer-verifiable examples. The agent-native registry
+published. At this stage, then, the impact claim rests on three things
+a reviewer can check directly: active use in an ongoing working paper,
+public distribution on PyPI, and the reproducible validation materials
+and worked examples bundled with the repository. The agent-native registry
 also supports AI-assisted replication and robustness analysis in which
 statistical tools are discovered and invoked through explicit schemas
 rather than informal prompts.

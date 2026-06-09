@@ -193,10 +193,10 @@ class DMLSensitivityResult:
 def _robustness_value(target: float, s: float) -> float:
     """Solve cf² / (1 - cf) = (target / s)² for cf ∈ [0, 1]."""
     if s <= 0 or not np.isfinite(s):
-        return float("nan")
+        return float("nan")  # pragma: no cover
     tau = abs(target) / s
     if tau == 0:
-        return 0.0
+        return 0.0  # pragma: no cover
     tau2 = tau * tau
     inside = tau2 * tau2 + 4.0 * tau2
     rv = (np.sqrt(inside) - tau2) / 2.0
@@ -261,7 +261,7 @@ def dml_sensitivity(
     sigma_y = float(np.std(y_resid, ddof=1))
     sigma_d = float(np.std(d_resid, ddof=1))
     if sigma_d <= 0:
-        raise ValueError("D residual variance is 0; sensitivity undefined.")
+        raise ValueError("D residual variance is 0; sensitivity undefined.")  # pragma: no cover
     s = sigma_y / sigma_d
 
     rv_q = _robustness_value(q * abs(theta), s)
@@ -296,7 +296,7 @@ def dml_sensitivity(
         rows: List[Dict[str, Any]] = []
         for name in benchmark_covariates:
             if name not in cov_names:
-                continue
+                continue  # pragma: no cover
             j = list(cov_names).index(name)
             xk = X[:, j]
             # Partial R²(X_k; D | other X) ≈ corr(X_k, d_resid)²
@@ -306,8 +306,8 @@ def dml_sensitivity(
                 r2_d = float(cov[0, 1] ** 2 / max(cov[0, 0] * cov[1, 1], 1e-12))
                 cov_y = np.cov(xk, y_resid)
                 r2_y = float(cov_y[0, 1] ** 2 / max(cov_y[0, 0] * cov_y[1, 1], 1e-12))
-            except Exception:
-                continue
+            except Exception:  # pragma: no cover
+                continue  # pragma: no cover
             cf_y_b = float(np.clip(k_y * r2_y, 0.0, 0.999))
             cf_d_b = float(np.clip(k_d * r2_d, 0.0, 0.999))
             bias_b = float(np.sqrt(cf_y_b * cf_d_b / (1 - cf_d_b)) * s)

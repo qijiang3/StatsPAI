@@ -341,9 +341,14 @@ class EconometricResults:
                 if isinstance(v, (int, float, np.integer, np.floating)):
                     g[dst] = float(v)
         if 'df_resid' in self.data_info:
-            g['df_resid'] = int(self.data_info['df_resid'])
+            dr = self.data_info['df_resid']
+            # Cox / parametric-survival results store df_resid = inf to flag a
+            # large-sample (normal) reference distribution; int(inf) raises
+            # OverflowError, so pass non-finite degrees of freedom through.
+            g['df_resid'] = int(dr) if np.isfinite(dr) else float(dr)
         if 'df_model' in self.data_info:
-            g['df_model'] = int(self.data_info['df_model'])
+            dm = self.data_info['df_model']
+            g['df_model'] = int(dm) if np.isfinite(dm) else float(dm)
         return pd.DataFrame([g])
 
     def predict(self, data: Optional[pd.DataFrame] = None) -> np.ndarray:

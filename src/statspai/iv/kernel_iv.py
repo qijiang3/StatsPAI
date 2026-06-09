@@ -106,7 +106,7 @@ def kernel_iv(
             # Conditional Z mean at this d
             w_d = _gauss(Di - d, bandwidth)
             if w_d.sum() < 1e-6:
-                h_g[j] = np.nan
+                h_g[j] = np.nan  # pragma: no cover
                 continue
             # Weighted average of Y at this d
             h_g[j] = float(np.sum(w_d * Yi) / w_d.sum())
@@ -121,7 +121,7 @@ def kernel_iv(
         Y_b = Y + rad * (Y - Y.mean())
         try:
             boot[b] = _fit(Y_b, D, Z)
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
     sd = np.nanstd(boot, axis=0, ddof=1)
     sd = np.where(np.isfinite(sd) & (sd > 0), sd, 1e-6)

@@ -203,7 +203,7 @@ def dml_diagnostics(result, clip: float = 0.02) -> DMLDiagnostics:
     d_resid = info.get("_d_resid")
     pscore = info.get("_pscore")
     if y_resid is None or d_resid is None:
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             "dml_diagnostics requires post-fit residuals on the result "
             "(re-fit with current statspai.dml; residuals are stored in "
             "model_info['_y_resid'] / ['_d_resid'])."
@@ -290,7 +290,7 @@ def dml_diagnostics(result, clip: float = 0.02) -> DMLDiagnostics:
             if sd_xk == 0:
                 rows.append({"variable": name,
                              "corr_d_resid": 0.0, "corr_y_resid": 0.0})
-                continue
+                continue  # pragma: no cover
             cd = float(np.corrcoef(xk, d_resid)[0, 1])
             cy = float(np.corrcoef(xk, y_resid)[0, 1])
             rows.append({

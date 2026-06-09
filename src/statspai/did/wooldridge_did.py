@@ -57,12 +57,19 @@ def _ols_fit(
     Returns (beta, se, vcov).
     """
     n, k = X.shape
+    # QR solve (X = QR): beta = R^{-1} Q'y and (X'X)^{-1} = R^{-1} R^{-ᵀ}.
+    # Avoids squaring cond(X) the way forming inv(X'X) does — same numerical
+    # hardening as the core OLS kernel (cf. NIST StRD certification under
+    # tests/numerical_accuracy/). Well-conditioned DiD designs are unchanged
+    # to ~1e-12; ill-conditioned (many group×period dummies) gain accuracy.
     try:
-        XtX_inv = np.linalg.inv(X.T @ X)
+        Q, R = np.linalg.qr(X)
+        R_inv = np.linalg.solve(R, np.eye(k))
+        XtX_inv = R_inv @ R_inv.T
+        beta = R_inv @ (Q.T @ y)
     except np.linalg.LinAlgError:
         XtX_inv = np.linalg.pinv(X.T @ X)
-
-    beta = XtX_inv @ (X.T @ y)
+        beta = XtX_inv @ (X.T @ y)
     resid = y - X @ beta
 
     if cluster is not None:
@@ -1149,6 +1156,16 @@ def drdid(
     df = data.copy()
     rng = np.random.default_rng(random_state if random_state is not None else seed)
 
+    # ── Validate method ─────────────────────────────────────────────
+    # Only the improved (locally-efficient) and traditional DR-DID
+    # estimators are implemented. Previously any other string silently
+    # fell through to the traditional branch (a §7 violation); fail loud.
+    if method not in ("imp", "trad"):
+        raise ValueError(
+            f"method must be 'imp' (improved, locally efficient) or 'trad' "
+            f"(traditional DR-DID); got {method!r}."
+        )
+
     # ── Validate 2×2 design ─────────────────────────────────────────
     g_vals = sorted(df[group].dropna().unique())
     t_vals = sorted(df[time].dropna().unique())
@@ -1249,14 +1266,28 @@ def drdid(
                 + (w_ctrl_pre * (Y_b - m0_x)).sum() / (w_ctrl_pre.sum() + 1e-10)
             )
         else:
-            # Traditional DR-DID
+            # Traditional DR-DID (Sant'Anna & Zhao 2020), repeated-cross-
+            # section form. Each of the four cell terms is a *weighted
+            # average* of the outcome-regression residual over the units
+            # selected by its weight, so it must be normalised by that
+            # weight's total mass — NOT by the full sample size ``n_b``.
+            # ⚠️ correctness fix (2026-06-05): the previous code divided
+            # every term by ``n_b``, which multiplied each term by the
+            # cell's sample share (~0.25 per cell on a balanced 2×2) and
+            # so biased the ATT toward zero by roughly 50%. method='imp'
+            # was unaffected (it already normalised by the weight mass).
             w1 = G_b / p_hat
             w0 = ps * (1 - G_b) / ((1 - ps) * p_hat)
 
-            att_1 = (w1 * T_b * (Y_b - m1_x)).sum() / n_b
-            att_0 = (w1 * (1 - T_b) * (Y_b - m0_x)).sum() / n_b
-            ctrl_1 = (w0 * T_b * (Y_b - m1_x)).sum() / n_b
-            ctrl_0 = (w0 * (1 - T_b) * (Y_b - m0_x)).sum() / n_b
+            w_tp = w1 * T_b           # treated, post
+            w_t0 = w1 * (1 - T_b)     # treated, pre
+            w_cp = w0 * T_b           # control, post (ps-reweighted)
+            w_c0 = w0 * (1 - T_b)     # control, pre  (ps-reweighted)
+
+            att_1 = (w_tp * (Y_b - m1_x)).sum() / (w_tp.sum() + 1e-10)
+            att_0 = (w_t0 * (Y_b - m0_x)).sum() / (w_t0.sum() + 1e-10)
+            ctrl_1 = (w_cp * (Y_b - m1_x)).sum() / (w_cp.sum() + 1e-10)
+            ctrl_0 = (w_c0 * (Y_b - m0_x)).sum() / (w_c0.sum() + 1e-10)
 
             att = (att_1 - att_0) - (ctrl_1 - ctrl_0)
 

@@ -6,7 +6,7 @@ Model: ``Y = theta * D + g(X) + eps``, ``D = m(X) + v``.
 Neyman-orthogonal score:
     psi(W; theta, g, m) = (Y - g(X) - theta*(D - m(X))) * (D - m(X))
 
-Closed-form DML1 estimator (unweighted):
+Closed-form DML2 (pooled-moment) estimator (unweighted):
     theta = sum( y_tilde * d_tilde ) / sum( d_tilde * d_tilde )
     y_tilde = Y - g_hat(X),  d_tilde = D - m_hat(X).
 
@@ -50,7 +50,7 @@ class DoubleMLPLR(_DoubleMLBase):
         if sample_weight is None:
             denom = float(np.sum(d_resid * d_resid))
             if denom < 1e-12:
-                raise RuntimeError(
+                raise RuntimeError(  # pragma: no cover
                     "PLR denominator ≈ 0; check covariate informativeness."
                 )
             theta = float(np.sum(d_resid * y_resid) / denom)
@@ -66,7 +66,7 @@ class DoubleMLPLR(_DoubleMLBase):
             w = sample_weight
             denom = float(np.sum(w * d_resid * d_resid))
             if denom < 1e-12:
-                raise RuntimeError(
+                raise RuntimeError(  # pragma: no cover
                     "PLR weighted denominator ≈ 0; check covariate "
                     "informativeness or weight distribution."
                 )

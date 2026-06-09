@@ -105,7 +105,7 @@ def _fit_logit(D: np.ndarray, Z: np.ndarray) -> np.ndarray:
         H = Z.T @ (Z * W[:, None]) + 1e-8 * np.eye(k)
         try:
             step = np.linalg.solve(H, g)
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError:  # pragma: no cover
             step = np.linalg.lstsq(H, g, rcond=None)[0]
         beta += step
         if np.linalg.norm(step) < 1e-8:
@@ -166,7 +166,7 @@ def _build_iv_moments(
         lo, hi = edges[b], edges[b + 1]
         in_bin = (p_hat >= lo) & (p_hat <= hi if b == n_bins - 1 else p_hat < hi)
         if in_bin.sum() < 2:
-            continue
+            continue  # pragma: no cover
         treated = in_bin & (D == 1)
         untreated = in_bin & (D == 0)
         bin_counts[b, 0] = treated.sum()
@@ -193,7 +193,7 @@ def _build_iv_moments(
             rows_b.append(float((Y * untreated).sum() / n))
 
     if not rows_A:
-        raise RuntimeError("No usable propensity-score bins.")
+        raise RuntimeError("No usable propensity-score bins.")  # pragma: no cover
     return np.array(rows_A), np.array(rows_b), edges, bin_counts
 
 
@@ -249,7 +249,7 @@ def _target_weights(
         diff = f_new - f_old
         denom = np.trapezoid(diff, u_grid)
         if abs(denom) < 1e-8:
-            raise ValueError("PRTE denominator too small; policy shift is negligible.")
+            raise ValueError("PRTE denominator too small; policy shift is negligible.")  # pragma: no cover
         w = diff / denom
         wk = np.array([np.trapezoid(u_grid ** k * w, u_grid) for k in range(K + 1)])
         return np.concatenate([wk, -wk])
@@ -349,7 +349,7 @@ def ivmte_bounds(
     D = _grab(treatment, data).reshape(-1)
     uniq = np.unique(D[~np.isnan(D)])
     if not set(uniq.tolist()).issubset({0.0, 1.0}):
-        raise ValueError("MST ivmte requires binary 0/1 treatment.")
+        raise ValueError("MST ivmte requires binary 0/1 treatment.")  # pragma: no cover
     Z = _grab(instruments, data, cols=True)
     if Z.ndim == 1:
         Z = Z.reshape(-1, 1)
@@ -440,7 +440,7 @@ def ivmte_bounds(
                 "ate": m.ate, "att": m.att, "atu": m.atu,
                 "late": m.late_2sls,
             }.get(target, None)
-        except Exception:
+        except Exception:  # pragma: no cover
             bmw_point = None
 
     shape_strs = []

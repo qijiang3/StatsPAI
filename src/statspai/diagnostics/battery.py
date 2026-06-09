@@ -420,10 +420,28 @@ def _battery_synth(result, alpha: float = 0.05) -> Dict[str, Any]:
                 "Lower is better. Compare with placebo distribution.",
         })
 
-    # Synthetic weights
+    # Synthetic weights — the container varies across estimators: sp.synth
+    # stores a DataFrame with ['unit', 'weight'] columns, others a Series,
+    # dict, or bare array. Iterating a DataFrame yields column-name strings
+    # (so abs(w) raised TypeError), hence the explicit coercion below.
     weights = model_info.get("weights")
-    if weights is not None and hasattr(weights, "__len__"):
-        n_nonzero = sum(1 for w in weights if abs(w) > 0.01)
+    w_vals = None
+    if isinstance(weights, pd.DataFrame):
+        if "weight" in weights.columns:
+            w_vals = weights["weight"].to_numpy()
+        else:
+            num = weights.select_dtypes(include="number")
+            if num.shape[1]:
+                w_vals = num.iloc[:, -1].to_numpy()
+    elif isinstance(weights, pd.Series):
+        w_vals = weights.to_numpy()
+    elif isinstance(weights, dict):
+        w_vals = np.asarray(list(weights.values()))
+    elif weights is not None and hasattr(weights, "__len__"):
+        w_vals = np.asarray(weights)
+    if w_vals is not None and w_vals.size:
+        w_vals = pd.to_numeric(pd.Series(w_vals), errors="coerce").to_numpy()
+        n_nonzero = int(np.sum(np.abs(w_vals) > 0.01))
         checks.append({
             "test": "Donor pool composition",
             "n_donors_with_weight": n_nonzero,

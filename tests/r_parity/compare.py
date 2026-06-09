@@ -52,6 +52,9 @@ STATA_SKIP_REASON: dict[str, str] = {
     "32_rif":           "rifhdreg requires GitHub install",
     "38_drdid":         "Stata DRDID = Ferman (different DR formula)",
     "52_scm_unique":    "no canonical Stata SCM port",
+    "53_cr2":           "Stata native vce(cluster)=CR1; CR2/CR3 need community summclust",
+    "54_twoway_cluster": "Stata native vce(cluster) is one-way; two-way needs community vcemway / reghdfe",
+    "56_multiway_cluster": "Stata native vce(cluster) is one-way; multiway needs community vcemway / reghdfe",
 }
 
 TRACK_A_SNAPSHOT_ROWS: list[dict[str, Any]] = [
@@ -250,6 +253,25 @@ TOLERANCES: dict[str, dict[str, float]] = {
     "51_newey":       {"rel_est": 1e-3, "rel_se": 1e-2},  # post HAC fix
     # Unique-solution SCM: strict-parity counterpart to module 07.
     "52_scm_unique":  {"rel_est": 0.02, "rel_se": 1.0},   # identified convex SCM; sp exact, Synth ~0.7%
+    # CR2 / CR3 cluster-robust SE: CR2 (Bell-McCaffrey) headline is
+    # machine-precision; exact CR3 jackknife vs clubSandwich analytic
+    # CR3 differs ~1e-3 (documented in HEADLINE gap_note, kept out of
+    # the strict CR2 headline filter).
+    "53_cr2":         {"rel_est": 1e-6, "rel_se": 1e-6},
+    # Two-way cluster-robust SE (Cameron-Gelbach-Miller). sp uses the
+    # per-dimension Liang-Zeger correction = sandwich::vcovCL defaults
+    # (HC1, cadjust), so the headline two-way SE is a machine-precision
+    # match (rel_se ~1e-16). fixest's single min-G df factor differs at
+    # ~1e-3 and is NOT the convention reference here.
+    "54_twoway_cluster": {"rel_est": 1e-6, "rel_se": 1e-6},
+    # HC2/HC3 (MacKinnon-White) heteroskedasticity-robust SE. sp.regress
+    # robust="hc2"/"hc3" matches sandwich::vcovHC(type="HC2"/"HC3") to
+    # machine precision (module 01 covers HC1).
+    "55_hc2_hc3":       {"rel_est": 1e-6, "rel_se": 1e-6},
+    # Three-way cluster-robust SE (Cameron-Gelbach-Miller). sp.multiway_cluster_vcov
+    # matches sandwich::vcovCL(~g1+g2+g3, HC1, cadjust) to machine precision after
+    # the v1.16.1 intersection-key fix.
+    "56_multiway_cluster": {"rel_est": 1e-6, "rel_se": 1e-6},
 }
 
 
@@ -923,6 +945,45 @@ HEADLINE: dict[str, dict[str, Any]] = {
         "metric": "rel_est",
         "verdict": "\\textbf{PASS}",
         "gap_note": "identified convex SCM; sp recovers exact weights+gap",
+    },
+    "53_cr2": {
+        "name": "Cluster-robust CR2 / CR3 SE",
+        # Headline is the CR2 (Bell--McCaffrey) SE only: it must match
+        # clubSandwich::vcovCR(type="CR2") to machine precision. The CR3
+        # rows are deliberately excluded -- sp's exact cluster jackknife
+        # vs clubSandwich's analytic CR3 is a documented ~1e-3 gap.
+        "headline_filter": lambda d: d.statistic.startswith("cr2_"),
+        "metric": "rel_se",
+        "verdict": "\\textbf{PASS}",
+        "gap_note": "CR2 machine-precision; exact CR3 jackknife vs analytic CR3 differs $\\sim10^{-3}$",
+    },
+    "54_twoway_cluster": {
+        "name": "Two-way cluster-robust SE",
+        # Headline is the two-way SE vs sandwich::vcovCL (same per-dimension
+        # Liang-Zeger convention) -- a machine-precision match.
+        "headline_filter": lambda d: d.statistic.startswith("beta_"),
+        "metric": "rel_se",
+        "verdict": "\\textbf{PASS}",
+        "gap_note": "matches sandwich::vcovCL(HC1,cadjust); fixest min-G df convention differs $\\sim10^{-3}$",
+    },
+    "55_hc2_hc3": {
+        "name": "HC2 / HC3 robust SE",
+        # Both the HC2 and HC3 SE rows match sandwich::vcovHC at machine
+        # precision (MacKinnon-White small-sample heteroskedasticity-robust).
+        "headline_filter": lambda d: d.statistic.startswith("hc"),
+        "metric": "rel_se",
+        "verdict": "\\textbf{PASS}",
+        "gap_note": "",
+    },
+    "56_multiway_cluster": {
+        "name": "Three-way cluster-robust SE",
+        # Three-way SE vs sandwich::vcovCL -- machine-precision match; exercises
+        # the full inclusion-exclusion (triple-intersection term) of the fixed
+        # multiway_cluster_vcov.
+        "headline_filter": lambda d: d.statistic.startswith("beta_"),
+        "metric": "rel_se",
+        "verdict": "\\textbf{PASS}",
+        "gap_note": "",
     },
 }
 

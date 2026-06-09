@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "StatsPAI"
-version = "1.16.1"
+version = "1.17.0"
 description = "Validation-tiered causal inference and econometrics workflows for Python"
 readme = "README.md"
 license = "MIT"
@@ -65,6 +65,8 @@ dependencies = [
 dev = [
     "pytest>=6.0",
     "pytest-cov",
+    "pytest-xdist",
+    "hypothesis>=6.100",
     "jsonschema>=4.0",
     "build",
     "black",
@@ -128,6 +130,16 @@ docs = [
     "mkdocstrings[python]>=0.25",
     "mkdocs-gen-files>=0.5",
     "mkdocs-literate-nav>=0.6",
+]
+notebooks = [
+    # Tier-B replication notebooks (Paper-JSS/replication/notebooks/*.ipynb):
+    # build them with scripts/build_replication_notebooks.py and execute them
+    # headless (reviewer reproduction + CI drift guard) via
+    # tests/test_replication_notebooks.py. All BSD-licensed (MIT-compatible).
+    "nbformat>=5.7",
+    "nbclient>=0.7",
+    "nbconvert>=7.0",
+    "ipykernel>=6.0",
 ]
 
 [project.scripts]

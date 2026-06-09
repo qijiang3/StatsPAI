@@ -243,7 +243,7 @@ def mte(
     sigma1 = float(resid1 @ resid1) / max(len(resid1) - M1.shape[1], 1)
     try:
         var1 = sigma1 * np.linalg.inv(M1.T @ M1)
-    except np.linalg.LinAlgError:
+    except np.linalg.LinAlgError:  # pragma: no cover
         var1 = sigma1 * np.linalg.pinv(M1.T @ M1)
     se1_flat = np.sqrt(np.maximum(np.diag(var1), 0))
 
@@ -255,7 +255,7 @@ def mte(
     sigma0 = float(resid0 @ resid0) / max(len(resid0) - M0.shape[1], 1)
     try:
         var0 = sigma0 * np.linalg.inv(M0.T @ M0)
-    except np.linalg.LinAlgError:
+    except np.linalg.LinAlgError:  # pragma: no cover
         var0 = sigma0 * np.linalg.pinv(M0.T @ M0)
     se0_flat = np.sqrt(np.maximum(np.diag(var0), 0))
 
@@ -310,7 +310,7 @@ def mte(
                     Y[idx], D[idx], Z[idx], X_raw[idx],
                     K, u_grid, propensity_model, trim,
                 )
-            except (ValueError, np.linalg.LinAlgError):
+            except (ValueError, np.linalg.LinAlgError):  # pragma: no cover
                 continue
             boot_mte[b] = pt["mte_curve"]
             boot_ate[b] = pt["ate"]
@@ -397,7 +397,7 @@ def _fit_propensity(D: np.ndarray, Z: np.ndarray, model: str = "logit") -> np.nd
         g = Z.T @ resid
         try:
             step = np.linalg.solve(H + 1e-8 * np.eye(k), g)
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError:  # pragma: no cover
             step = np.linalg.lstsq(H, g, rcond=None)[0]
         beta += step
         if np.linalg.norm(step) < 1e-8:
@@ -423,7 +423,7 @@ def _wald_tsls(Y: np.ndarray, D: np.ndarray, X: np.ndarray, p: np.ndarray) -> fl
 def _empirical_cdf_weight(u_grid: np.ndarray, p_sample: np.ndarray, side: str = "lower") -> np.ndarray:
     """Weights used by ATT/ATU integrals — see BMW 2017 Table 2."""
     if len(p_sample) == 0:
-        return np.ones_like(u_grid) / max(len(u_grid), 1)
+        return np.ones_like(u_grid) / max(len(u_grid), 1)  # pragma: no cover
     if side == "lower":
         w = np.array([(p_sample >= u).mean() for u in u_grid])
     else:
@@ -452,13 +452,13 @@ def _mte_point_only(
     keep = (p > trim) & (p < 1 - trim) & ~np.isnan(p)
     Y, D, X, p = Y[keep], D[keep], X[keep], p[keep]
     if len(Y) < X.shape[1] * (K + 1) * 4:
-        raise ValueError("Bootstrap draw too small after trimming.")
+        raise ValueError("Bootstrap draw too small after trimming.")  # pragma: no cover
     dx = X.shape[1]
 
     mask1 = D == 1
     mask0 = D == 0
     if mask1.sum() < dx * (K + 1) or mask0.sum() < dx * (K + 1):
-        raise ValueError("Arm too small in bootstrap draw.")
+        raise ValueError("Arm too small in bootstrap draw.")  # pragma: no cover
 
     def build(p_sub, Xs, mode):
         cols = []

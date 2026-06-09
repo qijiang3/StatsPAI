@@ -87,8 +87,8 @@ def _build_regressor(alias: str) -> Any:
     if a in {"lgbm", "lightgbm"}:
         try:
             from lightgbm import LGBMRegressor
-        except ImportError as e:
-            raise ImportError(
+        except ImportError as e:  # pragma: no cover
+            raise ImportError(  # pragma: no cover
                 "ml_g/ml_m='lgbm' requires the optional 'lightgbm' package — "
                 "install it via `pip install lightgbm`."
             ) from e
@@ -149,8 +149,8 @@ def _build_classifier(alias: str) -> Any:
     if a in {"lgbm", "lightgbm"}:
         try:
             from lightgbm import LGBMClassifier
-        except ImportError as e:
-            raise ImportError(
+        except ImportError as e:  # pragma: no cover
+            raise ImportError(  # pragma: no cover
                 "ml_m='lgbm' requires the optional 'lightgbm' package — "
                 "install it via `pip install lightgbm`."
             ) from e

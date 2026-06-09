@@ -176,11 +176,12 @@ class HALRegressor(_BaseHAL):
         B, anchors = _hal_basis(X, anchors=None,
                                  max_anchors_per_col=self.max_anchors_per_col)
         from sklearn.linear_model import Lasso, LassoCV
+        from ..compat.sklearn import lasso_cv_alphas_kwargs
         if self.lambda_ is None:
             cv = int(max(2, min(self.cv, max(2, len(y) // 20))))
             model = LassoCV(
                 cv=cv, random_state=self.random_state,
-                n_alphas=20, max_iter=5000,
+                max_iter=5000, **lasso_cv_alphas_kwargs(20),
             )
         else:
             model = Lasso(alpha=self.lambda_, max_iter=5000,

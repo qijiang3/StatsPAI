@@ -41,6 +41,35 @@ def _check_sklearn():
         )
 
 
+def lasso_cv_alphas_kwargs(n_alphas: int) -> dict:
+    """Version-robust keyword for the number of CV path alphas.
+
+    scikit-learn 1.7 deprecated the ``n_alphas`` argument of the
+    coordinate-descent CV estimators (``LassoCV`` / ``ElasticNetCV`` / ...)
+    in favour of passing an integer to ``alphas``; ``n_alphas`` was removed
+    outright in 1.9 (raising ``TypeError`` on construction). Older versions
+    only understand ``n_alphas``. Return whichever keyword the installed
+    scikit-learn accepts so call sites stay portable across the boundary.
+
+    Parameters
+    ----------
+    n_alphas : int
+        Number of alphas to evaluate along the regularisation path.
+
+    Returns
+    -------
+    dict
+        ``{"alphas": n}`` on scikit-learn >= 1.7, else ``{"n_alphas": n}``.
+    """
+    from packaging.version import parse as _parse
+
+    import sklearn
+
+    if _parse(sklearn.__version__).release[:2] >= (1, 7):
+        return {"alphas": int(n_alphas)}
+    return {"n_alphas": int(n_alphas)}
+
+
 class SklearnOLS(BaseEstimator, RegressorMixin):
     """
     Sklearn-compatible OLS with robust/clustered standard errors.

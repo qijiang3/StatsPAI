@@ -214,11 +214,68 @@ def coverage_causal_forest() -> dict:
             "B": B, "covered": covered, "rate": covered / B}
 
 
+def coverage_panel_fe() -> dict:
+    """Two-way FE panel on a known-coefficient DGP (same as the pytest row)."""
+    truth = 1.5
+    covered = 0
+    for seed in range(B):
+        rng = np.random.default_rng(seed)
+        n_units, n_time = 50, 6
+        rows = []
+        for i in range(n_units):
+            ai = rng.normal()
+            for t in range(n_time):
+                d = rng.binomial(1, 0.5)
+                y = ai + 0.3 * t + truth * d + rng.normal(scale=0.8)
+                rows.append({"i": i, "t": t, "d": d, "y": y})
+        df = pd.DataFrame(rows)
+        r = sp.panel(df, formula="y ~ d", entity="i", time="t", method="fe")
+        lo, hi = r.conf_int().loc["d"].values
+        if lo <= truth <= hi:
+            covered += 1
+    return {"name": "sp.panel two-way FE", "B": B,
+            "covered": covered, "rate": covered / B}
+
+
+def coverage_sdid() -> dict:
+    """SDID placebo-SE 95% CI on a one-treated-unit factor-model DGP.
+
+    Same DGP as ``test_synth_sdid_ci_coverage``. Classic Abadie SCM has no
+    analytic CI; SDID (Arkhangelsky et al. 2021) does, and placebo is the
+    recommended variance estimator for a single treated unit.
+    """
+    truth = 3.0
+    covered = 0
+    for seed in range(B):
+        rng = np.random.default_rng(seed)
+        n_ctrl, t0, t1 = 20, 12, 6
+        n_t = t0 + t1
+        f = rng.normal(size=n_t)
+        units, times, ys = [], [], []
+        for u in range(n_ctrl + 1):
+            loading = rng.uniform(0.5, 1.5)
+            ai = rng.normal()
+            for t in range(n_t):
+                base = ai + loading * f[t] + rng.normal(scale=0.5)
+                eff = truth if (u == 0 and t >= t0) else 0.0
+                units.append(u)
+                times.append(t)
+                ys.append(base + eff)
+        df = pd.DataFrame({"u": units, "t": times, "y": ys})
+        r = sp.sdid(df, outcome="y", unit="u", time="t",
+                    treated_unit=0, treatment_time=t0,
+                    se_method="placebo", n_reps=100, seed=seed)
+        if r.ci[0] <= truth <= r.ci[1]:
+            covered += 1
+    return {"name": "sp.sdid placebo (1 treated)", "B": B,
+            "covered": covered, "rate": covered / B}
+
+
 def main() -> None:
     out: list[dict] = []
     fns = [coverage_ols, coverage_did_2x2, coverage_iv,
            coverage_cs, coverage_ebalance, coverage_dml,
-           coverage_causal_forest]
+           coverage_causal_forest, coverage_panel_fe, coverage_sdid]
     for fn in fns:
         t0 = time.time()
         rec = fn()

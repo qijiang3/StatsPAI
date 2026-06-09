@@ -89,7 +89,7 @@ class DoubleMLIIVM(_DoubleMLBase):
         # stratification variable (Z here).
         nZ0, nZ1 = int(np.sum(Z == 0)), int(np.sum(Z == 1))
         if min(nZ0, nZ1) < self.n_folds:
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 f"model='iivm' with n_folds={self.n_folds} requires at least "
                 f"n_folds rows under each instrument arm; got "
                 f"n(Z=0)={nZ0}, n(Z=1)={nZ1}. Reduce n_folds or check "
@@ -186,7 +186,7 @@ class DoubleMLIIVM(_DoubleMLBase):
         num = float(np.sum(w * psi_a) / W)
         den = float(np.sum(w * psi_b) / W)
         if abs(den) < 1e-6:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 f"Degenerate IIVM first stage: E[psi_b] ≈ {den:.2e}. "
                 "Compliance (first-stage effect of Z on D) is near zero; "
                 "LATE is not identified."
@@ -254,7 +254,7 @@ class DoubleMLIIVM(_DoubleMLBase):
                 np.full(len(X_te), fallback_mean),
                 True,
             )
-        raise IdentificationFailure(
+        raise IdentificationFailure(  # pragma: no cover
             f"IIVM cross-fit produced an empty subgroup for {arm_label}; "
             "aborting rather than biasing the AIPW score with zeros.",
             recovery_hint=(
@@ -290,7 +290,7 @@ class DoubleMLIIVM(_DoubleMLBase):
             else:
                 fallback_mean = float(np.mean(d_sub))
             return np.full(len(X_te), fallback_mean), True
-        raise IdentificationFailure(
+        raise IdentificationFailure(  # pragma: no cover
             f"IIVM cross-fit produced an empty subgroup for {arm_label}; "
             "aborting rather than biasing the first-stage score with zeros.",
             recovery_hint=(

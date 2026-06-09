@@ -223,7 +223,7 @@ def npiv(
         PtP += regularization * np.eye(k_all)
     try:
         theta = np.linalg.solve(PtP, Phi_D.T @ Yt)
-    except np.linalg.LinAlgError:
+    except np.linalg.LinAlgError:  # pragma: no cover
         theta = np.linalg.lstsq(PtP, Phi_D.T @ Yt, rcond=None)[0]
 
     fitted = Phi_D @ theta

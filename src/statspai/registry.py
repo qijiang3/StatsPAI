@@ -679,7 +679,7 @@ def _build_registry():
                 ParamSpec("q", "float", False, 0.5, "Quantile (0-1)"),
             ],
             returns="EconometricResults",
-            example='sp.qreg("wage ~ education", data=df, q=0.9)',
+            example='sp.qreg(df, "wage ~ education", quantile=0.9)',
             tags=["quantile", "robust", "distribution"],
         )
     )
@@ -690,19 +690,41 @@ def _build_registry():
             category="regression",
             description="Heckman two-step selection model correcting for sample selection bias.",
             params=[
+                ParamSpec("data", "DataFrame", True),
                 ParamSpec(
-                    "formula", "str", True, description="Outcome equation formula"
-                ),
-                ParamSpec(
-                    "select_formula",
+                    "y",
                     "str",
                     True,
-                    description="Selection equation formula",
+                    description="Outcome variable (observed only when select=1)",
                 ),
-                ParamSpec("data", "DataFrame", True),
+                ParamSpec(
+                    "x",
+                    "list",
+                    True,
+                    description="Regressors in the outcome equation",
+                ),
+                ParamSpec(
+                    "select",
+                    "str",
+                    True,
+                    description="Binary selection indicator (1 = observed, 0 = not)",
+                ),
+                ParamSpec(
+                    "z",
+                    "list",
+                    True,
+                    description="Selection-equation variables (include exclusion restrictions in z but not x)",
+                ),
+                ParamSpec(
+                    "alpha",
+                    "float",
+                    False,
+                    0.05,
+                    "Significance level for confidence intervals",
+                ),
             ],
             returns="EconometricResults",
-            example='sp.heckman("wage ~ education + experience", select_formula="employed ~ age + kids", data=df)',
+            example='sp.heckman(df, y="wage", x=["education", "experience"], select="employed", z=["age", "kids"])',
             tags=["selection", "heckman", "bias"],
             reference="Heckman (1979)",
         )
@@ -714,13 +736,15 @@ def _build_registry():
             category="regression",
             description="Tobit model for censored dependent variables.",
             params=[
-                ParamSpec("formula", "str", True),
                 ParamSpec("data", "DataFrame", True),
-                ParamSpec("lower", "float", False, 0.0, "Lower censoring point"),
-                ParamSpec("upper", "float", False, None, "Upper censoring point"),
+                ParamSpec("y", "str", True, description="Censored outcome variable"),
+                ParamSpec("x", "list", True, description="Regressors"),
+                ParamSpec("ll", "float", False, 0.0, "Lower censoring limit (set -inf for none)"),
+                ParamSpec("ul", "float", False, None, "Upper censoring limit (default: none)"),
+                ParamSpec("alpha", "float", False, 0.05, "Significance level for confidence intervals"),
             ],
             returns="EconometricResults",
-            example='sp.tobit("hours ~ wage + kids", data=df, lower=0)',
+            example='sp.tobit(df, y="hours", x=["wage", "kids"], ll=0)',
             tags=["censored", "tobit", "limited"],
             reference="Tobin (1958)",
         )
@@ -1748,7 +1772,7 @@ def _build_registry():
                 ),
             ],
             returns="Meta-learner result with CATE predictions",
-            example='sp.metalearner(df, y="outcome", treatment="treat", covariates=["x1","x2"], method="x")',
+            example='sp.metalearner(df, y="outcome", treat="treat", covariates=["x1","x2"], learner="x")',
             tags=[
                 "metalearner",
                 "cate",
@@ -1873,7 +1897,7 @@ def _build_registry():
                 ParamSpec("covariates", "list", True),
             ],
             returns="TMLE result",
-            example='sp.tmle(df, y="outcome", treatment="treat", covariates=["x1","x2","x3"])',
+            example='sp.tmle(df, y="outcome", treat="treat", covariates=["x1","x2","x3"])',
             tags=["tmle", "doubly-robust", "semiparametric"],
             reference="van der Laan & Rose (2011) Targeted Learning",
             pre_conditions=[
@@ -2059,7 +2083,7 @@ def _build_registry():
                 ),
             ],
             returns="CausalImpactEstimator result",
-            example='sp.causal_impact(df, outcome="sales", intervention_time="2020-03-15")',
+            example='sp.causal_impact(df, y="sales", intervention_time="2020-03-15")',
             tags=["timeseries", "bayesian", "impact", "intervention"],
             reference="Brodersen et al. (2015)",
         )
@@ -2538,7 +2562,7 @@ def _build_registry():
                 ),
             ],
             returns="Sensitivity analysis result",
-            example='sp.sensemakr(result, treatment="education", benchmark_covariates=["experience"])',
+            example='sp.sensemakr(result, treat="education", benchmark=["experience"])',
             tags=["sensitivity", "omitted-variable", "robustness"],
             reference="Cinelli & Hazlett (2020)",
         )
@@ -2561,7 +2585,7 @@ def _build_registry():
                 ),
             ],
             returns="SpecCurveResult",
-            example='sp.spec_curve(df, y="outcome", treatment="treat", controls=["x1","x2","x3","x4"])',
+            example='sp.spec_curve(df, y="outcome", x="treat", controls=[[], ["x1"], ["x1", "x2"]])',
             tags=["robustness", "specification", "multiverse"],
             reference="Simonsohn, Simmons & Nelson (2020)",
         )
@@ -3298,8 +3322,8 @@ def _build_registry():
             ],
             returns="BartikIV result",
             example=(
-                'sp.bartik(df, y="wage_growth", shares="industry_share_t0", '
-                'shocks="industry_shock", unit="region", time="year")'
+                'sp.bartik(df, y="wage_growth", endog="emp_growth", '
+                'shares=share_matrix, shocks=industry_shocks)'
             ),
             tags=["bartik", "shift-share", "iv", "causal", "labor", "trade"],
             reference="Adão, Kolesár & Morales (2019) QJE; Borusyak, Hull & Jaravel (2022) ReStud",
@@ -3373,7 +3397,7 @@ def _build_registry():
                 ParamSpec("chains", "int", False, 4),
             ],
             returns="CausalResult with .posterior, .rhat, .ess_bulk, .divergences",
-            example='sp.bayes_rd(df, y="y", x="running_var", c=0.0)',
+            example='sp.bayes_rd(df, y="y", running="running_var", cutoff=0.0)',
             tags=["bayes", "rd", "sharp", "posterior", "bandwidth"],
             reference="Chib & Jacobi (2016); Branson et al. (2019)",
             pre_conditions=[
@@ -3430,7 +3454,7 @@ def _build_registry():
                 ParamSpec("chains", "int", False, 4),
             ],
             returns="CausalResult with .posterior, .rhat, .ess_bulk, .divergences",
-            example='sp.bayes_fuzzy_rd(df, y="y", treatment="d", x="score", c=0.5)',
+            example='sp.bayes_fuzzy_rd(df, y="y", treat="d", running="score", cutoff=0.5)',
             tags=["bayes", "rd", "fuzzy", "late", "wald"],
             reference="Geneletti, O'Keeffe & Baio (2015); Chib & Jacobi (2016)",
             pre_conditions=[
@@ -3486,7 +3510,7 @@ def _build_registry():
                 ParamSpec("n_grid", "int", False, 20, "Grid points for MTE curve"),
             ],
             returns="CausalResult with .mte_grid, .posterior, .rhat, .divergences",
-            example='sp.bayes_mte(df, y="y", treatment="d", instrument="z")',
+            example='sp.bayes_mte(df, y="y", treat="d", instrument="z")',
             tags=["bayes", "mte", "heckman-vytlacil", "hte", "late"],
             reference="Heckman & Vytlacil (2005, 2007); Brinch, Mogstad & Wiswall (2017)",
             pre_conditions=[
@@ -3567,7 +3591,7 @@ def _build_registry():
                 ParamSpec("time_varying_covariates", "list", False),
             ],
             returns="TargetTrialProtocol",
-            example='proto = sp.target_trial_protocol(eligibility="age >= 50", ...)',
+            example='sp.target_trial_protocol(eligibility="age>=50", treatment_strategies=["statin", "none"], assignment="treat", time_zero="enroll", followup_end="end", outcome="event")',
             tags=["target_trial", "epidemiology", "observational", "JAMA"],
             reference="Hernan & Robins (2016); JAMA (2022)",
         )
@@ -5085,7 +5109,7 @@ def _build_registry():
             ],
             returns="CausalResult with .posterior, .rhat, .ess_bulk, .ess_tail, .divergences",
             example=(
-                "sp.bayes_did(df, y='wage', g='first_treat', t='year', i='worker_id')"
+                "sp.bayes_did(df, y='wage', treat='union', post='post', cohort='first_treat')"
             ),
             tags=["bayes", "did", "staggered", "hierarchical", "posterior"],
             reference="Callaway & Sant'Anna (2021); Gelman & Hill (2006) hierarchical models",
@@ -5158,7 +5182,7 @@ def _build_registry():
             ],
             returns="CausalResult with .posterior, .rhat, .ess_bulk, .divergences",
             example=(
-                "sp.bayes_iv(df, y='wage', treatment='education', "
+                "sp.bayes_iv(df, y='wage', treat='education', "
                 "instrument='quarter_of_birth')"
             ),
             tags=["bayes", "iv", "2sls", "weak-iv", "posterior"],
@@ -5218,7 +5242,7 @@ def _build_registry():
             ],
             returns="MVMRResult",
             example=(
-                "sp.mr_multivariable(df, outcome='beta_y', se_outcome='se_y', "
+                "sp.mr_multivariable(df, outcome='beta_y', outcome_se='se_y', "
                 "exposures=['beta_ldl','beta_hdl'])"
             ),
             tags=["mr", "mvmr", "multivariable", "mendelian"],
@@ -6306,7 +6330,7 @@ def _build_registry():
                 ParamSpec("n_episodes", "int", False, 50),
             ],
             returns="CausalDQNResult",
-            example='sp.causal_dqn(df, states=["s1","s2"], action="a", reward="r")',
+            example='sp.causal_dqn(df, state="s", action="a", reward="r", next_state="s_next")',
             tags=["rl", "causal", "policy", "offline"],
             reference="Li, Zhang & Bareinboim (2025). arXiv:2510.21110. Cunha et al. (2512.18135).",
         )
@@ -6383,7 +6407,7 @@ def _build_registry():
                 ),
             ],
             returns="CausalResult",
-            example='sp.pci_mtp(df, y="y", treat="d", proxy_z=["z"], proxy_w=["w"], policy=lambda d: d+0.1)',
+            example='sp.pci_mtp(df, y="y", treat="d", proxy_z=["z"], proxy_w=["w"], delta=0.1)',
             tags=["proximal", "mtp", "modified-treatment-policy", "pci"],
             reference="Olivas-Martinez, Gilbert & Rotnitzky (2025). arXiv:2512.12038.",
         )
@@ -6411,7 +6435,7 @@ def _build_registry():
                 ),
             ],
             returns="CrossClusterRCTResult",
-            example='sp.cluster_cross_interference(df, y="y", cluster="city", treatment="d", exposure="neighbour_d")',
+            example='sp.cluster_cross_interference(df, y="y", cluster="city", treat="d", neighbour_treat_share="neighbour_d")',
             tags=["interference", "spillover", "cluster-rct", "sutva"],
             reference="Leung (2023). arXiv:2310.18836.",
         )
@@ -12108,7 +12132,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
         "typical_n_min": 500,
     },
     "ffl_decompose": {
-        "example": "sp.ffl_decompose(data=df, y='log_wage', group='female', x=['education'], statistic='variance')",
+        "example": "sp.ffl_decompose(data=df, y='log_wage', group='female', x=['education'], stat='variance')",
         "reference": "firpo2009unconditional",
         "pre_conditions": [
             "Outcome is continuous (e.g. log earnings) with adequate distributional support.",
@@ -12237,7 +12261,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
     #  Mendelian randomization core (variants inherit via _INHERITANCE_SEEDS)
     # ------------------------------------------------------------------ #
     "mr_ivw": {
-        "example": "sp.mr_ivw(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        "example": "sp.mr_ivw(beta_exposure=beta_x, beta_outcome=beta_y, se_exposure=se_x, se_outcome=se_y)",
         "reference": "burgess2013mendelian",
         "pre_conditions": [
             "Two-sample MR summary data: beta_exposure, beta_outcome, SE_exposure, SE_outcome per instrument.",
@@ -12267,7 +12291,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
         "typical_n_min": 10,
     },
     "mr_egger": {
-        "example": "sp.mr_egger(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        "example": "sp.mr_egger(beta_exposure=beta_x, beta_outcome=beta_y, se_exposure=se_x, se_outcome=se_y)",
         "reference": "bowden2015mendelian",
         "pre_conditions": [
             "Two-sample summary data with > ~15 instruments for the intercept test to have power.",
@@ -12289,7 +12313,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
         "typical_n_min": 15,
     },
     "mr_presso": {
-        "example": "sp.mr_presso(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        "example": "sp.mr_presso(beta_exposure=beta_x, beta_outcome=beta_y, se_exposure=se_x, se_outcome=se_y)",
         "reference": "verbanck2018detection",
         "pre_conditions": [
             "Two-sample summary statistics with at least ~10 SNP instruments.",
@@ -12311,7 +12335,7 @@ _AGENT_CARD_SEED_METADATA: Dict[str, Dict[str, Any]] = {
         "typical_n_min": 10,
     },
     "mr_raps": {
-        "example": "sp.mr_raps(b_exp=beta_x, b_out=beta_y, se_exp=se_x, se_out=se_y)",
+        "example": "sp.mr_raps(beta_exposure=beta_x, beta_outcome=beta_y, se_exposure=se_x, se_outcome=se_y)",
         # NOTE: Zhao et al. (2020) RAPS reference is not in paper.bib yet.
         # Adding `reference` here would fail the §10 zero-hallucination
         # check.  Leave empty until the bib entry is added.

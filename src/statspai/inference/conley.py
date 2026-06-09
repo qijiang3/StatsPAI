@@ -141,12 +141,10 @@ def conley(
     # Pre-compute X_i * e_i  (n x k)
     Xe = X * residuals[:, np.newaxis]
 
-    # The meat of the sandwich
-    Omega = np.zeros((k, k))
-
-    # Diagonal terms (every obs with itself, kernel weight = 1)
-    for i in range(n):
-        Omega += np.outer(Xe[i], Xe[i])
+    # The meat of the sandwich.
+    # Diagonal terms (every obs with itself, kernel weight = 1):
+    #   sum_i outer(Xe_i, Xe_i)  ==  Xe.T @ Xe
+    Omega = Xe.T @ Xe
 
     # Off-diagonal terms: only pairs within cutoff
     pairs = tree.query_pairs(r=chord_cutoff, output_type='ndarray')
@@ -169,14 +167,14 @@ def conley(
 
         weights = weights * within  # zero out pairs beyond cutoff
 
-        # Each pair (i,j) contributes symmetrically: weight * (Xe_i Xe_j' + Xe_j Xe_i')
-        for p in range(len(idx_i)):
-            if weights[p] > 0:
-                w = weights[p]
-                xi = Xe[idx_i[p]]
-                xj = Xe[idx_j[p]]
-                cross = np.outer(xi, xj) + np.outer(xj, xi)
-                Omega += w * cross
+        # Each pair (i,j) contributes symmetrically:
+        #   weight * (outer(Xe_i, Xe_j) + outer(Xe_j, Xe_i)).
+        # Summed over all pairs this is M + M.T where
+        #   M = sum_p weight_p * outer(Xe_i, Xe_j) = (Xe_i * w).T @ Xe_j.
+        # Zero-weight (beyond-cutoff) pairs contribute exactly nothing.
+        Wi = Xe[idx_i] * weights[:, np.newaxis]
+        M = Wi.T @ Xe[idx_j]
+        Omega += M + M.T
 
     V = XtX_inv @ Omega @ XtX_inv
 

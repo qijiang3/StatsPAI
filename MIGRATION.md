@@ -5,9 +5,233 @@ Internal version-to-version migrations are at the top; the long-form
 
 ---
 
+<a id="ols-qr-kernel"></a>
+
+## Unreleased — ⚠️ OLS kernel switched to a QR solve (numerical accuracy)
+
+**What changed.** The core OLS kernel — `ols_fit` for coefficients and
+`OLSEstimator.estimate` for the variance-covariance matrix, both in
+`src/statspai/` — now solves least squares via the **QR factorisation** of the
+design matrix `X = QR` (`b = R⁻¹Qᵀy`, `(X'X)⁻¹ = R⁻¹R⁻ᵀ`). The previous
+implementation solved the normal equations `(X'X) b = X'y` and formed
+`inv(X'X)` directly. Forming `X'X` squares the condition number of `X`, so on
+ill-conditioned designs roughly half of the available digits are lost — and on
+the worst cases the result is meaningless.
+
+**Why.** The new NIST StRD certification suite
+(`tests/numerical_accuracy/test_nist_strd_ols.py`) showed the normal-equations
+path produced **0 correct digits** on the NIST Filippelli dataset (a degree-10
+polynomial fit, `cond(X) ≈ 1e10`) and only ~6 digits on several Wampler
+polynomials. The QR path tracks `cond(X)` rather than `cond(X)²` and lifts
+those to ~7 and ~9–13 digits respectively, matching the published certified
+values.
+
+**Who is affected.**
+
+- **Well-conditioned regressions (the overwhelming majority): no action.**
+  Coefficients, standard errors, R², F all match the old output to ≈1e-12 —
+  far below any reporting precision. The full `reference_parity` and
+  `external_parity` (JOSS reproduction) suites pass unchanged.
+- **Regressions on near-collinear or high-degree-polynomial designs:** you will
+  now get **different — and correct — numbers**. If you previously fit, say, a
+  high-order polynomial trend or a strongly collinear specification directly
+  (without centring/orthogonalising) and recorded the coefficients, re-run and
+  expect them to move. The old numbers were the unstable ones.
+
+There is **no API change** and nothing to rewrite; this note exists only so the
+numerical shift on ill-conditioned designs is on the record.
+
+Separately, exact-fit OLS (`R² == 1`) now reports the F-statistic as `inf`
+(matching NIST's certified "Infinity") instead of emitting a divide-by-zero
+`RuntimeWarning`; non-exact fits are unaffected.
+
+Separately, `sp.regress` now fits intercept models in mean-centred
+(Frisch-Waugh-Lovell) coordinates and reconstructs the intercept afterward.
+This is algebraically identical to the raw fit in exact arithmetic, but it
+avoids catastrophic cancellation when `y` or a regressor has a very large
+constant offset. Well-conditioned fits remain unchanged to machine precision;
+the visible effect is on pathological offset designs such as the NIST StRD
+ANOVA `SmLs07/08/09` cases, where F/R² accuracy improves down to the float64
+input-representation floor.
+
+---
+
+<a id="regress-collinearity-guard"></a>
+
+## Unreleased — ⚠️ `sp.regress` raises on perfect collinearity; `sp.logit`/`sp.probit` warn on separation
+
+**What changed.** Two silent-failure corners now fail loudly:
+
+- **Perfect collinearity** in `sp.regress` — duplicate or proportional
+  regressors, the dummy-variable trap (complementary 0/1 dummies plus an
+  intercept), or a constant non-intercept regressor — previously returned
+  enormous unidentified coefficients (e.g. `~1e14`) with no warning. It now
+  raises `statspai.exceptions.NumericalInstability`, with the offending columns
+  in `error.diagnostics`.
+- **Perfect / quasi-complete separation** in `sp.logit` / `sp.probit` —
+  where the outcome is perfectly predicted and the maximum-likelihood estimate
+  does not exist — previously returned large finite coefficients with no
+  signal. It now emits a `statspai.exceptions.ConvergenceWarning`.
+
+**Why.** The project rule is "fail loudly": returning wrong numbers silently is
+the cheapest way to hide a correctness problem. Neither case has a meaningful
+answer to return.
+
+**What you need to do.**
+
+- If you *intended* collinear regressors, drop one (or remove the intercept for
+  a single constant regressor). The exception names them.
+- For separation, use penalized (Firth) logistic regression, drop the
+  separating predictor, or pool sparse categories.
+
+**Scope / non-goals.** Collinearity detection is deliberately *structural*
+(duplicate/proportional columns, zero-variance regressors), not based on the
+condition number or matrix rank. A rank tolerance loose enough to catch real
+collinearity also flags legitimately ill-conditioned but full-rank designs —
+the NIST StRD Filippelli benchmark is numerically *more* singular
+(`s_min/s_max ~ 6e-16`) than an exactly duplicated column yet must fit. So a
+general exact linear dependence among 3+ columns that is not reducible to a
+pairwise duplicate or a constant column is **not** auto-detected; inspect the
+design's condition number if you suspect one.
+
+---
+
+<a id="drdid-traditional-normalisation"></a>
+
+## 1.17.0 — ⚠️ `sp.drdid(method='trad')` ATT correctness fix
+
+**What changed.** The traditional doubly-robust DiD branch of `sp.drdid`
+(Sant'Anna & Zhao 2020) divided each of its four cell terms — treated/control ×
+post/pre, each a weighted average of the outcome-regression residual — by the
+**full sample size** `n` rather than by that cell's weight mass. On a balanced
+2×2 each cell holds ~¼ of the sample, so every term was scaled down by its
+sample share and the ATT was biased toward zero by ~50%. Concretely, on a 2×2
+with true ATT 2.0 (raw DiD 1.96) `method='trad'` returned ≈1.04. Each term is
+now normalised by its own weight total. The traditional estimator therefore now
+reduces **exactly** to the raw 2×2 DiD when no covariates are supplied, and
+recovers the true ATT with covariates.
+
+Separately, `sp.drdid` now **raises `ValueError`** when `method` is neither
+`'imp'` nor `'trad'`. Previously any other string (e.g. `'ipw'`, `'reg'`,
+`'dr'`) fell through silently to the traditional branch; such calls were never
+distinct estimators and now fail loudly.
+
+**Who is affected.** Callers of `sp.drdid(..., method='trad')` (or any non-`imp`
+string, which silently ran the traditional branch). The **default**
+`method='imp'` (improved, locally efficient) already normalised correctly and
+is **unchanged** — its point estimates, standard errors, the
+`docs/joss_validation_dossier.md` / R-`DRDID` parity numbers (which pin
+`drdid_imp_panel`), and every other default-path result are **not** affected.
+
+**Action.** If you relied on `method='trad'` output, re-run; the corrected ATT
+is ~2× the previously reported (downward-biased) value and now matches the raw
+DiD / `method='imp'`. Replace any `method` value other than `'imp'`/`'trad'`
+with one of those two.
+
+---
+
+<a id="multiway-cluster-intersection"></a>
+
+## 1.17.0 — ⚠️ `sp.multiway_cluster_vcov` multiway-cluster SE correctness fix
+
+**What changed.** `sp.multiway_cluster_vcov` forms the Cameron-Gelbach-Miller
+(2011) variance by inclusion-exclusion over the clustering dimensions, which
+requires an *intersection* cluster: the unique combinations of the dimensions'
+levels (e.g. the distinct `(firm, year)` pairs). The intersection key was built
+by joining the dimensions into one string with a `"\0"` separator, but NumPy
+fixed-width unicode strips the embedded NUL byte, so `(1, 23)` and `(12, 3)`
+both collapsed to `"123"`. On a 40×50 crossed-cluster DGP this merged 1733 true
+intersection clusters into 1639, which inflated the `G/(G-1)` finite-sample
+factor on the subtracted intersection term and biased the multiway SE by ~0.2%
+(two-way) to ~0.5% (three-way) away from the canonical estimator. The
+intersection key is now built collision-free via `np.unique(axis=0)` on
+per-dimension integer codes. `sp.multiway_cluster_vcov` now reproduces
+`sandwich::vcovCL(cluster = ~ g1 + g2 + ...)` and `sp.twoway_cluster` to machine
+precision (two-way exact; three-way relative error ~4e-7).
+
+**Who is affected.** Callers of `sp.multiway_cluster_vcov` with **two or more**
+clustering dimensions, and the multiway-clustered standard errors of
+`did.harvest` and `panel.feols`. One-way clustering is unaffected.
+`sp.twoway_cluster` is **not** affected — it used a separate, collision-free
+intersection key and already matched `sandwich::vcovCL` to machine precision.
+Point estimates are unchanged; only multiway-cluster SEs/CIs/p-values move
+(typically by tenths of a percent, always toward the canonical value).
+
+**Action.** Re-run any analysis that reported `sp.multiway_cluster_vcov`-based
+multiway-cluster SEs with ≥2 dimensions; the corrected SEs now agree with
+`sandwich::vcovCL` (R) and Stata multiway-cluster conventions.
+
+---
+
+<a id="structural-break-supf-null"></a>
+
+## 1.17.0 — ⚠️ `sp.structural_break` sup-F p-value null distribution correctness fix
+
+**What changed.** The sup-F / Chow statistic in `sp.structural_break(...)` is a
+*supremum* of the Chow F statistic over all candidate break points. Under the
+null of no break it therefore follows the Andrews (1993) sup-F limiting law,
+**not** the ordinary `F(k, n-2k)` distribution. The previous code referred the
+maximised statistic to the F CDF (`1 - scipy.stats.f.cdf(best_f, k, n-2k)`),
+which ignored the search over break points and produced p-values that were far
+too small. Measured false-positive rate on Gaussian white noise at the 5%
+level: **33–37%** (n ∈ {100, 200, 400}) — a roughly 7× inflation. P-values are
+now drawn from the Andrews (1993) null (a q-vector Brownian-bridge functional,
+sampled by a deterministic seeded simulation cached per `(q, grid, trimming)`),
+which restores **nominal size (~5%)** with no material loss of power. The same
+correct critical value now governs the Bai-Perron sequential `supF(l+1|l)`
+stopping rule, so `method='bai-perron'` stops over-segmenting noise.
+
+**Who is affected.** Anyone who relied on the `p_values` / `break_dates` of
+`sp.structural_break` with `method` in `{'sup-f', 'chow', 'bai-perron'}`.
+Previously-reported breaks (and their tiny p-values) were anti-conservative;
+some "significant" breaks were spurious. The point estimate of the *location*
+of the most likely break (`break_dates[0]` for sup-F) is unchanged — only its
+significance and the break **count** change.
+
+**What to do.** Re-run any structural-break tests and re-check significance
+against the corrected p-values. A break that was marginal under the old
+(inflated) test may no longer reject. `method='bai-perron'` may now return
+fewer breaks. The result object additionally gained populated `f_stats` /
+`p_values` for the Bai-Perron path (one entry per detected break, sorted by
+date), where it previously returned `None`.
+
+**Reference.** Andrews, D.W.K. (1993). "Tests for Parameter Instability and
+Structural Change with Unknown Change Point." *Econometrica*, 61(4), 821-856.
+doi:10.2307/2951764 (verified via Crossref, the Econometric Society, and
+RePEc).
+
+---
+
+<a id="msm-singleperiod-iptw"></a>
+
+## 1.17.0 — ⚠️ `sp.stabilized_weights` / `sp.msm` single-period IPTW correctness fix
+
+**What changed.** On a **single-period (point-treatment) panel**,
+`sp.stabilized_weights(...)` (and therefore `sp.msm(...)`) previously returned
+stabilized weights that were all exactly `1.0`. The within-unit lagged-
+treatment column is all-zero in that setting, which made the logistic
+treatment-model design singular; the failure was silently caught and the
+weights fell back to the marginal mean for both the numerator and denominator,
+cancelling to `1.0`. The MSM then silently reduced to an unweighted,
+**confounded** regression. The fix drops zero-variance columns before fitting,
+so the confounders are now used and the weights are computed correctly.
+
+**Who is affected.** Anyone who called `sp.stabilized_weights` / `sp.msm` on a
+panel with **one period per unit** (point treatment). Multi-period panels —
+the intended MSM use case — are **unaffected** (their weights already varied
+correctly and are numerically identical before and after).
+
+**What to do.** Re-run any single-period MSM analyses: the previous output was
+equivalent to an unadjusted regression and should not be relied on. The fixed
+weights match a textbook stabilized-IPTW computation to machine precision. If
+the treatment model genuinely cannot be fit (e.g. perfect separation), you now
+get a `RuntimeWarning` instead of a silent fallback.
+
+---
+
 <a id="sp-synth-default-classic"></a>
 
-## Unreleased — ⚠️ `sp.synth()` default method restored to `'classic'`
+## 1.16.1 — ⚠️ `sp.synth()` default method restored to `'classic'`
 
 **What changed.** A bare `sp.synth(...)` call (no `method=`) now runs
 `method='classic'` — canonical Abadie–Diamond–Hainmueller (2010) synthetic
@@ -41,7 +265,7 @@ Guarded by
 
 <a id="sp-causal-forest-aipw-fix"></a>
 
-## Unreleased — ⚠️ Causal-forest ATE/ATT now doubly-robust (AIPW)
+## 1.16.0+source.20260531 — ⚠️ Causal-forest ATE/ATT now doubly-robust (AIPW)
 
 **What changed.** `CausalForest.average_treatment_effect(...)` previously
 returned a plug-in average of the forest's CATE predictions. Forest
@@ -71,7 +295,7 @@ and `tests/reference_parity/test_grf_parity.py`.
 
 ---
 
-## Unreleased — ⚠️ `sp.xtabond` Arellano-Bond GMM correctness fix
+## 1.16.0 — ⚠️ `sp.xtabond` Arellano-Bond GMM correctness fix
 
 **What broke.** `sp.xtabond` (and `sp.panel(method='ab')`) used a flat,
 fixed block of lagged-level instrument columns and then dropped every
@@ -109,7 +333,7 @@ guarded by `tests/test_gmm.py::TestArellanoBond::test_parity_matches_stata_xtabo
 
 <a id="sp-qreg-se-fix"></a>
 
-## Unreleased — ⚠️ `sp.qreg` Powell sandwich SE correctness fix
+## 1.16.0 — ⚠️ `sp.qreg` Powell sandwich SE correctness fix
 
 **What broke.** The Powell (1991) kernel sandwich for quantile
 regression standard errors was implemented with an extra factor of

@@ -53,12 +53,14 @@ def test_active_manuscript_artifacts_have_generators_and_hash_guards() -> None:
 
     assert payload["status"] == "PASS"
     assert len(payload["active_sections"]) == 9
-    assert payload["artifact_count"] == 4
+    assert payload["artifact_count"] == 6
     assert payload["hash_mismatches"] == 0
     assert {
         "Paper-JSS/manuscript/tables/track_a_cross_language_snapshot.tex",
         "Paper-JSS/manuscript/tables/track_c_perf.tex",
         "Paper-JSS/replication/tables/ex07_agent_trace.tex",
+        "Paper-JSS/manuscript/figures/ex02_basque_gap.pdf",
+        "Paper-JSS/manuscript/figures/ex03_mpdta_event_study.pdf",
         "Paper-JSS/manuscript/figures/track_c_loglog.pdf",
     } == set(artifacts)
     assert artifacts[

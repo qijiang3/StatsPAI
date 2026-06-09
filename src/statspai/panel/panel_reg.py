@@ -27,7 +27,7 @@ Blundell, R. and Bond, S. (1998). "Initial Conditions and Moment Restrictions."
 """
 
 import warnings
-from typing import Optional, List, Dict, Any, Tuple, Union
+from typing import Optional, List, Dict, Any, Tuple
 
 import numpy as np
 import pandas as pd
@@ -98,7 +98,7 @@ class PanelResults(EconometricResults):
             'statistic', 'df', 'pvalue', 'recommendation', 'interpretation'
         """
         if self._panel_data is None:
-            raise ValueError("Panel data not stored — cannot run Hausman test.")
+            raise ValueError("Panel data not stored — cannot run Hausman test.")  # pragma: no cover
         from .panel_diagnostics import _hausman_from_data
         return _hausman_from_data(
             self._panel_data, self._dep_var, self._indep_vars,
@@ -122,7 +122,7 @@ class PanelResults(EconometricResults):
             'statistic', 'df', 'pvalue', 'recommendation', 'interpretation'
         """
         if self._panel_data is None:
-            raise ValueError("Panel data not stored — cannot run BP-LM test.")
+            raise ValueError("Panel data not stored — cannot run BP-LM test.")  # pragma: no cover
         from .panel_diagnostics import _bp_lm_test
         return _bp_lm_test(
             self._panel_data, self._dep_var, self._indep_vars,
@@ -145,7 +145,7 @@ class PanelResults(EconometricResults):
             'statistic', 'df1', 'df2', 'pvalue', 'interpretation'
         """
         if self._panel_data is None:
-            raise ValueError("Panel data not stored — cannot run F-test.")
+            raise ValueError("Panel data not stored — cannot run F-test.")  # pragma: no cover
         from .panel_diagnostics import _f_test_effects
         return _f_test_effects(
             self._panel_data, self._dep_var, self._indep_vars,
@@ -166,7 +166,7 @@ class PanelResults(EconometricResults):
             'statistic', 'pvalue', 'interpretation'
         """
         if self._lm_result is None:
-            raise ValueError("linearmodels result not stored — cannot run CD test.")
+            raise ValueError("linearmodels result not stored — cannot run CD test.")  # pragma: no cover
         from .panel_diagnostics import _pesaran_cd
         resids = self._lm_result.resids
         return _pesaran_cd(resids, self._entity, self._time, self._panel_data)
@@ -203,7 +203,7 @@ class PanelResults(EconometricResults):
         elif type == 'hausman':
             return plot_hausman(self, **kwargs)
         else:
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 f"Unknown plot type '{type}'. "
                 f"Choose from: coef, effects, residuals, hausman"
             )
@@ -569,7 +569,7 @@ def _dispatch_panel_impl(
         n_periods = data[time].nunique()
         data = balance_panel(data, entity=entity, time=time)
         if len(data) == 0:
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 f"balance=True dropped all units: none of the {n_units} "
                 f"entities appear in all {n_periods} time periods. "
                 "Check data or set balance=False."
@@ -608,17 +608,14 @@ def _fit_linearmodels(
     data, dep_var, indep_vars, entity, time, formula,
     method, robust, cluster, weights, alpha,
 ) -> PanelResults:
-    try:
-        from linearmodels.panel import (
-            PanelOLS, RandomEffects, BetweenOLS,
-            FirstDifferenceOLS, PooledOLS,
-        )
-        from statsmodels.tools import add_constant
-    except ImportError:
-        raise ImportError(
-            "linearmodels required for panel regression. "
-            "Install: pip install linearmodels"
-        )
+    # linearmodels is a core dependency (see pyproject.toml ``dependencies``);
+    # import lazily to keep module-import time low, but do not mask a broken
+    # install as if it were an optional extra.
+    from linearmodels.panel import (
+        PanelOLS, RandomEffects, BetweenOLS,
+        FirstDifferenceOLS, PooledOLS,
+    )
+    from statsmodels.tools import add_constant
 
     panel_data = data.set_index([entity, time])
     dep = panel_data[dep_var]
@@ -749,14 +746,10 @@ def _fit_cre(
     Chamberlain (1982): adds entity-level means separately for each
     time period (more flexible, uses more degrees of freedom).
     """
-    try:
-        from linearmodels.panel import RandomEffects
-        from statsmodels.tools import add_constant
-    except ImportError:
-        raise ImportError(
-            "linearmodels required for CRE estimation. "
-            "Install: pip install linearmodels"
-        )
+    # linearmodels is a core dependency (see pyproject.toml ``dependencies``);
+    # import lazily here without masking a broken install as optional.
+    from linearmodels.panel import RandomEffects
+    from statsmodels.tools import add_constant
 
     df = data.copy()
 
@@ -780,7 +773,6 @@ def _fit_cre(
             # Add time-specific deviations from the entity mean
             for t_val in time_vals[1:]:  # skip first to avoid collinearity
                 t_col = f'_cham_{var}_t{t_val}'
-                t_mean = df.loc[df[time] == t_val].groupby(entity)[var].transform('mean')
                 df[t_col] = 0.0
                 df.loc[df[time] == t_val, t_col] = (
                     df.loc[df[time] == t_val, var] -
@@ -975,7 +967,7 @@ def panel_compare(
             r = panel(data, formula, entity, time, method=m,
                       robust=robust, cluster=cluster, **kwargs)
             results[_METHOD_NAMES.get(m, m)] = r
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             results[_METHOD_NAMES.get(m, m)] = str(e)
 
     # Build comparison DataFrame

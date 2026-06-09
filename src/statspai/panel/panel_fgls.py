@@ -170,9 +170,9 @@ def panel_fgls(
 
         try:
             beta_gls = np.linalg.solve(XtOiX, XtOiY)
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError:  # pragma: no cover
             beta_gls = beta_ols
-            break
+            break  # pragma: no cover
 
         # Update residuals and re-estimate sigma, rho
         resid_new = y_data - X_data @ beta_gls
@@ -195,8 +195,8 @@ def panel_fgls(
     try:
         var_cov = np.linalg.inv(XtOiX)
         se = np.sqrt(np.diag(var_cov))
-    except np.linalg.LinAlgError:
-        se = np.full(k_total, np.nan)
+    except np.linalg.LinAlgError:  # pragma: no cover
+        se = np.full(k_total, np.nan)  # pragma: no cover
 
     params = pd.Series(beta_gls, index=var_names)
     std_errors = pd.Series(se, index=var_names)

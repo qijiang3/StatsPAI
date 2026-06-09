@@ -309,6 +309,85 @@ def test_causal_forest_aipw_ci_coverage():
 
 
 # ---------------------------------------------------------------------------
+# Panel — two-way fixed effects
+#
+# Unit + time fixed effects with a time-varying binary treatment and a
+# unit-level random effect (absorbed by the unit FE). With iid idiosyncratic
+# errors the default analytic SE must be calibrated to ~95%. This guards the
+# within-transform + degrees-of-freedom correction in the FE estimator.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow
+def test_panel_fe_ci_coverage():
+    """Two-way FE panel on a known-coefficient DGP: coverage calibrated."""
+    B = B_DEFAULT
+    truth = 1.5
+    covered = 0
+    for seed in range(B):
+        rng = np.random.default_rng(seed)
+        n_units, n_time = 50, 6
+        rows = []
+        for i in range(n_units):
+            ai = rng.normal()                 # unit FE (absorbed)
+            for t in range(n_time):
+                d = rng.binomial(1, 0.5)      # time-varying treatment
+                y = ai + 0.3 * t + truth * d + rng.normal(scale=0.8)
+                rows.append({"i": i, "t": t, "d": d, "y": y})
+        df = pd.DataFrame(rows)
+        r = sp.panel(df, formula="y ~ d", entity="i", time="t", method="fe")
+        lo, hi = r.conf_int().loc["d"].values
+        if lo <= truth <= hi:
+            covered += 1
+    _assert_calibrated(covered, B, "Panel two-way FE")
+
+
+# ---------------------------------------------------------------------------
+# Synthetic control — synthetic difference-in-differences (Arkhangelsky
+# et al. 2021).
+#
+# Classic Abadie SCM uses placebo/permutation inference and has no analytic
+# 95% CI, so a nominal-coverage claim there would be ill-posed. SDID *does*
+# have a genuine asymptotic interval; for a single treated unit the placebo
+# variance estimator is the recommended one (jackknife is undefined with one
+# treated unit). This row guards that placebo CI against SE miscalibration.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow
+def test_synth_sdid_ci_coverage():
+    """SDID (placebo SE) on a factor-model DGP with one treated unit:
+    the 95% CI must cover the injected effect at ~95%."""
+    B = min(B_DEFAULT, 150)   # placebo resampling is slow; cap at 150
+    truth = 3.0
+    covered = 0
+    for seed in range(B):
+        rng = np.random.default_rng(seed)
+        n_ctrl, t0, t1 = 20, 12, 6            # 20 controls, 12 pre, 6 post
+        n_t = t0 + t1
+        f = rng.normal(size=n_t)              # common factor
+        units, times, ys = [], [], []
+        for u in range(n_ctrl + 1):           # unit 0 = treated
+            loading = rng.uniform(0.5, 1.5)
+            ai = rng.normal()
+            for t in range(n_t):
+                base = ai + loading * f[t] + rng.normal(scale=0.5)
+                eff = truth if (u == 0 and t >= t0) else 0.0
+                units.append(u)
+                times.append(t)
+                ys.append(base + eff)
+        df = pd.DataFrame({"u": units, "t": times, "y": ys})
+        r = sp.sdid(df, outcome="y", unit="u", time="t",
+                    treated_unit=0, treatment_time=t0,
+                    se_method="placebo", n_reps=100, seed=seed)
+        if r.ci[0] <= truth <= r.ci[1]:
+            covered += 1
+    # Placebo SE on a single treated unit can be mildly conservative on
+    # small B; allow the standard 2% upper slack.
+    _assert_calibrated(covered, B, "SDID placebo (1 treated)")
+
+
+# ---------------------------------------------------------------------------
 # Fast-mode coverage: one cheap smoke test that ALWAYS runs (not slow)
 # ---------------------------------------------------------------------------
 

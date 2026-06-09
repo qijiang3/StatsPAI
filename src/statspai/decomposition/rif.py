@@ -46,7 +46,10 @@ def _kernel_density_at(y: np.ndarray, point: float, bw: str = "silverman") -> fl
     compatibility; prefer ``_common.influence_function`` for new code)."""
     try:
         kde = sp_stats.gaussian_kde(y, bw_method=bw)
-        return float(kde(point))
+        # ``kde(point)`` returns a length-1 array; index it before ``float()``
+        # to avoid the NumPy 1.25 ndim>0→scalar DeprecationWarning (the value
+        # is unchanged — it is the same single element ``float()`` would pull).
+        return float(np.asarray(kde(point)).ravel()[0])
     except Exception:
         # fallback: histogram-based density
         h = 1.06 * y.std() * len(y) ** (-0.2)

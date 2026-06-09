@@ -31,6 +31,31 @@ errors.
 | `synth_factor_model_data` | ATT = -5.0 | 2-factor DGP, treated loadings in convex hull of donors; SCM exactly unbiased (Abadie-Diamond-Hainmueller 2010 §3). |
 | `matching_cia_data` | ATT = 2.0 | CIA with homogeneous effect; matching / IPW / CBPS / ebalance target ATT = 2.0 (Imbens-Wooldridge 2009). |
 
+> **Published certified-value fixtures** (NIST StRD linear regression) live in
+> `tests/numerical_accuracy/`, not here — they certify numerical accuracy
+> against multiple-precision certified values rather than recover a DGP or align
+> with R/Stata, and are deliberately kept out of the JSS reference-parity count.
+
+## Frozen R-value fixtures (true cross-package parity)
+
+Some estimators are pinned to *exact* R numbers (not just DGP recovery).
+Each ships a deterministic data CSV, a `_generate_*.R` script that
+produces the reference JSON, and a frozen `*_R.json` with the R output.
+The test asserts coefficient/SE equality to a tight tolerance.
+
+| Fixture | sp entry point | R reference | Tolerance |
+| --- | --- | --- | --- |
+| `hdfe_*` | `sp.hdfe_ols` | `fixest::feols` two-way FE + cluster | coef 1e-4, cluster SE 5% |
+| `panel_*` | `sp.panel(method='fe'/'re'/'between')` | `plm` within / Swamy-Arora RE / between (Croissant & Millo 2008, *JSS* 27(2), doi:10.18637/jss.v027.i02) | coef 1e-5, classical SE 1e-5, cluster SE 2e-4 |
+| `count_quantile_*` | `sp.poisson` / `sp.nbreg` / `sp.qreg` / `sp.tobit` | `glm(poisson)` / `MASS::glm.nb` / `quantreg::rq` / `AER::tobit` | coef 1e-5, model SE 1e-4, qreg coef 1e-4 (SE not pinned) |
+| `zeroinfl_*` | `sp.zip_model` / `sp.zinb` | `pscl::zeroinfl` (Zeileis-Kleiber-Jackman 2008, *JSS* 27(8), doi:10.18637/jss.v027.i08) | ZIP coef+SE 1e-4, ZINB coef+theta 1e-3 |
+| `sdid_*` | `sp.sdid` | `synthdid` R package (Arkhangelsky et al. 2021, *AER* 111(12):4088-4118, doi:10.1257/aer.20190159) on `sp.california_prop99()` | estimate 1e-6 (SE not pinned — placebo randomisation) |
+
+For `panel_*`, the cluster-robust convention is `plm::vcovHC(type="HC1",
+cluster="group")`, which `sp.panel(method='fe', cluster=<entity>)`
+reproduces. Regenerate with
+`Rscript tests/reference_parity/_fixtures/_generate_panel.R`.
+
 ## What the tests verify
 
 ### Recovery tests

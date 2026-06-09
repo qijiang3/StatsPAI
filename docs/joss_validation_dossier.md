@@ -85,10 +85,17 @@ same CSV. On the Python side, `sp.dml` and `doubleml-for-py` are given
 partition under a fixed seed, so any divergence reflects a genuine
 implementation difference rather than learner choice or split noise.
 
+All four DoubleML model classes are pinned against `doubleml-for-py`.
+The non-instrumented models (PLR, IRM) use `dml_data.csv`; the
+instrumented models (PLIV, IIVM) use the companion `dml_iv_data.csv`
+(n=2000, continuous instrument `z_c`, binary instrument `z_b`).
+
 | Model | `sp.dml` (StatsPAI 1.16.1) | `doubleml-for-py` 0.11.3 | `DoubleML` R 1.0.2 (cv.glmnet) |
 | --- | --- | --- | --- |
 | **PLR** (continuous D) | +0.559022 ± 0.033103 | +0.559022 ± 0.033103 | +0.536759 ± 0.033498 |
 | **IRM** (binary D, AIPW ATE) | −0.019107 ± 0.076561 | −0.026658 ± 0.074206 | +0.006640 ± 0.074434 |
+| **PLIV** (continuous D, instrument) | +0.511701 ± 0.019453 | +0.511701 ± 0.019453 | — (Python-side pin) |
+| **IIVM** (binary D, instrument, LATE) | +0.549467 ± 0.092426 | +0.561773 ± 0.091915 | — (Python-side pin) |
 
 - **PLR matches `doubleml-for-py` to machine precision.** Under shared learners
   and folds the point estimate and standard error agree to within one float64

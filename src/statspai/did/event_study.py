@@ -204,6 +204,11 @@ def event_study(
         t_crit = sp_stats.norm.ppf(1 - alpha / 2)
         es_rows.append({
             "relative_time": k_val,
+            # ``att`` is the canonical event-study coefficient name shared by
+            # the whole DID family (see did._core.EVENT_STUDY_COLUMNS); the
+            # downstream plotters / exporters / pretrend tools key on it.
+            # ``estimate`` is kept as a backward-compatible alias.
+            "att": coef,
             "estimate": coef,
             "se": se_i,
             "ci_lower": coef - t_crit * se_i,
@@ -214,6 +219,7 @@ def event_study(
     # Add reference period (zero by definition)
     es_rows.append({
         "relative_time": ref_period,
+        "att": 0.0,
         "estimate": 0.0,
         "se": 0.0,
         "ci_lower": 0.0,

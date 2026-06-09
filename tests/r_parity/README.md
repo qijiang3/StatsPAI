@@ -34,11 +34,11 @@ tests/r_parity/
 Historical verification worklog (not the current source-snapshot audit):
 [`PARITY_TEST_WORKLOG_2026-05-29.md`](PARITY_TEST_WORKLOG_2026-05-29.md).
 
-## Modules (51 materialized StatsPAI--R rows)
+## Modules (55 materialized StatsPAI--R rows)
 
 Module `50_xtabond` is the separate Py--Stata-only migration fixture and
-is not part of this R-joined table; the 51 materialized R rows are
-modules 01--49, 51, and 52.
+is not part of this R-joined table; the 55 materialized R rows are
+modules 01--49 and 51--56.
 
 | # | Module | StatsPAI | R / reference side |
 | --- | --- | --- | --- |
@@ -93,6 +93,10 @@ modules 01--49, 51, and 52.
 | 49 | Ordered probit | `sp.oprobit` | `MASS::polr(method="probit")` |
 | 51 | Newey-West HAC OLS | `sp.regress(robust="hac")` | `sandwich::NeweyWest` |
 | 52 | Identified classical SCM DGP | `sp.synth(method="classic", backend="native")` | `Synth::synth` |
+| 53 | Cluster-robust CR2 SE (+ CR3 jackknife) | `sp.cr2_se` | `clubSandwich::vcovCR(type="CR2"/"CR3")` |
+| 54 | Two-way cluster-robust SE | `sp.twoway_cluster` | `sandwich::vcovCL(cluster=~g1+g2)` |
+| 55 | HC2 / HC3 robust SE | `sp.regress` | `sandwich::vcovHC(type="HC2"/"HC3")` |
+| 56 | Three-way cluster-robust SE | `sp.multiway_cluster_vcov` | `sandwich::vcovCL(cluster=~g1+g2+g3)` |
 
 ## Running
 
@@ -126,6 +130,31 @@ with R/Stata installed, run:
 
 ```bash
 pytest tests/test_parity_runtime.py -m external_parity_runtime --no-cov
+```
+
+## Tier A fixture lock
+
+The committed Tier A fixture set is hash-locked in
+[`TIER_A_FIXTURE_LOCK.json`](TIER_A_FIXTURE_LOCK.json). The lock covers
+the parity scripts, shared helpers, input CSVs, golden JSONs, rendered
+Appendix B tables, `renv.lock`, and the R/Stata reference-environment
+files. It is checked by the fast pytest contract suite, so a fixture can
+no longer drift merely because `compare.py` was re-run.
+
+Verify the lock without external R/Stata software:
+
+```bash
+python scripts/tier_a_fixture_lock.py
+```
+
+After intentionally changing a Tier A fixture, first regenerate the
+materialized evidence (`NN_*.py` / `NN_*.R` / Stata `.do` as needed,
+then `python tests/r_parity/compare.py`). Review the resulting diff,
+then refresh the lock explicitly:
+
+```bash
+python scripts/tier_a_fixture_lock.py --write
+pytest -o addopts='' tests/test_parity_harness_contract.py
 ```
 
 ## Tolerance budget (pre-registered)

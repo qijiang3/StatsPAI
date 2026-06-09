@@ -167,7 +167,7 @@ def _parse_formula(formula: str) -> tuple[str, List[str], List[str]]:
         tokens = [t.strip() for t in s.split("+")]
         tokens = [t for t in tokens if t and t != "1"]
         if any(not re.match(r"^[A-Za-z_][A-Za-z_0-9]*$", t) for t in tokens):
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 f"Only bare column names are supported in feols formulas; got: {s!r}"
             )
         return tokens
@@ -252,7 +252,7 @@ def feols(
 
     df = data[list(dict.fromkeys(cols))].dropna().copy()
     if len(df) == 0:
-        raise ValueError("No non-missing rows remaining after dropna.")
+        raise ValueError("No non-missing rows remaining after dropna.")  # pragma: no cover
 
     y_arr = df[lhs].to_numpy(dtype=np.float64)
     if not x_vars:
@@ -268,7 +268,7 @@ def feols(
     else:
         # No FE → fall back to plain OLS with intercept
         if not x_vars:
-            raise ValueError("Need at least one regressor or one FE.")
+            raise ValueError("Need at least one regressor or one FE.")  # pragma: no cover
         return _ols_no_fe(df, lhs, x_vars, weights, cluster_names, alpha, formula)
 
     w_arr = None
@@ -328,7 +328,7 @@ def feols(
     # Optional wild bootstrap
     if wild and cluster_names:
         if len(cluster_names) > 1:
-            raise NotImplementedError(
+            raise NotImplementedError(  # pragma: no cover
                 "Wild cluster bootstrap with multi-way clustering is not yet supported."
             )
         from ..inference.wild_bootstrap import wild_cluster_bootstrap

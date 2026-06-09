@@ -306,7 +306,7 @@ _REPLICATIONS: Dict[str, Dict[str, Any]] = {
                  'StatsPAI vs R MatchIt parity (matchit_lalonde subset)'),
                 ('Adjusted OLS ATT ($)',  1548.2,  1548.2,
                  'StatsPAI vs R parity'),
-                ('1:1 NN PSM ATT ($)',    2012.5,  1794.0,
+                ('1:1 NN PSM ATT ($)',    1963.4,  1794.0,
                  'StatsPAI vs DW (1999) Table 4 experimental benchmark'),
             ],
         },

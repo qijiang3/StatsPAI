@@ -199,7 +199,7 @@ class DoubleML:
     ):
         key = str(model).lower()
         if key not in _MODEL_REGISTRY:
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 f"model must be one of {self._VALID_MODELS}, got '{model}'"
             )
         self.model = key

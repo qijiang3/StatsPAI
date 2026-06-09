@@ -227,6 +227,13 @@ SURNAME_STOPWORDS = {
     "ses",
     # CHANGELOG / docstring meta-text words ("Verified via Crossref")
     "crossref", "verified", "datacite", "openalex", "scite",
+    # Andrews (1993) structural-break title canon: "Tests for Parameter
+    # Instability and Structural Change with Unknown Change Point"
+    # (doi:10.2307/2951764). The cite_boundary chop at "(1993)." drops the
+    # "Andrews" author token, leaving the quoted title in scope; "Instability"
+    # then reads as a phantom because it is directly followed by "and". These
+    # are common-noun title words, never surnames in our citation corpus.
+    "instability", "structural", "constancy", "unknown",
 }
 
 

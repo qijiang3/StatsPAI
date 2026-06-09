@@ -21,12 +21,25 @@ ROOT = Path(__file__).resolve().parents[1]
 R_PARITY = ROOT / "tests" / "r_parity"
 R_RESULTS = R_PARITY / "results"
 STATA_RESULTS = ROOT / "tests" / "stata_parity" / "results"
+FIXTURE_LOCK_SCRIPT = ROOT / "scripts" / "tier_a_fixture_lock.py"
 
 
 def _load_compare() -> ModuleType:
     spec = importlib.util.spec_from_file_location(
         "statspai_r_parity_compare_for_tests",
         R_PARITY / "compare.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_fixture_lock() -> ModuleType:
+    spec = importlib.util.spec_from_file_location(
+        "statspai_tier_a_fixture_lock_for_tests",
+        FIXTURE_LOCK_SCRIPT,
     )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -79,6 +92,17 @@ def test_parity_artifact_inventory_has_explicit_contracts():
 
     for module in sorted(py_modules & r_modules):
         assert compare.collect(module), f"{module} has no joined py/R rows"
+
+
+def test_tier_a_parity_fixture_lock_is_current():
+    lock = _load_fixture_lock()
+    ok, diff = lock.verify()
+    assert ok, (
+        "Tier A parity fixture lock is stale. Review the fixture change, then "
+        "refresh the committed lock with "
+        "`python scripts/tier_a_fixture_lock.py --write`.\n"
+        + diff
+    )
 
 
 def test_parity_json_rows_keep_the_joinable_schema():

@@ -27,6 +27,16 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# Drain the queue backlog: the full matrix is 13 shards × ~1.5h, so back-to-back
+# pushes to main pile up faster than the runner pool can clear them. Group runs
+# per (workflow, ref) and cancel any superseded in-progress/queued run on a new
+# push — only the latest commit on a branch matters for CI feedback.
+# Guard: never cancel a `release` run (tag ref, isolated group) so an in-flight
+# publish to PyPI is never interrupted mid-upload.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
+
 jobs:
   # Decide the test matrix based on trigger:
   #   - pull_request: 1 combo (ubuntu-latest × 3.10) — fast PR feedback, keeps Codecov upload
@@ -80,6 +90,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
 
+    - name: Install parity extra (canonical env — runs the doubleml external-parity pins)
+      # doubleml is the opt-in `parity` extra (not in `dev`). Installing it on
+      # the canonical ubuntu+3.10 env makes tests/external_parity/
+      # test_dml_python_parity.py actually run its 2 sp.dml-vs-doubleml pins,
+      # so the JSS external-parity headline count (52) is verified rather than
+      # silently skipped. Other matrix entries skip those 2 pins and the
+      # count-drift guard degrades gracefully (see test_jss_validation_api.py).
+      # Mirrors the flake8 / mypy / coverage canonical-env gating below.
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
+      run: pip install -e ".[parity]"
+
     - name: Lint with flake8 (hard syntax errors — all matrix entries)
       # E9/F63/F7/F82 are real syntax / undefined-name breakage and must be
       # zero on every OS × Python combo.
@@ -109,33 +130,78 @@ jobs:
     # matrices and the same pin used by the flake8/mypy gates — where numpy is
     # >= 2.1 and the bug is absent. Every other matrix entry runs the full
     # suite without ``--cov``. Root cause: docs/rfc (E1 analysis).
-    # NEEDS-CI-VERIFICATION: confirm the 3.10 coverage run is green in CI, then
-    # raise --cov-fail-under from 15 toward the measured baseline.
+    # Coverage baseline: the 2026-05-28 local full-suite run (committed
+    # ``coverage.xml``, v1.16.0) measured 70.5% line coverage repo-wide
+    # (61,681 / 87,476 lines). The gate is therefore set to 60 — a 4x lift
+    # over the historical 15 placeholder, held ~10pp below the measured
+    # baseline so ordinary fold-split / platform variance cannot red a PR.
+    # Ratchet upward (60 -> 65 -> 70) once each step is confirmed green in
+    # CI on the canonical ubuntu+3.10 env; never set the gate above the last
+    # CI-verified number.
     - name: Test with pytest (coverage)
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
       run: |
-        pytest tests/ -v --cov=statspai --cov-report=xml --cov-report=term-missing --cov-fail-under=15
+        pytest tests/ -v --cov=statspai --cov-report=xml --cov-report=term-missing --cov-fail-under=60
+
+    # Per-module ratchet for the six core estimators (did iv rd synth dml panel).
+    # The repo-wide --cov-fail-under above is a soft floor; this gate locks each
+    # core module at the hard ≥95% the coverage campaign achieved so none can
+    # silently regress. Reuses the coverage.xml just produced. Ratchet the --min
+    # upward only after a higher number is confirmed green here.
+    - name: Core-module coverage ratchet (did/iv/rd/synth/dml/panel ≥ 95%)
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
+      run: |
+        python scripts/coverage_campaign.py report --xml coverage.xml --check --min 95
 
     - name: Test with pytest (no coverage)
       if: ${{ !(matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10') }}
       run: |
         pytest tests/ -v
 
-    - name: Build and smoke installed wheel
+    - name: Build and smoke installed wheel (bare install — lazy-import guard)
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
       shell: bash
+      # Installs ONLY the wheel + its core runtime deps — no extras
+      # (no torch / jax / pymc / pyfixest / matplotlib). The estimator
+      # smoke below therefore proves two things at once: (1) the published
+      # artifact is importable and self-contained, and (2) core econometric
+      # paths (IV, staggered DiD) run without any optional extra, i.e. the
+      # heavy deps are genuinely lazily imported. If a core estimator ever
+      # starts eager-importing torch/jax/pymc, this step fails here rather
+      # than in a downstream user's bare `pip install statspai`.
       run: |
         python -m build --sdist --wheel
         python -m venv .wheel-smoke
         .wheel-smoke/bin/python -m pip install --upgrade pip
         .wheel-smoke/bin/python -m pip install dist/*.whl
         .wheel-smoke/bin/python - <<'PY'
+        import numpy as np
         import statspai as sp
         from statspai.cli import main
 
+        # Identity + citation metadata + CLI entrypoint.
         assert sp.__version__
         assert "StatsPAI" in sp.citation("cff")
         assert main(["version"]) == 0
+
+        # Core estimators on bundled data — must run on the bare install.
+        card = sp.datasets.card_1995()
+        iv = sp.ivreg(
+            "lwage ~ (educ ~ nearc4) + exper + expersq + black + south + smsa",
+            data=card,
+        )
+        assert np.isfinite(float(iv.params["educ"])), "IV educ coef not finite"
+
+        mpdta = sp.datasets.mpdta()
+        did = sp.callaway_santanna(
+            data=mpdta, y="lemp", t="year", i="countyreal", g="first_treat"
+        )
+        att = sp.aggte(did, type="simple")
+        assert np.isfinite(float(att.estimate)), "DiD simple ATT not finite"
+
+        print("bare-install smoke OK:",
+              f"IV educ={float(iv.params['educ']):.4f}, "
+              f"DiD ATT={float(att.estimate):.4f}")
         PY
 
     - name: Upload coverage to Codecov

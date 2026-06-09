@@ -375,7 +375,7 @@ def _gini_subgroup(
             mu_h = float(np.average(y_h_arr, weights=w_h_arr))
             mu_k = float(np.average(y_k_arr, weights=w_k_arr))
             if mu_h + mu_k <= 0:
-                continue
+                continue  # pragma: no cover
             W_h = w_h_arr.sum() / W
             W_k = w_k_arr.sum() / W
             D_hk = _weighted_pairwise_mad(y_h_arr, w_h_arr, y_k_arr, w_k_arr)

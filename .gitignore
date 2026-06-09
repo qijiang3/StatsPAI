@@ -185,6 +185,9 @@ tools/.citation_cache/
 audit_report.md
 audit_report.json
 
+# Local generated report scratch
+/report.md
+
 # Ad-hoc citation-audit scratch (not from the tool)
 .citation_audit/
 
@@ -199,3 +202,20 @@ CausalAgentBench/
 
 # Temp files
 MORNING_REPORT_2026-04-29.md
+
+# Local JOSS review-prep scratch (reviewer-by-name strategy notes; never publish
+# to this public repo — the JOSS reviewers actively watch it). Keep local only.
+.joss-review-notes/
+
+# Core-coverage campaign working dir (heavy XML/logs ignored; tracker kept)
+.coverage_campaign/*
+!.coverage_campaign/CAMPAIGN.md
+
+# Decomposition coverage campaign working dir (private coverage files ignored; tracker kept)
+.cov_decomp/*
+!.cov_decomp/DECOMP_CAMPAIGN.md
+
+# Tier-D/Tier-B validation campaign working dir (regenerable artifacts ignored; tracker + worklist kept)
+.tierd_campaign/*
+!.tierd_campaign/CAMPAIGN.md
+!.tierd_campaign/worklist.md

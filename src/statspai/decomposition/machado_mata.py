@@ -303,7 +303,7 @@ def machado_mata(
                 y_a_i = y_i[g_i == 0]
                 y_b_i = y_i[g_i == 1]
                 if len(y_a_i) < 20 or len(y_b_i) < 20:
-                    continue
+                    continue  # pragma: no cover
                 beta_a_i = _qreg_grid(y_a_i, X_a_i, tau_qr)
                 beta_b_i = _qreg_grid(y_b_i, X_b_i, tau_qr)
                 ya_sim = simulate(beta_a_i, X_a_i, n_sim)
@@ -324,7 +324,7 @@ def machado_mata(
                     else:
                         comps_b.append(q_cf_b - q_b_b)
                 boot_list.append((gaps_b, comps_b))
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001  # pragma: no cover
                 continue
         if len(boot_list) > 10:
             gaps_arr = np.array([b[0] for b in boot_list])

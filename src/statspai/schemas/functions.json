@@ -148,23 +148,44 @@
     "name": "heckman",
     "parameters": {
       "properties": {
+        "alpha": {
+          "default": 0.05,
+          "description": "Significance level for confidence intervals",
+          "type": "number"
+        },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
           "type": "string"
         },
-        "formula": {
-          "description": "Outcome equation formula",
+        "select": {
+          "description": "Binary selection indicator (1 = observed, 0 = not)",
           "type": "string"
         },
-        "select_formula": {
-          "description": "Selection equation formula",
+        "x": {
+          "description": "Regressors in the outcome equation",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "y": {
+          "description": "Outcome variable (observed only when select=1)",
           "type": "string"
+        },
+        "z": {
+          "description": "Selection-equation variables (include exclusion restrictions in z but not x)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
-        "formula",
-        "select_formula",
-        "data"
+        "data",
+        "y",
+        "x",
+        "select",
+        "z"
       ],
       "type": "object"
     }
@@ -174,27 +195,40 @@
     "name": "tobit",
     "parameters": {
       "properties": {
+        "alpha": {
+          "default": 0.05,
+          "description": "Significance level for confidence intervals",
+          "type": "number"
+        },
         "data": {
           "description": "pandas DataFrame containing the variables used by the estimator.",
           "type": "string"
         },
-        "formula": {
-          "description": "Model formula using patsy/R-style syntax.",
-          "type": "string"
-        },
-        "lower": {
+        "ll": {
           "default": 0.0,
-          "description": "Lower censoring point",
+          "description": "Lower censoring limit (set -inf for none)",
           "type": "number"
         },
-        "upper": {
-          "description": "Upper censoring point",
+        "ul": {
+          "description": "Upper censoring limit (default: none)",
           "type": "number"
+        },
+        "x": {
+          "description": "Regressors",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "y": {
+          "description": "Censored outcome variable",
+          "type": "string"
         }
       },
       "required": [
-        "formula",
-        "data"
+        "data",
+        "y",
+        "x"
       ],
       "type": "object"
     }
@@ -18555,7 +18589,7 @@
     }
   },
   {
-    "description": "Compute N-way cluster-robust variance of an OLS coefficient vector.",
+    "description": "Compute N-way cluster-robust variance of an OLS coefficient vector. Validation: certified parity evidence.",
     "name": "multiway_cluster_vcov",
     "parameters": {
       "properties": {
@@ -22317,7 +22351,7 @@
     }
   },
   {
-    "description": "Compute two-way cluster-robust standard errors.",
+    "description": "Compute two-way cluster-robust standard errors. Validation: certified parity evidence.",
     "name": "twoway_cluster",
     "parameters": {
       "properties": {
@@ -22677,7 +22711,7 @@
     }
   },
   {
-    "description": "CR2 bias-corrected cluster-robust standard errors (Bell & McCaffrey 2002).",
+    "description": "CR2 bias-corrected cluster-robust standard errors (Bell & McCaffrey 2002). Validation: certified parity evidence.",
     "name": "cr2_se",
     "parameters": {
       "properties": {
@@ -29451,7 +29485,7 @@
       "properties": {
         "collect_tests": {
           "default": false,
-          "description": "Run ``pytest --collect-only`` on the reference-parity, external-parity, and coverage Monte Carlo directories and record the authoritative collected-test counts (the integers the JSS manuscript headlines, e.g. 114 / 50 / 12). Off by default because it spawns pytest collection (seconds); the cheap metadata-only path reports test *file* counts instead.",
+          "description": "Run ``pytest --collect-only`` on the reference-parity, external-parity, and coverage Monte Carlo directories and record the authoritative collected-test counts (the integers the JSS manuscript headlines, e.g. 124 / 52 / 12). Off by default because it spawns pytest collection (seconds); the cheap metadata-only path reports test *file* counts instead.",
           "type": "boolean"
         },
         "fmt": {

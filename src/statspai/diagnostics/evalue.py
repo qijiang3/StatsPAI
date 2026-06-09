@@ -174,6 +174,15 @@ def evalue_from_result(
     >>> ev = sp.evalue_from_result(result)
     >>> print(f"E-value: {ev['evalue_estimate']:.2f}")
     """
+    if not hasattr(result, "estimate"):
+        raise TypeError(
+            "evalue_from_result expects a CausalResult carrying a single "
+            "causal estimate (.estimate / .se / .ci), e.g. from sp.did, sp.iv, "
+            "sp.dml, sp.synth or sp.metalearner. Got "
+            f"{type(result).__name__}, which exposes no scalar treatment "
+            "effect. For a single regression coefficient call sp.evalue("
+            "estimate=..., se=...) directly."
+        )
     return evalue(
         estimate=result.estimate,
         se=result.se,

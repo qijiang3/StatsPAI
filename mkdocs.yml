@@ -1,6 +1,7 @@
 site_name: StatsPAI
 site_description: Python causal inference toolkit — econometrics, DiD, SDID, RD, IV, ML causal inference
 site_author: Biaoyue Wang and Scott Rozelle
+site_url: https://brycewang-stanford.github.io/StatsPAI/
 repo_url: https://github.com/brycewang-stanford/StatsPAI
 repo_name: brycewang-stanford/StatsPAI
 edit_uri: edit/main/docs/
@@ -94,6 +95,7 @@ nav:
   - Ecosystem stats: stats.md
   - JOSS reviewer guide: joss_reviewer_guide.md
   - JOSS validation dossier: joss_validation_dossier.md
+  - "Design rationale & FAQ": joss_reviewer_qa.md
   - JSS source-audit dossier: jss_source_audit_dossier.md
   - Guides:
       - "Public health & epidemiology — overview & design→method map": guides/public_health.md

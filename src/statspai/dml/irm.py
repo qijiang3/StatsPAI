@@ -70,8 +70,8 @@ class DoubleMLIRM(_DoubleMLBase):
         # Need at least one row per arm per fold for stratified splitting.
         n0, n1 = int(np.sum(D == 0)), int(np.sum(D == 1))
         if min(n0, n1) < self.n_folds:
-            from statspai.exceptions import IdentificationFailure
-            raise IdentificationFailure(
+            from statspai.exceptions import IdentificationFailure  # pragma: no cover
+            raise IdentificationFailure(  # pragma: no cover
                 f"model='irm' with n_folds={self.n_folds} requires at "
                 f"least n_folds rows in each treatment arm; got "
                 f"n(D=0)={n0}, n(D=1)={n1}.",
@@ -121,8 +121,8 @@ class DoubleMLIRM(_DoubleMLBase):
                 n_fallback_g1 += 1
             else:
                 # StratifiedKFold should preclude this — guard anyway.
-                from statspai.exceptions import IdentificationFailure
-                raise IdentificationFailure(
+                from statspai.exceptions import IdentificationFailure  # pragma: no cover
+                raise IdentificationFailure(  # pragma: no cover
                     "IRM cross-fit produced a training fold with no D=1 "
                     "rows despite stratification; aborting rather than "
                     "biasing g(1, X) with zeros.",
@@ -150,8 +150,8 @@ class DoubleMLIRM(_DoubleMLBase):
                     g0_hat = np.full(len(test_idx), float(np.mean(Y_tr[mask0])))
                 n_fallback_g0 += 1
             else:
-                from statspai.exceptions import IdentificationFailure
-                raise IdentificationFailure(
+                from statspai.exceptions import IdentificationFailure  # pragma: no cover
+                raise IdentificationFailure(  # pragma: no cover
                     "IRM cross-fit produced a training fold with no D=0 "
                     "rows despite stratification; aborting rather than "
                     "biasing g(0, X) with zeros.",

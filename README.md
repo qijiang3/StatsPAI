@@ -10,6 +10,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/StatsPAI.svg)](https://pypi.org/project/StatsPAI/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/brycewang-stanford/statspai/blob/main/LICENSE)
 [![Tests](https://github.com/brycewang-stanford/statspai/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/brycewang-stanford/statspai/actions)
+[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue.svg)](https://brycewang-stanford.github.io/StatsPAI/)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/statspai?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/statspai)
 [![status](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332/status.svg)](https://joss.theoj.org/papers/9f1c837b1b1df7adfcdd538c3698e332)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19933900-blue.svg)](https://doi.org/10.5281/zenodo.19933900)
@@ -137,7 +138,7 @@ StatsPAI's focus is **causal inference**. The grid below summarizes method-famil
 
 **Legend**: B = broad API coverage within this comparison table; Y = implemented entry points; P = partial, scattered, or single-algorithm support; N = no first-class entry point. These are API-breadth labels, not validation tiers.
 
-**StatsPAI at a glance**: 1,029 registered functions in the live agent registry · 81 submodules · 270k LOC (core) + 97k LOC (tests). All four numbers are reproducible from the canonical generator (`python scripts/registry_stats.py`); the per-module table in [`docs/stats.md`](docs/stats.md) is regenerated from the same script. For the API-breadth matrix (23 method families) and cross-ecosystem line-count comparison, see [`docs/stats.md`](docs/stats.md).
+**StatsPAI at a glance**: 1,029 registered functions in the live agent registry · 81 submodules · 271k LOC (core) + 131k LOC (tests). All four numbers are reproducible from the canonical generator (`python scripts/registry_stats.py`); the per-module table in [`docs/stats.md`](docs/stats.md) is regenerated from the same script. For the API-breadth matrix (23 method families) and cross-ecosystem line-count comparison, see [`docs/stats.md`](docs/stats.md).
 
 **Validation tiers matter**: `stability="stable"` means the public API is SemVer-stable; it does not by itself mean R/Stata/paper parity. Use `sp.list_functions(validation_status="certified")` for cross-language or published-reference evidence, and inspect `sp.describe_function(name)["limitations"]` before production use. See [`docs/guides/stability.md`](docs/guides/stability.md).
 
@@ -1434,7 +1435,7 @@ resolves to the latest version):
   author       = {Wang, Biaoyue and Rozelle, Scott},
   title        = {StatsPAI: Validation-Tiered Causal Inference and Econometrics Workflows for Python},
   year         = {2026},
-  version      = {1.16.1},
+  version      = {1.17.0},
   doi          = {10.5281/zenodo.19933900},
   url          = {https://doi.org/10.5281/zenodo.19933900},
   license      = {MIT},
